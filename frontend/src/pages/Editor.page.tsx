@@ -4,8 +4,6 @@ import { AppContextProps, AppCtx } from '@/AppContext';
 import RichTextEditorComponent from '../components/Editor';
 import { TableOfContents } from '@/components/TableOfContents';
 
-
-
 export const EditorPage: React.FC = () => {
   const appCtx = useContext(AppCtx);
   const { editorState, updateEditorState, dumpToFile } = appCtx as unknown as AppContextProps;
@@ -30,7 +28,7 @@ export const EditorPage: React.FC = () => {
       <Stack h="100%" spacing="md" style={{ flexDirection: 'row' }}>
         <Paper p="md">
           {/* Tree view component goes here */}
-          {/* <TableOfContents/> */}
+          <TableOfContents links={editorConfig?.indexTree}/>
         </Paper>
         <Stack h="100%" spacing="md" style={{ flex: 2 }}>
           {editorConfig?.contentBlocks.map((editor) => (

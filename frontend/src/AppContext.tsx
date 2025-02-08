@@ -1,6 +1,17 @@
 import React, { createContext, ReactNode, useCallback, useState } from 'react';
-import { TreeNodeData } from '@mantine/core';
 import EditorStateManager from './utils/EditorStateManager';
+
+
+const links:ILink[] = [
+  { label: 'Usage', link: '#usage', order: 1 },
+  { label: 'Position and placement', link: '#position', order: 1 },
+  { label: 'With other overlays', link: '#overlays', order: 1 },
+  { label: 'Manage focus', link: '#focus', order: 1 },
+  { label: 'Examples', link: '#1', order: 1 },
+  // { label: 'Show on focus', link: '#2', order: 2 },
+  // { label: 'Show on hover', link: '#3', order: 2 },
+  // { label: 'With form', link: '#4', order: 2 },
+];
 
 const editorStateManager = new EditorStateManager();
 
@@ -21,7 +32,7 @@ export interface AppState {
   // Define your state properties here
   editorConfig: {
     projectId: string;
-    indexTree: TreeNodeData[];
+    indexTree: ILink[];
     contentBlocks: IContentBlock[];
    
   };
@@ -37,23 +48,7 @@ export interface AppContextProps {
 const defaultState: AppState = {
   editorConfig: {
     projectId: '123',
-    indexTree: [
-      {
-        label: 'Introduction',
-        value: 'Introduction',
-        children: [
-          {
-            label: 'Concept',
-            value: 'src/components',
-            children: [
-              { label: 'Accordion.tsx', value: 'src/components/Accordion.tsx' },
-              { label: 'Tree.tsx', value: 'src/components/Tree.tsx' },
-              { label: 'Button.tsx', value: 'src/components/Button.tsx' },
-            ],
-          },
-        ],
-      },
-    ],
+    indexTree: links,
     contentBlocks: editorStateManager.getEditors(),
   },
 };
@@ -72,3 +67,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   return <AppCtx.Provider value={{ editorState, setEditorState, updateEditorState, dumpToFile }}>{children}</AppCtx.Provider>;
 };
+
+interface ILink {
+  label: string;
+  link: string;
+  order: number;
+}
+
+

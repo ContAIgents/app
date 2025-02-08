@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Container, Title, Paper, Select, TextInput, PasswordInput, Stack, Alert } from '@mantine/core';
-import { IconCheck, IconAlertCircle } from '@tabler/icons-react';
+import { IconCheck } from '@tabler/icons-react';
 import { LLMFactory } from '../services/llm/LLMFactory';
-import { OpenAIProvider } from '../services/llm/OpenAIProvider';
 import { OnboardingNavigation } from '../components/OnboardingNavigation/OnboardingNavigation';
+import { OpenAIProvider } from '@/services/llm/OpenAIProvider';
+import { AnthropicProvider } from '@/services/llm/AnthropicProvider';
+import { GoogleProvider } from '@/services/llm/GoogleProvider';
 
 export function LlmConfig() {
   const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
@@ -11,12 +13,25 @@ export function LlmConfig() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const providers = {
-    'OpenAI': OpenAIProvider.providerConfig,
-  };
+  // Load initial configuration when component mounts
+  useEffect(() => {
+    // Try to find a configured provider
+    for (const providerName of Object.keys(providers)) {
+      try {
+        const llm = LLMFactory.getProvider(providerName);
+        if (llm.isConfigured()) {
+          setSelectedProvider(providerName);
+          setConfig(llm.getConfig());
+          setSaved(true);
+          break;
+        }
+      } catch (error) {
+        console.error(`Error checking ${providerName} configuration:`, error);
+      }
+    }
+  }, []);
 
-  const provider = selectedProvider ? providers[selectedProvider as keyof typeof providers] : null;
-
+  // Existing provider selection effect
   useEffect(() => {
     if (selectedProvider) {
       const llm = LLMFactory.getProvider(selectedProvider);
@@ -24,8 +39,45 @@ export function LlmConfig() {
     }
   }, [selectedProvider]);
 
+  const providers = {
+    'OpenAI': OpenAIProvider.providerConfig,
+    'Anthropic': AnthropicProvider.providerConfig,
+    'Google': GoogleProvider.providerConfig,
+    'DeepSeek': {
+      name: 'DeepSeek',
+      configFields: [
+        { name: 'apiKey', label: 'API Key', type: 'password', required: true },
+        { name: 'model', label: 'Model', type: 'select', required: true, options: ['deepseek-chat', 'deepseek-coder'] }
+      ]
+    },
+    'HuggingFace': {
+      name: 'HuggingFace',
+      configFields: [
+        { name: 'apiKey', label: 'API Key', type: 'password', required: true },
+        { name: 'model', label: 'Model', type: 'select', required: true, options: ['mistral-7b', 'llama-2', 'falcon-40b'] }
+      ]
+    },
+    'Ollama': {
+      name: 'Ollama',
+      configFields: [
+        { name: 'endpoint', label: 'Endpoint URL', type: 'url', required: true, default: 'http://localhost:11434' },
+        { name: 'model', label: 'Model', type: 'select', required: true, options: ['llama2', 'mistral', 'codellama', 'neural-chat'] }
+      ]
+    }
+  };
+
+  const provider = selectedProvider ? providers[selectedProvider as keyof typeof providers] : null;
+
   const handleProviderChange = (value: string | null) => {
     setSelectedProvider(value);
+    if (value) {
+      const llm = LLMFactory.getProvider(value);
+      setConfig(llm.getConfig()); // Load existing config if available
+    } else {
+      setConfig({});
+    }
+    setSaved(false);
+    setError(null);
   };
 
   const handleConfigChange = (field: string, value: string) => {
@@ -74,6 +126,11 @@ export function LlmConfig() {
 
           {provider && (
             <>
+              {saved && (
+                <Alert color="teal" radius="md">
+                  Provider is configured and ready to use
+                </Alert>
+              )}
               {provider.configFields.map((field) => {
                 const props = {
                   key: field.name,
@@ -88,7 +145,20 @@ export function LlmConfig() {
                   return <PasswordInput {...props} />;
                 }
                 if (field.type === 'select') {
-                  return (
+                  return field.allowCustom ? (
+                    <Select
+                      {...props}
+                      data={field.options || []}
+                      searchable
+                      creatable
+                      getCreateLabel={(query) => `Use custom model: ${query}`}
+                      onCreate={(query) => {
+                        handleConfigChange(field.name, query);
+                        return query;
+                      }}
+                      onChange={(value) => handleConfigChange(field.name, value || '')}
+                    />
+                  ) : (
                     <Select
                       {...props}
                       data={field.options || []}

@@ -3,6 +3,7 @@ import { HomePage } from './pages/Home.page';
 import { LlmConfig } from './pages/LlmConfig.page';
 import { Agents } from './pages/Agents.page';
 import { KnowledgeBase } from './pages/KnowledgeBase.page';
+import { KnowledgeBaseEdit } from './pages/KnowledgeBaseEdit.page';
 import { EditorPage } from './pages/Editor.page';
 
 const router = createBrowserRouter([
@@ -21,6 +22,10 @@ const router = createBrowserRouter([
   {
     path: '/knowledgeBase',
     element: <KnowledgeBase />,
+  },
+  {
+    path: '/knowledgeBase/edit/default',
+    element: <KnowledgeBaseEdit />,
   },
   {
     path: '/Editor',

@@ -1,0 +1,65 @@
+.knowledge-base-editor {
+  /* Editor content styles */
+  .ProseMirror {
+    min-height: 100%;
+    font-size: 16px;
+    line-height: 1.6;
+    color: #2c3e50;
+  }
+
+  /* Heading styles */
+  h1 {
+    font-size: 2.25rem;
+    margin-bottom: 1rem;
+    color: #1a202c;
+  }
+
+  h2 {
+    font-size: 1.75rem;
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+    color: #2d3748;
+  }
+
+  /* List styles */
+  ul, ol {
+    padding-left: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  li {
+    margin-bottom: 0.5rem;
+  }
+
+  /* Paragraph styles */
+  p {
+    margin-bottom: 1rem;
+  }
+
+  /* Link styles */
+  a {
+    color: #3182ce;
+    text-decoration: none;
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+/* Custom scrollbar for a more modern look */
+.knowledge-base-editor .ProseMirror::-webkit-scrollbar {
+  width: 8px;
+}
+
+.knowledge-base-editor .ProseMirror::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.knowledge-base-editor .ProseMirror::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.knowledge-base-editor .ProseMirror::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}

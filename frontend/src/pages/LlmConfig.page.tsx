@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Container, Title, Paper, Select, TextInput, PasswordInput, Button, Stack, Alert } from '@mantine/core';
+import { Container, Title, Paper, Select, TextInput, PasswordInput, Stack, Alert } from '@mantine/core';
 import { IconCheck, IconAlertCircle } from '@tabler/icons-react';
 import { LLMFactory } from '../services/llm/LLMFactory';
 import { OpenAIProvider } from '../services/llm/OpenAIProvider';
+import { OnboardingNavigation } from '../components/OnboardingNavigation/OnboardingNavigation';
 
 export function LlmConfig() {
   const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
@@ -34,22 +35,25 @@ export function LlmConfig() {
     }));
   };
 
-  const handleSave = async () => {
+  const validateAndSave = async () => {
     try {
       if (!selectedProvider || !provider) {
-        throw new Error('Please select a provider');
+        setError('Please select a provider');
+        return false;
       }
 
       const llm = LLMFactory.getProvider(selectedProvider);
       llm.configure(config);
-
+      
+      // // Test the configuration
+      // await llm.executePrompt('test');
+      
       setSaved(true);
       setError(null);
-      
-      setTimeout(() => setSaved(false), 3000);
+      return true;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save configuration');
-      setSaved(false);
+      return false;
     }
   };
 
@@ -95,21 +99,11 @@ export function LlmConfig() {
                 return <TextInput {...props} type={field.type} />;
               })}
 
-              <Button onClick={handleSave} mt="md">
-                Save Configuration
-              </Button>
-
-              {saved && (
-                <Alert icon={<IconCheck size="1rem" />} title="Success!" color="green">
-                  Configuration saved successfully
-                </Alert>
-              )}
-
-              {error && (
-                <Alert icon={<IconAlertCircle size="1rem" />} title="Error!" color="red">
-                  {error}
-                </Alert>
-              )}
+              <OnboardingNavigation 
+                nextPath="/agents" 
+                onNext={validateAndSave}
+                nextLabel="Save & Continue"
+              />
             </>
           )}
         </Stack>

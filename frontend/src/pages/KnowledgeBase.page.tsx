@@ -42,11 +42,11 @@ export function KnowledgeBase() {
       </Stack>
 
       <Group mt="xl" grow>
-        <Tooltip label="Coming Soon" position="top">
+        <Tooltip label="Coming Soon: Upload and analyze your own documents!" position="top">
           <Button disabled>Upload Document</Button>
         </Tooltip>
-        <Tooltip label="Coming Soon" position="top">
-          <Button disabled>Record Audio</Button>
+        <Tooltip label="Coming Soon: Capture and learn from human expertise!" position="top">
+          <Button disabled>Record Human</Button>
         </Tooltip>
       </Group>
     </Container>

@@ -55,4 +55,11 @@ export class AgentManager {
     }
     return deleted;
   }
+
+  public hasRequiredAgents(): boolean {
+    const agents = this.getAllAgents();
+    const hasContentWriter = agents.some(agent => agent.getConfig().role === 'content_writer');
+    const hasContentReviewer = agents.some(agent => agent.getConfig().role === 'content_reviewer');
+    return hasContentWriter && hasContentReviewer;
+  }
 }

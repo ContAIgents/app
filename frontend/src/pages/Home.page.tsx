@@ -1,11 +1,7 @@
-import { ColorSchemeToggle } from '../components/ColorSchemeToggle/ColorSchemeToggle';
-import { Welcome } from '../components/Welcome/Welcome';
+import { useOnboardingManager } from '../hooks/useOnboardingManager';
 
 export function HomePage() {
-  return (
-    <>
-      <Welcome />
-      <ColorSchemeToggle />
-    </>
-  );
+  useOnboardingManager();
+  
+  return null; // We don't need to render anything as we'll redirect
 }

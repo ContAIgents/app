@@ -1,7 +1,8 @@
 import React from 'react';
-import { RichTextEditor, Link } from '@mantine/tiptap';
 import { useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import { Link, RichTextEditor } from '@mantine/tiptap';
+
 // import Link from '@tiptap/extension-link';
 
 interface RichTextEditorComponentProps {
@@ -20,17 +21,17 @@ const RichTextEditorComponent: React.FC<RichTextEditorComponentProps> = ({ conte
 
   return (
     <RichTextEditor editor={editor} variant="subtle">
-       <RichTextEditor.Toolbar sticky stickyOffset={60}>
-        <RichTextEditor.ControlsGroup>
-          <RichTextEditor.Bold />
-          <RichTextEditor.Italic />
-          <RichTextEditor.Underline />
-          <RichTextEditor.Strikethrough />
-          <RichTextEditor.ClearFormatting />
-          <RichTextEditor.Highlight />
-          <RichTextEditor.Code />
-        </RichTextEditor.ControlsGroup>
-      </RichTextEditor.Toolbar>
+      {/* <RichTextEditor.Toolbar sticky stickyOffset={60}> */}
+      <RichTextEditor.ControlsGroup>
+        <RichTextEditor.Bold />
+        <RichTextEditor.Italic />
+        <RichTextEditor.Underline />
+        <RichTextEditor.Strikethrough />
+        <RichTextEditor.ClearFormatting />
+        <RichTextEditor.Highlight />
+        <RichTextEditor.Code />
+      </RichTextEditor.ControlsGroup>
+      {/* </RichTextEditor.Toolbar> */}
       <RichTextEditor.Content />
     </RichTextEditor>
   );

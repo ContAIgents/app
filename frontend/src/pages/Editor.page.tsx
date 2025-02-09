@@ -25,12 +25,12 @@ export const EditorPage: React.FC = () => {
   // console.log(editorConfig);
   return (
     <Container size="xl" py="xl" style={{ height: 'calc(100vh - 80px)' }}>
-      <Stack h="100%" spacing="md" style={{ flexDirection: 'row' }}>
+      <Stack h="100%" gap="md" style={{ flexDirection: 'row' }}>
         <Paper p="md">
           {/* Tree view component goes here */}
           <TableOfContents links={editorConfig?.indexTree}/>
         </Paper>
-        <Stack h="100%" spacing="md" style={{ flex: 2 }}>
+        <Stack h="100%" gap="md" style={{ flex: 2 }}>
           {editorConfig?.contentBlocks.map((editor) => (
             <Group>
               <Paper key={editor.id} p="md" style={{ flex: 1 }}>
@@ -39,7 +39,7 @@ export const EditorPage: React.FC = () => {
                   onUpdate={(content) => handleUpdate(editor.id, content)}
                 />
               </Paper>
-              <Stack spacing="md">
+              <Stack gap="md">
                 {editor?.comments?.map(({user, comment, id}) => (
                   <Paper key={id} p="md">
                     <div>

@@ -331,7 +331,7 @@ export function Agents() {
 
   return (
     <Container size="lg" py="xl">
-      <Stack spacing="xl">
+      <Stack gap="xl">
         {/* Workspace Section */}
         <div>
           <Group justify="space-between" mb="md">
@@ -364,7 +364,7 @@ export function Agents() {
 
           {agents.length === 0 ? (
             <Paper p="xl" withBorder>
-              <Stack align="center" spacing="md">
+              <Stack align="center" gap="md">
                 <Text size="lg" fw={500}>
                   No Agents Created Yet
                 </Text>
@@ -425,7 +425,7 @@ export function Agents() {
         title={selectedAgent ? 'Edit Agent' : 'New Agent'}
         size="lg"
       >
-        <Stack spacing="md">
+        <Stack gap="md">
           <TextInput
             label="Name"
             placeholder="e.g., Tech Blogger Sarah"

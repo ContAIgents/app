@@ -1,8 +1,8 @@
-import { Container, Title, Paper, Stack, Text, Button, Group, Tooltip, Alert } from '@mantine/core';
-import { useNavigate } from 'react-router-dom';
-import { KnowledgeBaseManager } from '../services/knowledgeBase/KnowledgeBaseManager';
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Alert, Button, Container, Group, Paper, Stack, Text, Title, Tooltip } from '@mantine/core';
 import { OnboardingNavigation } from '../components/OnboardingNavigation/OnboardingNavigation';
+import { KnowledgeBaseManager } from '../services/knowledgeBase/KnowledgeBaseManager';
 
 export function KnowledgeBase() {
   const navigate = useNavigate();
@@ -35,10 +35,12 @@ export function KnowledgeBase() {
 
   return (
     <Container size="lg" py="xl">
-      <Stack spacing="xl">
+      <Stack gap="xl">
         <div>
-          <Title order={1} mb="md">Knowledge Base</Title>
-          
+          <Title order={1} mb="md">
+            Knowledge Base
+          </Title>
+
           {isConfigured ? (
             <Alert color="teal" radius="md" mb="lg">
               <Group justify="space-between" align="center">
@@ -63,16 +65,24 @@ export function KnowledgeBase() {
           <Paper shadow="sm" p="md" withBorder>
             <Group justify="space-between" align="center">
               <div>
-                <Text size="lg" fw={500}>Default Knowledge Base</Text>
-                <Text size="sm" c="dimmed">Last updated: {formatLastUpdated(lastUpdated)}</Text>
+                <Text size="lg" fw={500}>
+                  Default Knowledge Base
+                </Text>
+                <Text size="sm" c="dimmed">
+                  Last updated: {formatLastUpdated(lastUpdated)}
+                </Text>
               </div>
-              <Button variant="light" onClick={handleEdit}>Edit</Button>
+              <Button variant="light" onClick={handleEdit}>
+                Edit
+              </Button>
             </Group>
           </Paper>
         </div>
 
         <div>
-          <Text size="sm" c="dimmed" mb="md">Additional Features</Text>
+          <Text size="sm" c="dimmed" mb="md">
+            Additional Features
+          </Text>
           <Group grow>
             <Tooltip label="Coming Soon: Upload and analyze your own documents!" position="top">
               <Button disabled>Upload Document</Button>

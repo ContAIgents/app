@@ -147,7 +147,7 @@ export function LlmConfig() {
                       data={field.options || []}
                       searchable
                       creatable
-                      getCreateLabel={(query) => `Use custom model: ${query}`}
+                      getCreateLabel={(query: string) => `Use custom model: ${query}`}
                       onCreate={(query) => {
                         handleConfigChange(field.name, query);
                         return query;

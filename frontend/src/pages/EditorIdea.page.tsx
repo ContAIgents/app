@@ -27,28 +27,129 @@ const CONTENT_TYPES = [
 ];
 
 const getStructuredBlocks = (type: string, idea: string) => {
+  const dummyComments = [
+    {
+      timestamp: new Date().toISOString(),
+      user: 'AI Assistant',
+      comment: 'Consider expanding this section with more specific examples.',
+      id: 1,
+    },
+    {
+      timestamp: new Date().toISOString(),
+      user: 'Editor',
+      comment: 'The tone here aligns well with our style guide.',
+      id: 2,
+    },
+    {
+      timestamp: new Date().toISOString(),
+      user: 'Technical Reviewer',
+      comment: 'Make sure to fact-check these statistics.',
+      id: 3,
+    }
+  ];
+
   const structures = {
     blog: [
-      { id: 1, title: 'Introduction', content: '# Introduction\n' + idea, comments: [] },
-      { id: 2, title: 'The Current State of AI', content: '# The Current State of AI\nDiscuss the current landscape...', comments: [] },
-      { id: 3, title: 'Key Challenges and Opportunities', content: '# Key Challenges and Opportunities\nExplore the main challenges...', comments: [] },
-      { id: 4, title: 'Real-World Applications', content: '# Real-World Applications\nPresent concrete examples...', comments: [] },
-      { id: 5, title: 'Future Implications', content: '# Future Implications\nAnalyze potential future developments...', comments: [] },
-      { id: 6, title: 'Conclusion', content: '# Conclusion\nSummarize key points and provide final thoughts...', comments: [] },
+      { 
+        id: 1, 
+        title: 'Introduction', 
+        content: '# Introduction\n' + idea, 
+        comments: [dummyComments[0]]
+      },
+      { 
+        id: 2, 
+        title: 'The Current State of AI', 
+        content: '# The Current State of AI\nDiscuss the current landscape...', 
+        comments: [dummyComments[1], dummyComments[2]]
+      },
+      { 
+        id: 3, 
+        title: 'Key Challenges and Opportunities', 
+        content: '# Key Challenges and Opportunities\nExplore the main challenges...', 
+        comments: [dummyComments[0], dummyComments[1]]
+      },
+      { 
+        id: 4, 
+        title: 'Real-World Applications', 
+        content: '# Real-World Applications\nPresent concrete examples...', 
+        comments: [dummyComments[2]]
+      },
+      { 
+        id: 5, 
+        title: 'Future Implications', 
+        content: '# Future Implications\nAnalyze potential future developments...', 
+        comments: [dummyComments[1]]
+      },
+      { 
+        id: 6, 
+        title: 'Conclusion', 
+        content: '# Conclusion\nSummarize key points and provide final thoughts...', 
+        comments: [dummyComments[0]]
+      },
     ],
     documentation: [
-      { id: 1, title: 'Overview', content: '# Overview\n' + idea, comments: [] },
-      { id: 2, title: 'Getting Started', content: '# Getting Started\nStep-by-step guide...', comments: [] },
-      { id: 3, title: 'Core Concepts', content: '# Core Concepts\nKey concepts and terminology...', comments: [] },
-      { id: 4, title: 'Advanced Usage', content: '# Advanced Usage\nDetailed examples...', comments: [] },
-      { id: 5, title: 'Troubleshooting', content: '# Troubleshooting\nCommon issues and solutions...', comments: [] },
+      { 
+        id: 1, 
+        title: 'Overview', 
+        content: '# Overview\n' + idea, 
+        comments: [dummyComments[0], dummyComments[1]]
+      },
+      { 
+        id: 2, 
+        title: 'Getting Started', 
+        content: '# Getting Started\nStep-by-step guide...', 
+        comments: [dummyComments[2]]
+      },
+      { 
+        id: 3, 
+        title: 'Core Concepts', 
+        content: '# Core Concepts\nKey concepts and terminology...', 
+        comments: [dummyComments[0]]
+      },
+      { 
+        id: 4, 
+        title: 'Advanced Usage', 
+        content: '# Advanced Usage\nDetailed examples...', 
+        comments: [dummyComments[1]]
+      },
+      { 
+        id: 5, 
+        title: 'Troubleshooting', 
+        content: '# Troubleshooting\nCommon issues and solutions...', 
+        comments: [dummyComments[2]]
+      },
     ],
     article: [
-      { id: 1, title: 'Executive Summary', content: '# Executive Summary\n' + idea, comments: [] },
-      { id: 2, title: 'Background', content: '# Background\nContextual information...', comments: [] },
-      { id: 3, title: 'Analysis', content: '# Analysis\nIn-depth analysis...', comments: [] },
-      { id: 4, title: 'Key Findings', content: '# Key Findings\nMain discoveries...', comments: [] },
-      { id: 5, title: 'Recommendations', content: '# Recommendations\nActionable insights...', comments: [] },
+      { 
+        id: 1, 
+        title: 'Executive Summary', 
+        content: '# Executive Summary\n' + idea, 
+        comments: [dummyComments[0], dummyComments[2]]
+      },
+      { 
+        id: 2, 
+        title: 'Background', 
+        content: '# Background\nContextual information...', 
+        comments: [dummyComments[1]]
+      },
+      { 
+        id: 3, 
+        title: 'Analysis', 
+        content: '# Analysis\nIn-depth analysis...', 
+        comments: [dummyComments[0]]
+      },
+      { 
+        id: 4, 
+        title: 'Key Findings', 
+        content: '# Key Findings\nMain discoveries...', 
+        comments: [dummyComments[2]]
+      },
+      { 
+        id: 5, 
+        title: 'Recommendations', 
+        content: '# Recommendations\nActionable insights...', 
+        comments: [dummyComments[1], dummyComments[0]]
+      },
     ],
   };
   

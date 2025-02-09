@@ -1,39 +1,47 @@
-import React, { useContext } from 'react';
-import { Container, Group, Paper, Stack, } from '@mantine/core';
-import { AppContextProps, AppCtx } from '@/AppContext';
+import React, { useEffect, useState } from 'react';
+import { Container, Group, Paper, Stack } from '@mantine/core';
 import RichTextEditorComponent from '../components/Editor';
 import { TableOfContents } from '@/components/TableOfContents';
+import { ConfigManager } from '../services/config/ConfigManager';
+import { IContentBlock } from '@/AppContext';
 
 export const EditorPage: React.FC = () => {
-  const appCtx = useContext(AppCtx);
-  const { editorState, updateEditorState, dumpToFile } = appCtx as unknown as AppContextProps;
+  const [contentBlocks, setContentBlocks] = useState<IContentBlock[]>([]);
+  const configManager = new ConfigManager('editor_');
+
+  useEffect(() => {
+    const loadContent = () => {
+      const blocks = configManager.load<IContentBlock[]>('contentBlocks') || [];
+      setContentBlocks(blocks);
+    };
+    loadContent();
+  }, []);
 
   const handleUpdate = (id: number, content: string) => {
-    updateEditorState(id, content);
+    const updatedBlocks = contentBlocks.map(block =>
+      block.id === id ? { ...block, content } : block
+    );
+    setContentBlocks(updatedBlocks);
+    configManager.save('contentBlocks', updatedBlocks);
   };
 
-  const handleAddEditor = () => {
-    // editorStateManager.addEditor();
-    // setEditors([...editorStateManager.getEditors()]);
-  };
+  // Generate table of contents links from content blocks
+  const tocLinks = contentBlocks.map((block) => ({
+    label: block.title,
+    link: `#section-${block.id}`,
+    order: 1
+  }));
 
-  const handleSelect = (node: any) => {
-    console.log('Selected node:', node);
-  };
-
-  const { editorConfig } = editorState;
-  // console.log(editorConfig);
   return (
     <Container size="xl" py="xl" style={{ height: 'calc(100vh - 80px)' }}>
       <Stack h="100%" gap="md" style={{ flexDirection: 'row' }}>
         <Paper p="md">
-          {/* Tree view component goes here */}
-          <TableOfContents links={editorConfig?.indexTree}/>
+          <TableOfContents links={tocLinks} />
         </Paper>
         <Stack h="100%" gap="md" style={{ flex: 2 }}>
-          {editorConfig?.contentBlocks.map((editor) => (
-            <Group>
-              <Paper key={editor.id} p="md" style={{ flex: 1 }}>
+          {contentBlocks.map((editor) => (
+            <Group key={editor.id} id={`section-${editor.id}`}>
+              <Paper p="md" style={{ flex: 1 }}>
                 <RichTextEditorComponent
                   content={editor.content}
                   onUpdate={(content) => handleUpdate(editor.id, content)}
@@ -51,9 +59,6 @@ export const EditorPage: React.FC = () => {
               </Stack>
             </Group>
           ))}
-          {/* <button type="button" onClick={dumpToFile}>
-            Export
-          </button> */}
         </Stack>
       </Stack>
     </Container>

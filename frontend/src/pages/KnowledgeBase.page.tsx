@@ -48,7 +48,7 @@ export function KnowledgeBase() {
                   ✓ Great job! Your knowledge base is ready.
                 </Text>
                 <OnboardingNavigation
-                  nextPath="/editor"
+                  nextPath="/editor/idea"
                   onNext={validateKnowledgeBase}
                   nextLabel="Continue to Editor"
                 />

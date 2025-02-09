@@ -24,6 +24,7 @@ interface IComment {
 
 export interface IContentBlock {
   id: number;
+  title: string;
   content: string;
   comments: IComment[];
 }

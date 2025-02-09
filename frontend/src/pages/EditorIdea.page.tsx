@@ -13,9 +13,33 @@ import {
   Card,
   Text,
   rem,
+  Modal,
+  ActionIcon,
+  TextInput,
+  Collapse,
 } from '@mantine/core';
 import { ConfigManager } from '../services/config/ConfigManager';
-import { IconArticle, IconBook, IconBrandBlogger, IconMicrophone, IconVideo, IconFileText } from '@tabler/icons-react';
+import { 
+  IconArticle, 
+  IconBook, 
+  IconBrandBlogger, 
+  IconMicrophone, 
+  IconVideo, 
+  IconFileText,
+  IconCircleCheck,
+  IconEdit,
+  IconTrash,
+  IconPlus,
+  IconGripVertical,
+} from '@tabler/icons-react';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+
+interface ContentBlock {
+  id: number;
+  title: string;
+  content: string;
+  comments: any[];
+}
 
 const CONTENT_TYPES = [
   { value: 'blog', label: 'Blog Post', icon: IconBrandBlogger, description: 'Create engaging blog content' },
@@ -161,6 +185,9 @@ export function EditorIdea() {
   const [contentType, setContentType] = useState<string | null>(null);
   const [idea, setIdea] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedBlocks, setGeneratedBlocks] = useState<ContentBlock[] | null>(null);
+  const [showPlotModal, setShowPlotModal] = useState(false);
+  const [editingBlockId, setEditingBlockId] = useState<number | null>(null);
   const configManager = new ConfigManager('editor_');
 
   const handleGenerateIdea = () => {
@@ -169,8 +196,8 @@ export function EditorIdea() {
     setIsGenerating(true);
     try {
       const contentBlocks = getStructuredBlocks(contentType, idea);
-      configManager.save('contentBlocks', contentBlocks);
-      navigate('/editor');
+      setGeneratedBlocks(contentBlocks);
+      setShowPlotModal(true);
     } catch (error) {
       console.error('Failed to generate content blocks:', error);
     } finally {
@@ -178,63 +205,225 @@ export function EditorIdea() {
     }
   };
 
+  const handleApprovePlot = () => {
+    if (generatedBlocks) {
+      configManager.save('contentBlocks', generatedBlocks);
+      setShowPlotModal(false);
+      navigate('/editor');
+    }
+  };
+
+  const handleRejectPlot = () => {
+    setShowPlotModal(false);
+    setGeneratedBlocks(null);
+    setEditingBlockId(null);
+  };
+
+  const handleUpdateBlock = (blockId: number, updates: Partial<ContentBlock>) => {
+    if (!generatedBlocks) return;
+    
+    setGeneratedBlocks(blocks => 
+      blocks?.map(block => 
+        block.id === blockId ? { ...block, ...updates } : block
+      ) ?? null
+    );
+  };
+
+  const handleAddBlock = () => {
+    if (!generatedBlocks) return;
+    
+    const newBlock: ContentBlock = {
+      id: Math.max(...generatedBlocks.map(b => b.id)) + 1,
+      title: 'New Section',
+      content: '# New Section\nAdd your content here...',
+      comments: []
+    };
+    
+    setGeneratedBlocks([...generatedBlocks, newBlock]);
+    setEditingBlockId(newBlock.id);
+  };
+
+  const handleDeleteBlock = (blockId: number) => {
+    if (!generatedBlocks || generatedBlocks.length <= 1) return;
+    
+    setGeneratedBlocks(blocks => 
+      blocks?.filter(block => block.id !== blockId) ?? null
+    );
+  };
+
+  const handleDragEnd = (result: any) => {
+    if (!result.destination || !generatedBlocks) return;
+
+    const items = Array.from(generatedBlocks);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+
+    setGeneratedBlocks(items);
+  };
+
   return (
-    <Container size="xl" py="xl">
-      <Stack gap="xl">
-        <Title order={1}>Content Creation Hub</Title>
+    <>
+      <Container size="xl" py="xl">
+        <Stack gap="xl">
+          <Title order={1}>Content Creation Hub</Title>
 
-        <Paper shadow="sm" p="xl" withBorder>
-          <Stack gap="md">
-            <Text size="lg" fw={500}>What would you like to create?</Text>
-            <SimpleGrid cols={3}>
-              {CONTENT_TYPES.map((type) => (
-                <Card
-                  key={type.value}
-                  shadow="sm"
-                  padding="lg"
-                  radius="md"
-                  withBorder
-                  style={{ 
-                    cursor: type.disabled ? 'not-allowed' : 'pointer',
-                    opacity: type.disabled ? 0.5 : 1,
-                  }}
-                  onClick={() => !type.disabled && setContentType(type.value)}
-                  bg={contentType === type.value ? 'blue.1' : undefined}
+          <Paper shadow="sm" p="xl" withBorder>
+            <Stack gap="md">
+              <Text size="lg" fw={500}>What would you like to create?</Text>
+              <SimpleGrid cols={3}>
+                {CONTENT_TYPES.map((type) => (
+                  <Card
+                    key={type.value}
+                    shadow="sm"
+                    padding="lg"
+                    radius="md"
+                    withBorder
+                    style={{ 
+                      cursor: type.disabled ? 'not-allowed' : 'pointer',
+                      opacity: type.disabled ? 0.5 : 1,
+                    }}
+                    onClick={() => !type.disabled && setContentType(type.value)}
+                    bg={contentType === type.value ? 'blue.1' : undefined}
+                  >
+                    <type.icon size={rem(32)} style={{ marginBottom: rem(10) }} />
+                    <Text fw={500}>{type.label}</Text>
+                    <Text size="sm" c="dimmed">{type.description}</Text>
+                    {type.disabled && (
+                      <Badge color="yellow" style={{ position: 'absolute', top: 10, right: 10 }}>
+                        Coming Soon
+                      </Badge>
+                    )}
+                  </Card>
+                ))}
+              </SimpleGrid>
+
+              <Textarea
+                label="Share your idea"
+                placeholder="Describe your content idea in detail..."
+                minRows={5}
+                value={idea}
+                onChange={(event) => setIdea(event.currentTarget.value)}
+                required
+              />
+
+              <Group justify="apart" mt="md">
+                <Badge color="blue">AI Assisted</Badge>
+                <Button
+                  onClick={handleGenerateIdea}
+                  loading={isGenerating}
+                  disabled={!contentType || !idea.trim()}
                 >
-                  <type.icon size={rem(32)} style={{ marginBottom: rem(10) }} />
-                  <Text fw={500}>{type.label}</Text>
-                  <Text size="sm" c="dimmed">{type.description}</Text>
-                  {type.disabled && (
-                    <Badge color="yellow" style={{ position: 'absolute', top: 10, right: 10 }}>
-                      Coming Soon
-                    </Badge>
-                  )}
-                </Card>
-              ))}
-            </SimpleGrid>
+                  Generate Content Structure
+                </Button>
+              </Group>
+            </Stack>
+          </Paper>
+        </Stack>
+      </Container>
 
-            <Textarea
-              label="Share your idea"
-              placeholder="Describe your content idea in detail..."
-              minRows={5}
-              value={idea}
-              onChange={(event) => setIdea(event.currentTarget.value)}
-              required
-            />
+      <Modal 
+        opened={showPlotModal} 
+        onClose={handleRejectPlot}
+        size="xl"
+        title={
+          <Title order={3}>Content Structure</Title>
+        }
+      >
+        <Stack gap="md">
+          <Text>
+            Review and customize your content structure. You can reorder sections by dragging them, 
+            edit their titles, or add new sections as needed.
+          </Text>
 
-            <Group justify="apart" mt="md">
-              <Badge color="blue">AI Assisted</Badge>
-              <Button
-                onClick={handleGenerateIdea}
-                loading={isGenerating}
-                disabled={!contentType || !idea.trim()}
-              >
-                Generate Content Structure
-              </Button>
-            </Group>
-          </Stack>
-        </Paper>
-      </Stack>
-    </Container>
+          <Paper withBorder p="md">
+            <DragDropContext onDragEnd={handleDragEnd}>
+              <Droppable droppableId="sections">
+                {(provided) => (
+                  <Stack gap="xs" ref={provided.innerRef} {...provided.droppableProps}>
+                    {generatedBlocks?.map((block, index) => (
+                      <Draggable key={block.id} draggableId={String(block.id)} index={index}>
+                        {(provided) => (
+                          <Paper
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            withBorder
+                            p="sm"
+                          >
+                            <Group gap="xs">
+                              <ActionIcon 
+                                variant="subtle" 
+                                {...provided.dragHandleProps}
+                                aria-label="Drag to reorder"
+                              >
+                                <IconGripVertical size={16} />
+                              </ActionIcon>
+
+                              {editingBlockId === block.id ? (
+                                <TextInput
+                                  value={block.title}
+                                  onChange={(e) => handleUpdateBlock(block.id, { title: e.target.value })}
+                                  onBlur={() => setEditingBlockId(null)}
+                                  onKeyDown={(e) => e.key === 'Enter' && setEditingBlockId(null)}
+                                  autoFocus
+                                  style={{ flex: 1 }}
+                                />
+                              ) : (
+                                <Text fw={500} style={{ flex: 1 }}>{block.title}</Text>
+                              )}
+
+                              <Group gap="xs">
+                                <ActionIcon
+                                  variant="subtle"
+                                  onClick={() => setEditingBlockId(block.id)}
+                                  aria-label="Edit section title"
+                                >
+                                  <IconEdit size={16} />
+                                </ActionIcon>
+                                <ActionIcon
+                                  variant="subtle"
+                                  color="red"
+                                  onClick={() => handleDeleteBlock(block.id)}
+                                  disabled={generatedBlocks.length <= 1}
+                                  aria-label="Delete section"
+                                >
+                                  <IconTrash size={16} />
+                                </ActionIcon>
+                              </Group>
+                            </Group>
+                          </Paper>
+                        )}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
+                  </Stack>
+                )}
+              </Droppable>
+            </DragDropContext>
+
+            <Button 
+              variant="light" 
+              leftSection={<IconPlus size={16} />}
+              onClick={handleAddBlock}
+              mt="md"
+              fullWidth
+            >
+              Add New Section
+            </Button>
+          </Paper>
+
+          <Group justify="flex-end" mt="xl">
+            <Button variant="light" color="red" onClick={handleRejectPlot}>
+              Start Over
+            </Button>
+            <Button 
+              onClick={handleApprovePlot}
+              leftSection={<IconCircleCheck size={16} />}
+            >
+              Proceed to Editor
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+    </>
   );
 }

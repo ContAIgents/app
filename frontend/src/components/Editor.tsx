@@ -8,15 +8,21 @@ import { Link, RichTextEditor } from '@mantine/tiptap';
 interface RichTextEditorComponentProps {
   content: string;
   onUpdate: (content: string) => void;
+  disabled?: boolean;
 }
 
-const RichTextEditorComponent: React.FC<RichTextEditorComponentProps> = ({ content, onUpdate }) => {
+const RichTextEditorComponent: React.FC<RichTextEditorComponentProps> = ({ 
+  content, 
+  onUpdate,
+  disabled = false 
+}) => {
   const editor = useEditor({
     extensions: [StarterKit, Link],
     content,
     onUpdate: ({ editor }) => {
       onUpdate(editor.getHTML());
     },
+    editable: !disabled
   });
 
   return (
@@ -32,7 +38,10 @@ const RichTextEditorComponent: React.FC<RichTextEditorComponentProps> = ({ conte
         <RichTextEditor.Code />
       </RichTextEditor.ControlsGroup>
       {/* </RichTextEditor.Toolbar> */}
-      <RichTextEditor.Content />
+      <RichTextEditor.Content style={{ 
+        opacity: disabled ? 0.7 : 1,
+        cursor: disabled ? 'not-allowed' : 'text'
+      }} />
     </RichTextEditor>
   );
 };

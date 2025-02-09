@@ -26,17 +26,205 @@ import { useDisclosure } from '@mantine/hooks';
 import { OnboardingNavigation } from '../components/OnboardingNavigation/OnboardingNavigation';
 import { Agent } from '../services/agents/Agent';
 import { AgentManager } from '../services/agents/AgentManager';
-import { AgentConfig } from '../services/agents/types';
+import { AgentConfig, AgentRole, ToneOfVoice, WritingStyle } from '../services/agents/types';
+
+// Static Data moved outside the component
+const dummyCommunityAgents: AgentConfig[] = [
+  {
+    id: 'community-1',
+    name: 'Tech Stack Architect',
+    role: 'content_writer',
+    expertise: ['System Design', 'Cloud Architecture', 'Scalability'],
+    systemPrompt:
+      'Expert in modern tech stack analysis and architectural decision-making for scalable systems.',
+    writingStyle: 'professional',
+    tone: 'neutral',
+    createdAt: 0,
+    updatedAt: 0,
+  },
+  {
+    id: 'community-2',
+    name: 'AI/ML Specialist',
+    role: 'content_writer',
+    expertise: ['Machine Learning', 'Neural Networks', 'MLOps'],
+    systemPrompt:
+      'Specialized in explaining complex AI/ML concepts and their practical business applications.',
+    writingStyle: 'professional',
+    tone: 'neutral',
+    createdAt: 0,
+    updatedAt: 0,
+  },
+  {
+    id: 'community-3',
+    name: 'Blockchain Strategist',
+    role: 'content_writer',
+    expertise: ['Web3', 'Smart Contracts', 'DeFi'],
+    systemPrompt:
+      'Expert in blockchain technology, cryptocurrency ecosystems, and decentralized applications.',
+    writingStyle: 'professional',
+    tone: 'neutral',
+    createdAt: 0,
+    updatedAt: 0,
+  },
+  {
+    id: 'community-4',
+    name: 'DevOps Engineer',
+    role: 'content_writer',
+    expertise: ['CI/CD', 'Infrastructure', 'Kubernetes'],
+    systemPrompt:
+      'Specialized in modern DevOps practices, cloud infrastructure, and deployment strategies.',
+    writingStyle: 'professional',
+    tone: 'neutral',
+    createdAt: 0,
+    updatedAt: 0,
+  },
+];
+
+const dummyCloudAgents: AgentConfig[] = [
+  {
+    id: 'cloud-1',
+    name: 'VC Pitch Consultant',
+    role: 'content_writer',
+    expertise: ['Pitch Decks', 'Market Analysis', 'Growth Strategy'],
+    systemPrompt:
+      'Expert in crafting compelling startup narratives and venture capital pitch materials.',
+    writingStyle: 'professional',
+    tone: 'neutral',
+    createdAt: 0,
+    updatedAt: 0,
+  },
+  {
+    id: 'cloud-2',
+    name: 'Product Strategy Lead',
+    role: 'content_writer',
+    expertise: ['Product Management', 'Go-to-Market', 'User Experience'],
+    systemPrompt: 'Specialized in product strategy, market positioning, and growth frameworks.',
+    writingStyle: 'professional',
+    tone: 'neutral',
+    createdAt: 0,
+    updatedAt: 0,
+  },
+  {
+    id: 'cloud-3',
+    name: 'Deep Tech Analyst',
+    role: 'content_writer',
+    expertise: ['Quantum Computing', 'Robotics', 'Edge AI'],
+    systemPrompt: 'Expert in analyzing emerging technologies and their market implications.',
+    writingStyle: 'professional',
+    tone: 'neutral',
+    createdAt: 0,
+    updatedAt: 0,
+  },
+  {
+    id: 'cloud-4',
+    name: 'Technical Due Diligence',
+    role: 'content_reviewer',
+    expertise: ['Code Quality', 'Architecture Review', 'Tech Stack Analysis'],
+    systemPrompt:
+      'Specialized in technical assessment and due diligence for technology investments.',
+    writingStyle: 'professional',
+    tone: 'neutral',
+    createdAt: 0,
+    updatedAt: 0,
+  },
+  {
+    id: 'cloud-5',
+    name: 'Sustainability Tech Expert',
+    role: 'content_writer',
+    expertise: ['CleanTech', 'Carbon Footprint', 'Green AI'],
+    systemPrompt: 'Expert in sustainable technology solutions and environmental impact assessment.',
+    writingStyle: 'professional',
+    tone: 'neutral',
+    createdAt: 0,
+    updatedAt: 0,
+  },
+  {
+    id: 'cloud-6',
+    name: 'Market Intelligence Agent',
+    role: 'content_writer',
+    expertise: ['Competitive Analysis', 'Market Trends', 'Industry Research'],
+    systemPrompt:
+      'Specialized in market research and competitive intelligence for technology sectors.',
+    writingStyle: 'professional',
+    tone: 'neutral',
+    createdAt: 0,
+    updatedAt: 0,
+  },
+  {
+    id: 'cloud-7',
+    name: 'Compliance Guardian',
+    role: 'content_reviewer',
+    expertise: ['GDPR', 'SOC2', 'ISO27001'],
+    systemPrompt:
+      'Expert in technology compliance, security standards, and regulatory requirements.',
+    writingStyle: 'professional',
+    tone: 'neutral',
+    createdAt: 0,
+    updatedAt: 0,
+  },
+  {
+    id: 'cloud-8',
+    name: 'Innovation Scout',
+    role: 'content_writer',
+    expertise: ['Emerging Tech', 'Patent Analysis', 'R&D Trends'],
+    systemPrompt:
+      'Specialized in identifying and analyzing breakthrough technologies and innovation patterns.',
+    writingStyle: 'professional',
+    tone: 'neutral',
+    createdAt: 0,
+    updatedAt: 0,
+  },
+];
+
+const expertiseSuggestions = [
+  'Technical Writing',
+  'Blockchain',
+  'AI/ML',
+  'Cloud Computing',
+  'DevOps',
+  'Web Development',
+  'Mobile Development',
+  'System Design',
+  'Product Management',
+  'Digital Marketing',
+  'Content Strategy',
+];
+
+const reviewStyles = [
+  { value: 'professional', label: 'Thorough & Detailed' },
+  { value: 'conversational', label: 'Constructive & Supportive' },
+  { value: 'technical', label: 'Technical & Precise' },
+  { value: 'storytelling', label: 'Context-Focused' },
+  { value: 'educational', label: 'Educational & Guiding' },
+];
+
+const writingStyles = [
+  { value: 'professional', label: 'Professional & Formal' },
+  { value: 'conversational', label: 'Conversational & Friendly' },
+  { value: 'technical', label: 'Technical & Detailed' },
+  { value: 'storytelling', label: 'Narrative & Story-driven' },
+  { value: 'educational', label: 'Educational & Explanatory' },
+];
+
+const toneOptions = [
+  { value: 'neutral', label: 'Neutral & Balanced' },
+  { value: 'enthusiastic', label: 'Enthusiastic & Energetic' },
+  { value: 'humorous', label: 'Humorous & Light' },
+  { value: 'authoritative', label: 'Authoritative & Confident' },
+  { value: 'empathetic', label: 'Empathetic & Understanding' },
+];
+
+const initialFormState: Partial<AgentConfig> = {
+  expertise: [],
+  writingStyle: 'professional',
+  tone: 'neutral',
+};
 
 export function Agents() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [opened, { open, close }] = useDisclosure(false);
-  const [formData, setFormData] = useState<Partial<AgentConfig>>({
-    expertise: [],
-    writingStyle: 'professional',
-    tone: 'neutral',
-  });
+  const [formData, setFormData] = useState<Partial<AgentConfig>>(initialFormState);
 
   const agentManager = new AgentManager();
 
@@ -46,8 +234,7 @@ export function Agents() {
 
   const handleSave = () => {
     if (selectedAgent) {
-      const updated = agentManager.updateAgent(selectedAgent.getConfig().id, formData);
-      if (updated) {
+      if (agentManager.updateAgent(selectedAgent.getConfig().id, formData)) {
         setAgents(agentManager.getAllAgents());
       }
     } else {
@@ -66,23 +253,15 @@ export function Agents() {
   };
 
   const handleAdd = () => {
-    const missingRole = getMissingRole();
     setSelectedAgent(null);
-    setFormData({
-      ...formData,
-      role: missingRole || 'content_writer' // Default to writer if both roles exist
-    });
+    setFormData((prev) => ({
+      ...prev,
+      role: getMissingRole() || 'content_writer', // Default to writer if both roles exist
+    }));
     open();
   };
 
-  const validateAgents = () => {
-    const hasRequired = agentManager.hasRequiredAgents();
-    if (!hasRequired) {
-      // You might want to add some error state here
-      return false;
-    }
-    return true;
-  };
+  const validateAgents = (): boolean => agentManager.hasRequiredAgents();
 
   const renderAgentCard = (
     config: AgentConfig,
@@ -139,163 +318,21 @@ export function Agents() {
     </Card>
   );
 
-  const dummyCommunityAgents = [
-    {
-      id: 'community-1',
-      name: 'Tech Stack Architect',
-      role: 'content_writer',
-      expertise: ['System Design', 'Cloud Architecture', 'Scalability'],
-      systemPrompt:
-        'Expert in modern tech stack analysis and architectural decision-making for scalable systems.',
-    },
-    {
-      id: 'community-2',
-      name: 'AI/ML Specialist',
-      role: 'content_writer',
-      expertise: ['Machine Learning', 'Neural Networks', 'MLOps'],
-      systemPrompt:
-        'Specialized in explaining complex AI/ML concepts and their practical business applications.',
-    },
-    {
-      id: 'community-3',
-      name: 'Blockchain Strategist',
-      role: 'content_writer',
-      expertise: ['Web3', 'Smart Contracts', 'DeFi'],
-      systemPrompt:
-        'Expert in blockchain technology, cryptocurrency ecosystems, and decentralized applications.',
-    },
-    {
-      id: 'community-4',
-      name: 'DevOps Engineer',
-      role: 'content_writer',
-      expertise: ['CI/CD', 'Infrastructure', 'Kubernetes'],
-      systemPrompt:
-        'Specialized in modern DevOps practices, cloud infrastructure, and deployment strategies.',
-    },
-  ];
-
-  const dummyCloudAgents = [
-    {
-      id: 'cloud-1',
-      name: 'VC Pitch Consultant',
-      role: 'content_writer',
-      expertise: ['Pitch Decks', 'Market Analysis', 'Growth Strategy'],
-      systemPrompt:
-        'Expert in crafting compelling startup narratives and venture capital pitch materials.',
-    },
-    {
-      id: 'cloud-2',
-      name: 'Product Strategy Lead',
-      role: 'content_writer',
-      expertise: ['Product Management', 'Go-to-Market', 'User Experience'],
-      systemPrompt: 'Specialized in product strategy, market positioning, and growth frameworks.',
-    },
-    {
-      id: 'cloud-3',
-      name: 'Deep Tech Analyst',
-      role: 'content_writer',
-      expertise: ['Quantum Computing', 'Robotics', 'Edge AI'],
-      systemPrompt: 'Expert in analyzing emerging technologies and their market implications.',
-    },
-    {
-      id: 'cloud-4',
-      name: 'Technical Due Diligence',
-      role: 'content_reviewer',
-      expertise: ['Code Quality', 'Architecture Review', 'Tech Stack Analysis'],
-      systemPrompt:
-        'Specialized in technical assessment and due diligence for technology investments.',
-    },
-    {
-      id: 'cloud-5',
-      name: 'Sustainability Tech Expert',
-      role: 'content_writer',
-      expertise: ['CleanTech', 'Carbon Footprint', 'Green AI'],
-      systemPrompt:
-        'Expert in sustainable technology solutions and environmental impact assessment.',
-    },
-    {
-      id: 'cloud-6',
-      name: 'Market Intelligence Agent',
-      role: 'content_writer',
-      expertise: ['Competitive Analysis', 'Market Trends', 'Industry Research'],
-      systemPrompt:
-        'Specialized in market research and competitive intelligence for technology sectors.',
-    },
-    {
-      id: 'cloud-7',
-      name: 'Compliance Guardian',
-      role: 'content_reviewer',
-      expertise: ['GDPR', 'SOC2', 'ISO27001'],
-      systemPrompt:
-        'Expert in technology compliance, security standards, and regulatory requirements.',
-    },
-    {
-      id: 'cloud-8',
-      name: 'Innovation Scout',
-      role: 'content_writer',
-      expertise: ['Emerging Tech', 'Patent Analysis', 'R&D Trends'],
-      systemPrompt:
-        'Specialized in identifying and analyzing breakthrough technologies and innovation patterns.',
-    },
-  ];
-
-  // Sample options for various fields
-  const expertiseSuggestions = [
-    'Technical Writing',
-    'Blockchain',
-    'AI/ML',
-    'Cloud Computing',
-    'DevOps',
-    'Web Development',
-    'Mobile Development',
-    'System Design',
-    'Product Management',
-    'Digital Marketing',
-    'Content Strategy',
-  ];
-
-  const writingStyles = [
-    { value: 'professional', label: 'Professional & Formal' },
-    { value: 'conversational', label: 'Conversational & Friendly' },
-    { value: 'technical', label: 'Technical & Detailed' },
-    { value: 'storytelling', label: 'Narrative & Story-driven' },
-    { value: 'educational', label: 'Educational & Explanatory' },
-  ];
-
-  const toneOptions = [
-    { value: 'neutral', label: 'Neutral & Balanced' },
-    { value: 'enthusiastic', label: 'Enthusiastic & Energetic' },
-    { value: 'humorous', label: 'Humorous & Light' },
-    { value: 'authoritative', label: 'Authoritative & Confident' },
-    { value: 'empathetic', label: 'Empathetic & Understanding' },
-  ];
-
   const getMissingRole = (): AgentRole | null => {
-    const hasWriter = agents.some(agent => agent.getConfig().role === 'content_writer');
-    const hasReviewer = agents.some(agent => agent.getConfig().role === 'content_reviewer');
-    
+    const hasWriter = agents.some((agent) => agent.getConfig().role === 'content_writer');
+    const hasReviewer = agents.some((agent) => agent.getConfig().role === 'content_reviewer');
     if (!hasWriter) return 'content_writer';
     if (!hasReviewer) return 'content_reviewer';
     return null;
   };
 
-  const getStyleOptions = (role: AgentRole) => {
-    if (role === 'content_reviewer') {
-      return [
-        { value: 'professional', label: 'Thorough & Detailed' },
-        { value: 'conversational', label: 'Constructive & Supportive' },
-        { value: 'technical', label: 'Technical & Precise' },
-        { value: 'storytelling', label: 'Context-Focused' },
-        { value: 'educational', label: 'Educational & Guiding' },
-      ];
-    }
-    return writingStyles;
-  };
+  const getStyleOptions = (role: AgentRole) =>
+    role === 'content_reviewer' ? reviewStyles : writingStyles;
 
   return (
     <Container size="lg" py="xl">
       <Stack spacing="xl">
-        {/* Your Workspace Section */}
+        {/* Workspace Section */}
         <div>
           <Group justify="space-between" mb="md">
             <div>
@@ -358,9 +395,8 @@ export function Agents() {
               </Text>
             </div>
           </Group>
-
           <SimpleGrid cols={2} spacing="lg">
-            {dummyCommunityAgents.map((agent) => renderAgentCard(agent as AgentConfig, true))}
+            {dummyCommunityAgents.map((agent) => renderAgentCard(agent, true))}
           </SimpleGrid>
         </div>
 
@@ -377,9 +413,8 @@ export function Agents() {
               </Text>
             </div>
           </Group>
-
           <SimpleGrid cols={2} spacing="lg">
-            {dummyCloudAgents.map((agent) => renderAgentCard(agent as AgentConfig, true))}
+            {dummyCloudAgents.map((agent) => renderAgentCard(agent, true))}
           </SimpleGrid>
         </div>
       </Stack>
@@ -414,25 +449,29 @@ export function Agents() {
             onChange={(value) => setFormData({ ...formData, expertise: value })}
             searchable
             creatable
-            getCreateLabel={(query) => `+ Create "${query}"`}
+            getCreateLabel={(query: string) => `+ Create "${query}"`}
           />
           <Select
-            label={formData.role === 'content_reviewer' ? "Review Style" : "Writing Style"}
-            placeholder={formData.role === 'content_reviewer' ? "Choose the primary review style" : "Choose the primary writing style"}
+            label={formData.role === 'content_reviewer' ? 'Review Style' : 'Writing Style'}
+            placeholder={
+              formData.role === 'content_reviewer'
+                ? 'Choose the primary review style'
+                : 'Choose the primary writing style'
+            }
             data={getStyleOptions(formData.role || 'content_writer')}
             value={formData.writingStyle}
-            onChange={(value) => setFormData({ ...formData, writingStyle: value })}
+            onChange={(value) => setFormData({ ...formData, writingStyle: value as WritingStyle })}
           />
           <Select
             label="Tone of Voice"
             placeholder="Select the tone for communication"
             data={toneOptions}
             value={formData.tone}
-            onChange={(value) => setFormData({ ...formData, tone: value })}
+            onChange={(value) => setFormData({ ...formData, tone: value as ToneOfVoice })}
           />
           <Textarea
             label="Persona Definition"
-            placeholder="Describe the agent's personality, expertise, and approach. For example: 'Sarah is an experienced tech blogger who explains complex concepts through real-world analogies. She maintains a friendly, approachable tone while ensuring technical accuracy.'"
+            placeholder="Describe the agent's personality, expertise and approach..."
             value={formData.systemPrompt || ''}
             onChange={(e) => setFormData({ ...formData, systemPrompt: e.target.value })}
             minRows={4}

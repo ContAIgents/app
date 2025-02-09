@@ -1,11 +1,23 @@
-import { useState, useEffect } from 'react';
-import { Container, Title, Paper, Select, TextInput, PasswordInput, Stack, Alert } from '@mantine/core';
+import { useEffect, useState } from 'react';
 import { IconCheck } from '@tabler/icons-react';
-import { LLMFactory } from '../services/llm/LLMFactory';
-import { OnboardingNavigation } from '../components/OnboardingNavigation/OnboardingNavigation';
-import { OpenAIProvider } from '@/services/llm/OpenAIProvider';
+import {
+  Alert,
+  Container,
+  Paper,
+  PasswordInput,
+  Select,
+  Stack,
+  TextInput,
+  Title,
+} from '@mantine/core';
 import { AnthropicProvider } from '@/services/llm/AnthropicProvider';
+import { DeepSeekProvider } from '@/services/llm/DeepSeekProvider';
 import { GoogleProvider } from '@/services/llm/GoogleProvider';
+import { HuggingFaceProvider } from '@/services/llm/HuggingFaceProvider';
+import { OllamaProvider } from '@/services/llm/OllamaProvider';
+import { OpenAIProvider } from '@/services/llm/OpenAIProvider';
+import { OnboardingNavigation } from '../components/OnboardingNavigation/OnboardingNavigation';
+import { LLMFactory } from '../services/llm/LLMFactory';
 
 export function LlmConfig() {
   const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
@@ -40,30 +52,12 @@ export function LlmConfig() {
   }, [selectedProvider]);
 
   const providers = {
-    'OpenAI': OpenAIProvider.providerConfig,
-    'Anthropic': AnthropicProvider.providerConfig,
-    'Google': GoogleProvider.providerConfig,
-    'DeepSeek': {
-      name: 'DeepSeek',
-      configFields: [
-        { name: 'apiKey', label: 'API Key', type: 'password', required: true },
-        { name: 'model', label: 'Model', type: 'select', required: true, options: ['deepseek-chat', 'deepseek-coder'] }
-      ]
-    },
-    'HuggingFace': {
-      name: 'HuggingFace',
-      configFields: [
-        { name: 'apiKey', label: 'API Key', type: 'password', required: true },
-        { name: 'model', label: 'Model', type: 'select', required: true, options: ['mistral-7b', 'llama-2', 'falcon-40b'] }
-      ]
-    },
-    'Ollama': {
-      name: 'Ollama',
-      configFields: [
-        { name: 'endpoint', label: 'Endpoint URL', type: 'url', required: true, default: 'http://localhost:11434' },
-        { name: 'model', label: 'Model', type: 'select', required: true, options: ['llama2', 'mistral', 'codellama', 'neural-chat'] }
-      ]
-    }
+    OpenAI: OpenAIProvider.providerConfig,
+    Anthropic: AnthropicProvider.providerConfig,
+    Google: GoogleProvider.providerConfig,
+    DeepSeek: DeepSeekProvider.providerConfig,
+    HuggingFace: HuggingFaceProvider.providerConfig,
+    Ollama: OllamaProvider.providerConfig,
   };
 
   const provider = selectedProvider ? providers[selectedProvider as keyof typeof providers] : null;
@@ -81,7 +75,7 @@ export function LlmConfig() {
   };
 
   const handleConfigChange = (field: string, value: string) => {
-    setConfig(prev => ({
+    setConfig((prev) => ({
       ...prev,
       [field]: value,
     }));
@@ -96,10 +90,10 @@ export function LlmConfig() {
 
       const llm = LLMFactory.getProvider(selectedProvider);
       llm.configure(config);
-      
+
       // // Test the configuration
       // await llm.executePrompt('test');
-      
+
       setSaved(true);
       setError(null);
       return true;
@@ -111,7 +105,9 @@ export function LlmConfig() {
 
   return (
     <Container size="sm" py="xl">
-      <Title order={1} mb="xl">LLM Configuration</Title>
+      <Title order={1} mb="xl">
+        LLM Configuration
+      </Title>
 
       <Paper shadow="sm" p="xl" withBorder>
         <Stack>
@@ -137,7 +133,7 @@ export function LlmConfig() {
                   label: field.label,
                   required: field.required,
                   value: config[field.name] || '',
-                  onChange: (event: React.ChangeEvent<HTMLInputElement>) => 
+                  onChange: (event: React.ChangeEvent<HTMLInputElement>) =>
                     handleConfigChange(field.name, event.currentTarget.value),
                 };
 
@@ -169,8 +165,8 @@ export function LlmConfig() {
                 return <TextInput {...props} type={field.type} />;
               })}
 
-              <OnboardingNavigation 
-                nextPath="/agents" 
+              <OnboardingNavigation
+                nextPath="/agents"
                 onNext={validateAndSave}
                 nextLabel="Save & Continue"
               />

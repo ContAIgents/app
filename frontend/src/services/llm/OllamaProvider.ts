@@ -17,8 +17,8 @@ export class OllamaProvider extends BaseLLM {
         label: 'Model',
         type: 'select',
         required: true,
-        options: ['llama2', 'mistral', 'codellama', 'neural-chat'],
-        default: 'llama2',
+        options: ['deepseek-r1:8b','llama3.2', 'llama2', 'mistral', 'codellama', 'neural-chat'],
+        default: 'deepseek-r1:8b',
         allowCustom: true, // Allow custom model input
       },
     ],
@@ -54,7 +54,7 @@ export class OllamaProvider extends BaseLLM {
     }
 
     const data = await response.json();
-    
+
     return {
       content: data.response,
       raw: data,

@@ -1,10 +1,10 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import { HomePage } from './pages/Home.page';
-import { LlmConfig } from './pages/LlmConfig.page';
 import { Agents } from './pages/Agents.page';
+import { EditorPage } from './pages/Editor.page';
+import { HomePage } from './pages/Home.page';
 import { KnowledgeBase } from './pages/KnowledgeBase.page';
 import { KnowledgeBaseEdit } from './pages/KnowledgeBaseEdit.page';
-import { EditorPage } from './pages/Editor.page';
+import { LlmConfig } from './pages/LlmConfig.page';
 
 const router = createBrowserRouter([
   {

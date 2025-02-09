@@ -39,5 +39,5 @@ export const PROVIDER_MODELS = {
   DeepSeek: ['deepseek-chat', 'deepseek-coder'],
   Google: ['gemini-pro', 'gemini-pro-vision'],
   HuggingFace: ['mistral-7b', 'llama-2', 'falcon-40b'],
-  Ollama: ['llama2', 'mistral', 'codellama', 'neural-chat']
+  Ollama: ['deepseek-r1:8b','llama3.2', 'llama2', 'mistral', 'codellama', 'neural-chat']
 } as const;

@@ -28,6 +28,7 @@ import RichTextEditorComponent from '../components/Editor';
 import { TableOfContents } from '@/components/TableOfContents';
 import { ConfigManager } from '../services/config/ConfigManager';
 import { IContentBlock } from '@/AppContext';
+import { Agent } from '@/services/agents/Agent';
 
 const COMMENT_WIDTH = 280;
 const TOC_WIDTH = 200;
@@ -68,6 +69,8 @@ export const EditorPage: React.FC = () => {
     instructions: '',
   });
   const configManager = new ConfigManager('editor_');
+  const selectedWriter = new Agent(configManager.load('selectedWriter') || {});
+  const selectedReviewer = new Agent(configManager.load('selectedReviewer') || {});
 
   useEffect(() => {
     const loadContent = () => {
@@ -95,7 +98,7 @@ export const EditorPage: React.FC = () => {
             {
               id: Math.floor(Math.random() * 1000),
               timestamp: new Date().toISOString(),
-              user: 'AI Assistant',
+              user: selectedReviewer.getConfig().name,
               comment: 'Initial review: This section needs more specific examples and clearer transitions between paragraphs.',
               status: 'success' as CommentStatus
             }
@@ -217,7 +220,12 @@ export const EditorPage: React.FC = () => {
           ...block,
           comments: block.comments.map(comment =>
             comment.id === commentId
-              ? { ...comment, comment: newComment, status: 'success' }
+              ? { 
+                  ...comment, 
+                  comment: newComment, 
+                  status: 'success',
+                  user: selectedReviewer.getConfig().name
+                }
               : comment
           )
         }))
@@ -413,7 +421,7 @@ export const EditorPage: React.FC = () => {
               loading={blockStatuses[blockId]?.isLoading}
               disabled={blockStatuses[blockId]?.isLoading}
             >
-              Pass to Writer
+              Ask {selectedWriter.getConfig().name} to rewrite
             </Button>
           </Group>
         </>

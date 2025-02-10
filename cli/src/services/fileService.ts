@@ -32,8 +32,24 @@ export class FileService {
     return fs.promises.readFile(fullPath, "utf-8");
   }
 
+  async listFiles(dirPath?: string): Promise<string[]> {
+    const fullPath = dirPath ? path.join(this.baseDir, dirPath) : this.baseDir;
+    return fs.promises.readdir(fullPath);
+  }
+
   async fileExists(filePath: string): Promise<boolean> {
     const fullPath = path.join(this.baseDir, filePath);
     return fs.existsSync(fullPath);
+  }
+
+  async deleteFile(filePath: string): Promise<void> {
+    const fullPath = path.join(this.baseDir, filePath);
+    await fs.promises.unlink(fullPath);
+  }
+
+  async copyFile(sourcePath: string, destinationPath: string): Promise<void> {
+    const fullSourcePath = path.join(this.baseDir, sourcePath);
+    const fullDestinationPath = path.join(this.baseDir, destinationPath);
+    await fs.promises.copyFile(fullSourcePath, fullDestinationPath);
   }
 }

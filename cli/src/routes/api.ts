@@ -16,8 +16,8 @@ router.post("/files", async (req, res) => {
 
 router.get("/files/", async (req, res) => {
   try {
-    // const files = await fileService.listFiles();
-    res.status(200).json({ files: [] });
+    const files = await fileService.listFiles();
+    res.status(200).json({ files });
   } catch (error) {
     res.status(404).json({ error: "Files not found" });
   }

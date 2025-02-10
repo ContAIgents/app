@@ -16,3 +16,6 @@ export interface AgentConfig {
   createdAt: number;
   updatedAt: number;
 }
+
+export type ReviewStatus = 'pending' | 'reviewing' | 'completed' | 'error';
+export type CommentStatus = 'idle' | 'loading' | 'error' | 'success';

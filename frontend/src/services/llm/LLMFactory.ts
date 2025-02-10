@@ -9,6 +9,21 @@ import { LLMInterface } from './types';
 export class LLMFactory {
   private static instances: Map<string, LLMInterface> = new Map();
 
+  static getConfiguredProvider(): LLMInterface {
+    const providers = this.getAvailableProviders();
+    for (const providerName of providers) {
+      try {
+        const provider = this.getProvider(providerName);
+        if (provider.isConfigured()) {
+          return provider;
+        }
+      } catch (error) {
+        console.error(`Error checking ${providerName} configuration:`, error);
+      }
+    }
+    throw new Error('No configured LLM provider found');
+  }
+
   static getProvider(name: string): LLMInterface {
     const providerName = name.toLowerCase();
     

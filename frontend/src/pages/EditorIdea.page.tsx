@@ -40,19 +40,12 @@ import {
   TextInput,
   Title,
 } from '@mantine/core';
+import { ContentBlock } from '@/types/content';
 import { Agent } from '../services/agents/Agent';
 import { AgentManager } from '../services/agents/AgentManager';
 import { ConfigManager } from '../services/config/ConfigManager';
 import { BaseLLM } from '../services/llm/BaseLLM';
 import { LLMFactory } from '../services/llm/LLMFactory';
-
-interface ContentBlock {
-  id: number;
-  title: string;
-  content: string;
-  description: string;
-  comments: any[];
-}
 
 const CONTENT_TYPES = [
   {
@@ -344,7 +337,12 @@ export function EditorIdea() {
     } catch (error) {
       console.error('Failed to generate blocks:', error);
       // Fallback to default structure
-      setGeneratedBlocks(getStructuredBlocks(contentType, idea));
+      setGeneratedBlocks(
+        getStructuredBlocks(contentType, idea).map((block) => ({
+          ...block,
+          shortDescription: block.description, // Using description as shortDescription fallback
+        }))
+      );
     } finally {
       setIsGenerating(false);
     }
@@ -353,6 +351,8 @@ export function EditorIdea() {
   const handleApprovePlot = () => {
     if (generatedBlocks) {
       configManager.save('contentBlocks', generatedBlocks);
+      configManager.save('idea', idea);
+      configManager.save('contentType', contentType);
       configManager.save('selectedWriter', selectedWriter?.getConfig());
       configManager.save('selectedReviewer', selectedReviewer?.getConfig());
       setShowPlotModal(false);
@@ -382,6 +382,7 @@ export function EditorIdea() {
       id: Math.max(...generatedBlocks.map((b) => b.id)) + 1,
       title: 'New Section',
       content: '',
+      shortDescription: '',
       description: 'Describe the purpose of this section...',
       comments: [],
     };

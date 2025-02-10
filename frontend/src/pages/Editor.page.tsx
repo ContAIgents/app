@@ -1,48 +1,38 @@
 import React, { useEffect, useState } from 'react';
-import { 
-  Container, 
-  Group, 
-  Paper, 
-  Stack, 
-  Avatar, 
-  Text, 
-  Box, 
-  Button, 
-  ActionIcon,
-  TextInput,
-  Loader,
-  Tooltip,
-  Modal,
-  Textarea,
-} from '@mantine/core';
-import { 
-  IconRefresh, 
-  IconEdit, 
-  IconCheck, 
-  IconX, 
-  IconPencil, 
-  IconMessageCircle,
+import {
+  IconCheck,
+  IconEdit,
   IconInfoCircle,
+  IconMessageCircle,
+  IconPencil,
+  IconRefresh,
+  IconX,
 } from '@tabler/icons-react';
-import RichTextEditorComponent from '../components/Editor';
+import {
+  ActionIcon,
+  Avatar,
+  Box,
+  Button,
+  Container,
+  Group,
+  Loader,
+  Modal,
+  Paper,
+  Stack,
+  Text,
+  Textarea,
+  TextInput,
+  Tooltip,
+} from '@mantine/core';
 import { TableOfContents } from '@/components/TableOfContents';
-import { ConfigManager } from '../services/config/ConfigManager';
-import { IContentBlock } from '@/AppContext';
 import { Agent } from '@/services/agents/Agent';
+import { CommentStatus, ReviewStatus } from '@/services/agents/types';
+import { Comment, ContentBlock } from '@/types/content';
+import RichTextEditorComponent from '../components/Editor';
+import { ConfigManager } from '../services/config/ConfigManager';
 
 const COMMENT_WIDTH = 280;
 const TOC_WIDTH = 200;
-
-type CommentStatus = 'idle' | 'loading' | 'error' | 'success';
-type ReviewStatus = 'pending' | 'reviewing' | 'completed' | 'error';
-
-interface IComment {
-  timestamp: string;
-  user: string;
-  comment: string;
-  id: number;
-  status: CommentStatus;
-}
 
 interface IBlockStatus {
   isLoading: boolean;
@@ -51,9 +41,8 @@ interface IBlockStatus {
   isInitialReview: boolean;
 }
 
-
 export const EditorPage: React.FC = () => {
-  const [contentBlocks, setContentBlocks] = useState<IContentBlock[]>([]);
+  const [contentBlocks, setContentBlocks] = useState<ContentBlock[]>([]);
   const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
   const [editedComment, setEditedComment] = useState('');
   const [blockStatuses, setBlockStatuses] = useState<Record<number, IBlockStatus>>({});
@@ -73,80 +62,105 @@ export const EditorPage: React.FC = () => {
   const selectedReviewer = new Agent(configManager.load('selectedReviewer') || {});
 
   useEffect(() => {
-    const loadContent = () => {
-      const blocks = configManager.load<IContentBlock[]>('contentBlocks') || [];
+    const loadContent = async () => {
+      const blocks = configManager.load<ContentBlock[]>('contentBlocks') || [];
       setContentBlocks(blocks);
-      
+
       // Initialize status for each block
       const initialStatuses: Record<number, IBlockStatus> = {};
-      blocks.forEach(block => {
+      blocks.forEach((block) => {
         initialStatuses[block.id] = {
-          isLoading: true,
+          isLoading: !block.content, // Only set loading if content is empty
           error: null,
           reviewStatus: 'pending',
-          isInitialReview: true
+          isInitialReview: !block.content, // Only mark as initial review if content is empty
         };
       });
       setBlockStatuses(initialStatuses);
 
-      // timeout to stop loading blocks and add dummy content
-      setTimeout(() => {
-        const updatedBlocks = blocks.map(block => ({
-          ...block,
-          content: generateDummyContent(block.title, block.description),
-          comments: [
-            {
-              id: Math.floor(Math.random() * 1000),
-              timestamp: new Date().toISOString(),
-              user: selectedReviewer.getConfig().name,
-              comment: 'Initial review: This section needs more specific examples and clearer transitions between paragraphs.',
-              status: 'success' as CommentStatus
-            }
-          ]
-        }));
+      // Only expand blocks that have no content
+      const blocksToExpand = blocks.filter((block) => !block.content);
 
-        setContentBlocks(updatedBlocks);
-        configManager.save('contentBlocks', updatedBlocks);
+      if (blocksToExpand.length > 0) {
+        try {
+          const expandedBlocks = await Promise.all(
+            blocks.map(async (block) => {
+              if (block.content && block.content.trim() !== '') {
+                return block; // Skip blocks that already have content
+              }
 
-        // Update block statuses
-        blocks.forEach(block => {
-          setBlockStatuses(prev => ({
-            ...prev,
-            [block.id]: { 
-              ...prev[block.id], 
-              isLoading: false,
-              error: null,
-              reviewStatus: 'pending',
-              isInitialReview: true
-            }
-          }));
-        });
-      }, 1000);
+              try {
+                const expandedContent = await selectedWriter.expand(block);
+                return {
+                  ...block,
+                  content: expandedContent,
+                  comments: [
+                    {
+                      id: Math.floor(Math.random() * 1000),
+                      timestamp: new Date().toISOString(),
+                      user: selectedReviewer.getConfig().name,
+                      comment:
+                        'Initial review: This section needs more specific examples and clearer transitions between paragraphs.',
+                      status: 'success' as CommentStatus,
+                    },
+                  ],
+                };
+              } catch (error) {
+                console.error(`Failed to expand block ${block.id}:`, error);
+                setBlockStatuses((prev) => ({
+                  ...prev,
+                  [block.id]: {
+                    ...prev[block.id],
+                    isLoading: false,
+                    error: error instanceof Error ? error.message : 'Failed to expand content',
+                    reviewStatus: 'error',
+                    isInitialReview: true,
+                  },
+                }));
+                return block;
+              }
+            })
+          );
+
+          setContentBlocks(expandedBlocks);
+          configManager.save('contentBlocks', expandedBlocks);
+
+          // Update block statuses only for blocks that were expanded
+          blocksToExpand.forEach((block) => {
+            setBlockStatuses((prev) => ({
+              ...prev,
+              [block.id]: {
+                ...prev[block.id],
+                isLoading: false,
+                error: null,
+                reviewStatus: 'pending',
+                isInitialReview: true,
+              },
+            }));
+          });
+        } catch (error) {
+          console.error('Failed to load and expand content:', error);
+          blocksToExpand.forEach((block) => {
+            setBlockStatuses((prev) => ({
+              ...prev,
+              [block.id]: {
+                ...prev[block.id],
+                isLoading: false,
+                error: 'Failed to load content',
+                reviewStatus: 'error',
+                isInitialReview: true,
+              },
+            }));
+          });
+        }
+      }
     };
 
     loadContent();
   }, []);
 
-  // // Add effect to handle initial content loading and review
-  // useEffect(() => {
-  //   Object.entries(blockStatuses).forEach(([blockId, status]) => {
-  //     if (status.isLoading) {
-  //       // Simulate initial content loading
-  //       simulateContentGeneration(Number(blockId)).then(() => {
-  //         if (status.isInitialReview) {
-  //           // Automatically trigger first review
-  //           const commentId = contentBlocks.find(b => b.id === Number(blockId))?.comments[0]?.id;
-  //           if (commentId) {
-  //             simulateReview(Number(blockId), commentId);
-  //           }
-  //         }
-  //       });
-  //     }
-  //   });
-  // }, [blockStatuses]);
-
   const handleUpdate = (id: number, content: string) => {
-    const updatedBlocks = contentBlocks.map(block =>
+    const updatedBlocks = contentBlocks.map((block) =>
       block.id === id ? { ...block, content } : block
     );
     setContentBlocks(updatedBlocks);
@@ -157,7 +171,7 @@ export const EditorPage: React.FC = () => {
   const tocLinks = contentBlocks.map((block) => ({
     label: block.title,
     link: `#section-${block.id}`,
-    order: 1
+    order: 1,
   }));
 
   // Helper function to get avatar color based on user role
@@ -178,124 +192,122 @@ export const EditorPage: React.FC = () => {
   const getInitials = (name: string) => {
     return name
       .split(' ')
-      .map(word => word[0])
+      .map((word) => word[0])
       .join('')
       .toUpperCase();
   };
 
   // Simulate AI review generation with random timeout
   const simulateReview = async (blockId: number, commentId: number, instructions?: string) => {
-    setBlockStatuses(prev => ({
+    setBlockStatuses((prev) => ({
       ...prev,
-      [blockId]: { 
-        ...prev[blockId], 
-        reviewStatus: 'reviewing' 
-      }
+      [blockId]: {
+        ...prev[blockId],
+        reviewStatus: 'reviewing',
+      },
     }));
 
     const updateCommentStatus = (status: CommentStatus) => {
-      setContentBlocks(blocks => 
-        blocks.map(block => ({
+      setContentBlocks((blocks) =>
+        blocks.map((block) => ({
           ...block,
-          comments: block.comments.map(comment => 
+          comments: block.comments.map((comment) =>
             comment.id === commentId ? { ...comment, status } : comment
-          )
+          ),
         }))
       );
     };
 
     updateCommentStatus('loading');
-    
+
     try {
-      await new Promise(resolve => setTimeout(resolve, Math.random() * 3000 + 1000));
-      
+      await new Promise((resolve) => setTimeout(resolve, Math.random() * 3000 + 1000));
+
       if (Math.random() < 0.2) throw new Error('Failed to generate review');
-      
+
       const newComment = `Updated AI review at ${new Date().toLocaleTimeString()}${
         instructions ? `\n\nFocused on: ${instructions}` : ''
       }`;
-      
-      setContentBlocks(blocks =>
-        blocks.map(block => ({
+
+      setContentBlocks((blocks) =>
+        blocks.map((block) => ({
           ...block,
-          comments: block.comments.map(comment =>
+          comments: block.comments.map((comment) =>
             comment.id === commentId
-              ? { 
-                  ...comment, 
-                  comment: newComment, 
+              ? {
+                  ...comment,
+                  comment: newComment,
                   status: 'success',
-                  user: selectedReviewer.getConfig().name
+                  user: selectedReviewer.getConfig().name,
                 }
               : comment
-          )
+          ),
         }))
       );
 
-      setBlockStatuses(prev => ({
+      setBlockStatuses((prev) => ({
         ...prev,
-        [blockId]: { 
-          ...prev[blockId], 
+        [blockId]: {
+          ...prev[blockId],
           reviewStatus: 'completed',
-          isInitialReview: false 
-        }
+          isInitialReview: false,
+        },
       }));
     } catch (error) {
       updateCommentStatus('error');
-      setBlockStatuses(prev => ({
+      setBlockStatuses((prev) => ({
         ...prev,
-        [blockId]: { 
-          ...prev[blockId], 
-          reviewStatus: 'error' 
-        }
+        [blockId]: {
+          ...prev[blockId],
+          reviewStatus: 'error',
+        },
       }));
     }
   };
 
   // Simulate content generation
-  const simulateContentGeneration = async (blockId: number) => {
-    setBlockStatuses(prev => ({
+  const simulateContentGeneration = async (blockId: number, comment: Comment) => {
+    setBlockStatuses((prev) => ({
       ...prev,
-      [blockId]: { 
-        isLoading: true, 
+      [blockId]: {
+        ...prev[blockId],
+        isLoading: true,
         error: null,
-        reviewStatus: prev[blockId]?.reviewStatus || 'pending',
-        isInitialReview: prev[blockId]?.isInitialReview || true
-      }
+      },
     }));
 
-    try {
-      await new Promise(resolve => setTimeout(resolve, Math.random() * 5000 + 2000));
-      
-      if (Math.random() < 0.1) throw new Error('Failed to generate content');
+    const block = contentBlocks.find((b) => b.id === blockId);
+    if (!block) return;
 
-      setContentBlocks(blocks =>
-        blocks.map(block =>
-          block.id === blockId
-            ? { ...block, content: block.content + '\n\nNew AI generated content at ' + new Date().toLocaleTimeString() }
-            : block
-        )
+    try {
+      // Get the latest comment as the reviewer suggestion
+
+      const rewrittenContent = await selectedWriter.rewrite(block, block.content, comment.comment);
+
+      setContentBlocks((blocks) =>
+        blocks.map((b) => (b.id === blockId ? { ...b, content: rewrittenContent } : b))
       );
 
-      setBlockStatuses(prev => ({
+      setBlockStatuses((prev) => ({
         ...prev,
         [blockId]: {
           ...prev[blockId],
           isLoading: false,
           error: null,
           reviewStatus: prev[blockId]?.reviewStatus || 'pending',
-          isInitialReview: prev[blockId]?.isInitialReview || true
-        }
+          isInitialReview: prev[blockId]?.isInitialReview || true,
+        },
       }));
     } catch (error) {
-      setBlockStatuses(prev => ({
+      setBlockStatuses((prev) => ({
         ...prev,
         [blockId]: {
           ...prev[blockId],
           isLoading: false,
           error: error instanceof Error ? error.message : 'An unknown error occurred',
           reviewStatus: 'error',
-          isInitialReview: prev[blockId]?.isInitialReview || true
-        }
+          isInitialReview: prev[blockId]?.isInitialReview || true,
+        },
       }));
     }
   };
@@ -313,28 +325,26 @@ export const EditorPage: React.FC = () => {
     const { blockId, commentId, instructions } = reviewInstructionsModal;
     if (blockId === null || commentId === null) return;
 
-    setReviewInstructionsModal(prev => ({ ...prev, isOpen: false }));
+    setReviewInstructionsModal((prev) => ({ ...prev, isOpen: false }));
     await simulateReview(blockId, commentId, instructions);
   };
 
-  const renderCommentCard = (comment: IComment, blockId: number) => (
-    <Paper 
-      key={comment.id} 
-      p="md" 
-      withBorder={false}  // Remove border from comment cards
+  const renderCommentCard = (comment: Comment, blockId: number) => (
+    <Paper
+      key={comment.id}
+      p="md"
+      withBorder={false} // Remove border from comment cards
       shadow="xs"
       radius="md"
     >
       <Group gap="sm" mb="xs">
-        <Avatar 
-          color={getAvatarColor(comment.user)} 
-          radius="xl"
-          size="sm"
-        >
+        <Avatar color={getAvatarColor(comment.user)} radius="xl" size="sm">
           {getInitials(comment.user)}
         </Avatar>
         <Box style={{ flex: 1 }}>
-          <Text size="sm" fw={500}>{comment.user}</Text>
+          <Text size="sm" fw={500}>
+            {comment.user}
+          </Text>
           <Text size="xs" c="dimmed">
             {new Date(comment.timestamp).toLocaleDateString()}
           </Text>
@@ -364,7 +374,7 @@ export const EditorPage: React.FC = () => {
           </Tooltip>
         </Group>
       </Group>
-      
+
       {editingCommentId === comment.id ? (
         <Stack gap="xs">
           <TextInput
@@ -386,12 +396,12 @@ export const EditorPage: React.FC = () => {
               variant="subtle"
               color="green"
               onClick={() => {
-                setContentBlocks(blocks =>
-                  blocks.map(block => ({
+                setContentBlocks((blocks) =>
+                  blocks.map((block) => ({
                     ...block,
-                    comments: block.comments.map(c =>
+                    comments: block.comments.map((c) =>
                       c.id === comment.id ? { ...c, comment: editedComment } : c
-                    )
+                    ),
                   }))
                 );
                 setEditingCommentId(null);
@@ -411,13 +421,12 @@ export const EditorPage: React.FC = () => {
               Failed to generate review. Please try again.
             </Text>
           )}
-          
-          <Group justify='flex-end' mt="md">
-            
+
+          <Group justify="flex-end" mt="md">
             <Button
               color="blue"
               size="xs"
-              onClick={() => simulateContentGeneration(blockId)}
+              onClick={() => simulateContentGeneration(blockId, comment)}
               loading={blockStatuses[blockId]?.isLoading}
               disabled={blockStatuses[blockId]?.isLoading}
             >
@@ -454,16 +463,18 @@ export const EditorPage: React.FC = () => {
 
   return (
     <>
-      <div style={{ 
-        height: '100vh', 
-        display: 'flex',
-        overflow: 'hidden',
-        backgroundColor: 'var(--mantine-color-body)'
-      }}>
+      <div
+        style={{
+          height: '100vh',
+          display: 'flex',
+          overflow: 'hidden',
+          backgroundColor: 'var(--mantine-color-body)',
+        }}
+      >
         {/* Fixed TOC sidebar */}
-        <Paper 
+        <Paper
           shadow="xs"
-          style={{ 
+          style={{
             width: TOC_WIDTH,
             height: '100vh',
             borderRight: '1px solid var(--mantine-color-default-border)',
@@ -472,47 +483,55 @@ export const EditorPage: React.FC = () => {
           }}
         >
           {/* TOC Header */}
-          <Box p="md" style={{ 
-            borderBottom: '1px solid var(--mantine-color-default-border)',
-            backgroundColor: 'var(--mantine-color-body)'
-          }}>
-            <Text size="sm" fw={700}>Table of Contents</Text>
+          <Box
+            p="md"
+            style={{
+              borderBottom: '1px solid var(--mantine-color-default-border)',
+              backgroundColor: 'var(--mantine-color-body)',
+            }}
+          >
+            <Text size="sm" fw={700}>
+              Table of Contents
+            </Text>
           </Box>
-          
+
           {/* Scrollable TOC Content */}
-          <Box p="md" style={{ 
-            flex: 1,
-            overflowY: 'auto'
-          }}>
+          <Box
+            p="md"
+            style={{
+              flex: 1,
+              overflowY: 'auto',
+            }}
+          >
             <TableOfContents links={tocLinks} />
           </Box>
         </Paper>
 
         {/* Main content area with independent scroll */}
-        <div 
+        <div
           role="main"
-          style={{ 
+          style={{
             flex: 1,
             height: '100vh',
             overflowY: 'auto',
             padding: 'var(--mantine-spacing-xl)',
-            backgroundColor: 'var(--mantine-color-body)'
+            backgroundColor: 'var(--mantine-color-body)',
           }}
         >
           <Container size="xl">
             <Stack gap="md">
               {contentBlocks.map((block) => (
-                <Group 
-                  key={block.id} 
-                  id={`section-${block.id}`} 
-                  align="flex-start" 
+                <Group
+                  key={block.id}
+                  id={`section-${block.id}`}
+                  align="flex-start"
                   style={{ scrollMarginTop: '2rem' }}
                 >
                   {/* Editor Section */}
-                  <Paper 
-                    p="md" 
+                  <Paper
+                    p="md"
                     withBorder={false}
-                    style={{ 
+                    style={{
                       flex: 1,
                       minHeight: '300px',
                       display: 'flex',
@@ -521,7 +540,9 @@ export const EditorPage: React.FC = () => {
                   >
                     <Group justify="apart" mb="md">
                       <Group gap="xs">
-                        <Text size="lg" fw={500}>{block.title}</Text>
+                        <Text size="lg" fw={500}>
+                          {block.title}
+                        </Text>
                         <Tooltip
                           label={block.description}
                           position="right"
@@ -542,24 +563,28 @@ export const EditorPage: React.FC = () => {
                       {blockStatuses[block.id]?.reviewStatus === 'reviewing' && (
                         <Group gap="xs">
                           <Loader size="xs" />
-                          <Text size="sm" c="dimmed">Review in progress...</Text>
+                          <Text size="sm" c="dimmed">
+                            Review in progress...
+                          </Text>
                         </Group>
                       )}
                     </Group>
                     <Box style={{ flex: 1, position: 'relative' }}>
                       {blockStatuses[block.id]?.isLoading && (
-                        <div style={{
-                          position: 'absolute',
-                          top: 0,
-                          left: 0,
-                          right: 0,
-                          bottom: 0,
-                          background: 'rgba(255, 255, 255, 0.8)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          zIndex: 1000
-                        }}>
+                        <div
+                          style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            background: 'rgba(255, 255, 255, 0.8)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            zIndex: 1000,
+                          }}
+                        >
                           <Stack align="center">
                             <Loader size="sm" />
                             <Text size="sm">Loading content...</Text>
@@ -569,7 +594,10 @@ export const EditorPage: React.FC = () => {
                       <RichTextEditorComponent
                         content={block.content}
                         onUpdate={(content) => handleUpdate(block.id, content)}
-                        disabled={blockStatuses[block.id]?.isLoading || blockStatuses[block.id]?.reviewStatus === 'reviewing'}
+                        disabled={
+                          blockStatuses[block.id]?.isLoading ||
+                          blockStatuses[block.id]?.reviewStatus === 'reviewing'
+                        }
                       />
                     </Box>
                     {blockStatuses[block.id]?.error && (
@@ -580,18 +608,20 @@ export const EditorPage: React.FC = () => {
                   </Paper>
 
                   {/* Comments Section */}
-                  <Paper 
-                    p="md" 
-                    withBorder={false}  
-                    style={{ 
+                  <Paper
+                    p="md"
+                    withBorder={false}
+                    style={{
                       width: COMMENT_WIDTH,
                       flexShrink: 0,
-                      alignSelf: 'stretch'
+                      alignSelf: 'stretch',
                     }}
                   >
-                    <Text size="sm" fw={500} c="dimmed" mb="md">Reviewer Comments</Text>
+                    <Text size="sm" fw={500} c="dimmed" mb="md">
+                      Reviewer Comments
+                    </Text>
                     <Stack gap="md">
-                      {block.comments.map(comment => renderCommentCard(comment, block.id))}
+                      {block.comments.map((comment) => renderCommentCard(comment, block.id))}
                     </Stack>
                   </Paper>
                 </Group>
@@ -603,7 +633,7 @@ export const EditorPage: React.FC = () => {
 
       <Modal
         opened={reviewInstructionsModal.isOpen}
-        onClose={() => setReviewInstructionsModal(prev => ({ ...prev, isOpen: false }))}
+        onClose={() => setReviewInstructionsModal((prev) => ({ ...prev, isOpen: false }))}
         title="Request Re-review"
         size="md"
       >
@@ -611,25 +641,27 @@ export const EditorPage: React.FC = () => {
           <Text size="sm">
             Provide specific instructions for the reviewer to focus on during this review:
           </Text>
-          
+
           <Textarea
             placeholder="e.g., Please focus on technical accuracy and code examples"
             minRows={3}
             value={reviewInstructionsModal.instructions}
-            onChange={(e) => setReviewInstructionsModal(prev => ({
-              ...prev,
-              instructions: e.currentTarget.value
-            }))}
+            onChange={(e) =>
+              setReviewInstructionsModal((prev) => ({
+                ...prev,
+                instructions: e.currentTarget.value,
+              }))
+            }
           />
 
           <Group justify="right" mt="md">
-            <Button 
-              variant="light" 
-              onClick={() => setReviewInstructionsModal(prev => ({ ...prev, isOpen: false }))}
+            <Button
+              variant="light"
+              onClick={() => setReviewInstructionsModal((prev) => ({ ...prev, isOpen: false }))}
             >
               Cancel
             </Button>
-            <Button 
+            <Button
               onClick={handleSubmitReviewRequest}
               disabled={!reviewInstructionsModal.instructions.trim()}
             >

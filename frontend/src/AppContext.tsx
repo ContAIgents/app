@@ -1,6 +1,6 @@
 import React, { createContext, ReactNode, useCallback, useState } from 'react';
 import EditorStateManager from './utils/EditorStateManager';
-
+import { ContentBlock, Comment } from './types/content';
 
 const links:ILink[] = [
   { label: 'Usage', link: '#usage', order: 1 },
@@ -8,35 +8,18 @@ const links:ILink[] = [
   { label: 'With other overlays', link: '#overlays', order: 1 },
   { label: 'Manage focus', link: '#focus', order: 1 },
   { label: 'Examples', link: '#1', order: 1 },
-  // { label: 'Show on focus', link: '#2', order: 2 },
-  // { label: 'Show on hover', link: '#3', order: 2 },
-  // { label: 'With form', link: '#4', order: 2 },
 ];
 
 const editorStateManager = new EditorStateManager();
 
-interface IComment {
-  timestamp: string;
-  user: string;
-  comment: string;
-  id: number;
-  status: 'idle' | 'loading' | 'error' | 'success';
-}
-
-export interface IContentBlock {
-  id: number;
-  title: string;
-  content: string;
-  description: string;
-  comments: IComment[];
-}
+// Remove IContentBlock interface as we're now using ContentBlock from types/content
 
 export interface AppState {
   // Define your state properties here
   editorConfig: {
     projectId: string;
     indexTree: ILink[];
-    contentBlocks: IContentBlock[];
+    contentBlocks: ContentBlock[];
    
   };
 }

@@ -19,11 +19,7 @@ export const theme = createTheme({
     ],
   },
   components: {
-    Paper: {
-      defaultProps: {
-        withBorder: true,
-      },
-    },
+
     // Define background levels through components
     AppShell: {
       styles: (theme) => ({
@@ -33,6 +29,9 @@ export const theme = createTheme({
       }),
     },
     Paper: {
+      defaultProps: {
+        withBorder: true,
+      },
       styles: (theme) => ({
         root: {
           backgroundColor: theme.colorScheme === 'dark' ? theme.colors.dark[7] : theme.white,

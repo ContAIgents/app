@@ -471,10 +471,13 @@ export function Agents() {
           />
           <Textarea
             label="Persona Definition"
-            placeholder="Describe the agent's personality, expertise and approach..."
+            placeholder="Describe the agent's personality, expertise, and approach in detail. Include their background, key strengths, and how they typically handle tasks in their role. For example:
+
+As a seasoned tech journalist with 10+ years of experience, this agent excels in breaking down complex technological concepts for a general audience. They have a knack for spotting emerging trends and can provide insightful analysis on how new technologies might impact various industries. Their writing style is clear and engaging, often using analogies to make difficult concepts more accessible. When reviewing content, they pay close attention to technical accuracy while ensuring the information remains digestible for non-experts."
             value={formData.systemPrompt || ''}
             onChange={(e) => setFormData({ ...formData, systemPrompt: e.target.value })}
-            minRows={4}
+            autosize
+            minRows={5}
           />
           <Button onClick={handleSave}>Save</Button>
         </Stack>

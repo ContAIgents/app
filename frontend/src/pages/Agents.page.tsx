@@ -27,6 +27,9 @@ import { OnboardingNavigation } from '../components/OnboardingNavigation/Onboard
 import { Agent } from '../services/agents/Agent';
 import { AgentManager } from '../services/agents/AgentManager';
 import { AgentConfig, AgentRole, ToneOfVoice, WritingStyle } from '../services/agents/types';
+import { PROVIDER_MODELS } from '../services/llm/types';
+import { ConfigManager } from '../services/config/ConfigManager';
+import { LLMFactory } from '../services/llm/LLMFactory';
 
 // Static Data moved outside the component
 const dummyCommunityAgents: AgentConfig[] = [
@@ -214,10 +217,32 @@ const toneOptions = [
   { value: 'empathetic', label: 'Empathetic & Understanding' },
 ];
 
+const llmOptions = Object.entries(PROVIDER_MODELS).map(([provider, models]) => ({
+  group: provider,
+  items: models.map(model => ({
+    value: `${provider}:${model}`,
+    label: model
+  }))
+}));
+
 const initialFormState: Partial<AgentConfig> = {
   expertise: [],
   writingStyle: 'professional',
   tone: 'neutral',
+  llm: (() => {
+    const configManager = new ConfigManager('llm_');
+    try {
+      const providers = LLMFactory.getAvailableProviders().map(name => LLMFactory.getProvider(name));
+      const configuredProvider = providers.find(provider => provider.isConfigured());
+      if (configuredProvider) {
+        const config = configuredProvider.getConfig();
+        return `${configuredProvider.constructor.name.replace('Provider', '')}:${config.model}`;
+      }
+    } catch (error) {
+      console.error('Failed to load LLM configuration:', error);
+    }
+    return undefined;
+  })(),
 };
 
 export function Agents() {
@@ -468,6 +493,14 @@ export function Agents() {
             data={toneOptions}
             value={formData.tone}
             onChange={(value) => setFormData({ ...formData, tone: value as ToneOfVoice })}
+          />
+          <Select
+            label="Language Model"
+            placeholder="Select the LLM (coming soon)"
+            data={llmOptions}
+            disabled
+            value={formData.llm}
+            onChange={(value) => setFormData({ ...formData, llm: value || undefined })}
           />
           <Textarea
             label="Persona Definition"

@@ -87,7 +87,7 @@ Format your response as a JSON array of content blocks. Each block must have:
 
 Ensure the structure is comprehensive and follows best practices for ${contentType} content.`;
 
-    const writerPersona = `Acting as ${this.config.name}, an expert ${this.config.expertise.join(', ')} 
+    const writerPersona = `Acting as ${this.config.name}, an expert ${(this.config.expertise ?? []).join(', ')}
 with a ${this.config.writingStyle} writing style and ${this.config.tone} tone.`;
 
     const prompt = `${systemPrompt}

@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
+import { useState, useEffect } from 'react';
+import { DragDropContext, Draggable, Droppable, DroppableProvided, DraggableProvided } from '@hello-pangea/dnd';
 import {
   IconArticle,
   IconBook,
@@ -16,11 +16,13 @@ import {
 import { useNavigate } from 'react-router-dom';
 import {
   ActionIcon,
+  Avatar,
   Badge,
   Button,
   Card,
   Collapse,
   Container,
+  Divider,
   Group,
   Modal,
   Paper,
@@ -33,11 +35,14 @@ import {
   Title,
 } from '@mantine/core';
 import { ConfigManager } from '../services/config/ConfigManager';
+import { AgentManager } from '../services/agents/AgentManager';
+import { Agent } from '../services/agents/Agent';
 
 interface ContentBlock {
   id: number;
   title: string;
   content: string;
+  description: string;
   comments: any[];
 }
 
@@ -233,7 +238,16 @@ export function EditorIdea() {
   const [generatedBlocks, setGeneratedBlocks] = useState<ContentBlock[] | null>(null);
   const [showPlotModal, setShowPlotModal] = useState(false);
   const [editingBlockId, setEditingBlockId] = useState<number | null>(null);
+  const [selectedWriter, setSelectedWriter] = useState<Agent | null>(null);
+  const [selectedReviewer, setSelectedReviewer] = useState<Agent | null>(null);
+  const [agents, setAgents] = useState<Agent[]>([]);
   const configManager = new ConfigManager('editor_');
+
+  useEffect(() => {
+    const agentManager = new AgentManager();
+    const allAgents = agentManager.getAllAgents();
+    setAgents(allAgents);
+  }, []);
 
   const handleGenerateIdea = () => {
     if (!contentType || !idea.trim()) return;
@@ -253,6 +267,8 @@ export function EditorIdea() {
   const handleApprovePlot = () => {
     if (generatedBlocks) {
       configManager.save('contentBlocks', generatedBlocks);
+      configManager.save('selectedWriter', selectedWriter?.getConfig());
+      configManager.save('selectedReviewer', selectedReviewer?.getConfig());
       setShowPlotModal(false);
       navigate('/editor');
     }
@@ -304,6 +320,10 @@ export function EditorIdea() {
     setGeneratedBlocks(items);
   };
 
+  // Filter agents by role
+  const writers = agents.filter(agent => agent.getConfig().role === 'content_writer');
+  const reviewers = agents.filter(agent => agent.getConfig().role === 'content_reviewer');
+
   return (
     <>
       <Container size="xl" py="xl">
@@ -344,6 +364,100 @@ export function EditorIdea() {
                 ))}
               </SimpleGrid>
 
+              {contentType && (
+                <>
+                  <Divider label="Select Your Team" labelPosition="center" />
+                  
+                  <Text size="lg" fw={500}>Choose your Content Writer</Text>
+                  <SimpleGrid cols={{ base: 2, sm: 3, md: 4 }} spacing="lg">
+                    {writers.map((writer) => {
+                      const config = writer.getConfig();
+                      return (
+                        <Card
+                          key={config.id}
+                          shadow="sm"
+                          padding="lg"
+                          radius="md"
+                          withBorder
+                          onClick={() => setSelectedWriter(writer)}
+                          style={{
+                            cursor: 'pointer',
+                            opacity: selectedWriter?.getConfig().id === config.id ? 1 : 0.7,
+                          }}
+                          bg={selectedWriter?.getConfig().id === config.id ? 'blue.1' : undefined}
+                        >
+                          <Group>
+                            <Avatar
+                              size="md"
+                              src={config.avatar}
+                              color="blue"
+                            >
+                              {config.name.charAt(0)}
+                            </Avatar>
+                            <div>
+                              <Text fw={500} size="sm">
+                                {config.name}
+                              </Text>
+                              <Group gap={5} mt={3}>
+                                {config.expertise?.slice(0, 2).map((skill) => (
+                                  <Badge key={skill} size="xs" variant="light">
+                                    {skill}
+                                  </Badge>
+                                ))}
+                              </Group>
+                            </div>
+                          </Group>
+                        </Card>
+                      );
+                    })}
+                  </SimpleGrid>
+
+                  <Text size="lg" fw={500}>Choose your Content Reviewer</Text>
+                  <SimpleGrid cols={{ base: 2, sm: 3, md: 4 }} spacing="lg">
+                    {reviewers.map((reviewer) => {
+                      const config = reviewer.getConfig();
+                      return (
+                        <Card
+                          key={config.id}
+                          shadow="sm"
+                          padding="lg"
+                          radius="md"
+                          withBorder
+                          onClick={() => setSelectedReviewer(reviewer)}
+                          style={{
+                            cursor: 'pointer',
+                            opacity: selectedReviewer?.getConfig().id === config.id ? 1 : 0.7,
+                          }}
+                          bg={selectedReviewer?.getConfig().id === config.id ? 'green.1' : undefined}
+                        >
+                          <Group>
+                            <Avatar
+                              size="md"
+                              src={config.avatar}
+                              color="green"
+                            >
+                              {config.name.charAt(0)}
+                            </Avatar>
+                            <div>
+                              <Text fw={500} size="sm">
+                                {config.name}
+                              </Text>
+                              <Group gap={5} mt={3}>
+                                {config.expertise?.slice(0, 2).map((skill) => (
+                                  <Badge key={skill} size="xs" variant="light">
+                                    {skill}
+                                  </Badge>
+                                ))}
+                              </Group>
+                            </div>
+                          </Group>
+                        </Card>
+                      );
+                    })}
+                  </SimpleGrid>
+                </>
+              )}
+
               <Textarea
                 label="Share your idea"
                 placeholder="Describe your content idea in detail..."
@@ -358,7 +472,7 @@ export function EditorIdea() {
                 <Button
                   onClick={handleGenerateIdea}
                   loading={isGenerating}
-                  disabled={!contentType || !idea.trim()}
+                  disabled={!contentType || !idea.trim() || !selectedWriter || !selectedReviewer}
                 >
                   Generate Content Structure
                 </Button>
@@ -383,11 +497,11 @@ export function EditorIdea() {
           <Paper withBorder p="md">
             <DragDropContext onDragEnd={handleDragEnd}>
               <Droppable droppableId="sections">
-                {(provided) => (
+                {(provided: DroppableProvided) => (
                   <Stack gap="xs" ref={provided.innerRef} {...provided.droppableProps}>
                     {generatedBlocks?.map((block, index) => (
                       <Draggable key={block.id} draggableId={String(block.id)} index={index}>
-                        {(provided) => (
+                        {(provided: DraggableProvided) => (
                           <Paper
                             ref={provided.innerRef}
                             {...provided.draggableProps}

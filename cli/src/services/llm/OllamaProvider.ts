@@ -1,0 +1,68 @@
+import { BaseLLM } from "./BaseLLM";
+import { PromptOptions, PromptResponse, ProviderConfig } from "./types";
+
+export class OllamaProvider extends BaseLLM {
+  static readonly providerConfig: ProviderConfig = {
+    name: "Ollama",
+    configFields: [
+      {
+        name: "endpoint",
+        required: true,
+        default: "http://localhost:11434",
+      },
+      {
+        name: "model",
+        required: true,
+        options: [
+          "deepseek-r1:8b",
+          "llama3.2",
+          "llama2",
+          "mistral",
+          "codellama",
+          "neural-chat",
+        ],
+        default: "deepseek-r1:8b",
+      },
+    ],
+  };
+
+  constructor() {
+    super(OllamaProvider.providerConfig);
+  }
+
+  async executePrompt(
+    prompt: string,
+    options: PromptOptions = {}
+  ): Promise<PromptResponse> {
+    if (!this.isConfigured()) {
+      throw new Error("Ollama provider is not configured");
+    }
+
+    const response = await fetch(`${this.config.endpoint}/api/generate`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: this.config.model,
+        prompt: prompt,
+        options: {
+          temperature: options.temperature ?? 0.7,
+          num_predict: options.maxTokens,
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(`Ollama API error: ${error.error || "Unknown error"}`);
+    }
+
+    const data = await response.json();
+
+    return {
+      content: data.response,
+      raw: data,
+    };
+  }
+}

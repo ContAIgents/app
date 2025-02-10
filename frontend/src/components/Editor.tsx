@@ -3,8 +3,6 @@ import { useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { Link, RichTextEditor } from '@mantine/tiptap';
 
-// import Link from '@tiptap/extension-link';
-
 interface RichTextEditorComponentProps {
   content: string;
   onUpdate: (content: string) => void;
@@ -18,37 +16,67 @@ const RichTextEditorComponent: React.FC<RichTextEditorComponentProps> = ({
 }) => {
   const editor = useEditor({
     extensions: [StarterKit, Link],
-    content,
+    content: '',  // Initialize with empty content
     onUpdate: ({ editor }) => {
       onUpdate(editor.getHTML());
     },
     editable: !disabled
   });
 
-  // Add this effect to update editor's editable state when disabled prop changes
+  // Update content when editor is ready or content changes
+  useEffect(() => {
+    if (editor && content) {
+      // Only update if the content is different to avoid unnecessary rerenders
+      if (editor.getHTML() !== content) {
+        editor.commands.setContent(content);
+      }
+    }
+  }, [editor, content]);
+
+  // Update editable state when disabled prop changes
   useEffect(() => {
     if (editor) {
       editor.setEditable(!disabled);
     }
   }, [disabled, editor]);
 
+  if (!editor) {
+    return null;
+  }
+
   return (
-    <RichTextEditor editor={editor} variant="subtle">
-      {/* <RichTextEditor.Toolbar sticky stickyOffset={60}> */}
-      <RichTextEditor.ControlsGroup>
-        <RichTextEditor.Bold />
-        <RichTextEditor.Italic />
-        <RichTextEditor.Underline />
-        <RichTextEditor.Strikethrough />
-        <RichTextEditor.ClearFormatting />
-        <RichTextEditor.Highlight />
-        <RichTextEditor.Code />
-      </RichTextEditor.ControlsGroup>
-      {/* </RichTextEditor.Toolbar> */}
-      <RichTextEditor.Content style={{ 
-        opacity: disabled ? 0.7 : 1,
-        cursor: disabled ? 'not-allowed' : 'text'
-      }} />
+    <RichTextEditor editor={editor}>
+      <RichTextEditor.Toolbar sticky stickyOffset={0}>
+        <RichTextEditor.ControlsGroup>
+          <RichTextEditor.Bold />
+          <RichTextEditor.Italic />
+          <RichTextEditor.Underline />
+          <RichTextEditor.Strikethrough />
+          <RichTextEditor.ClearFormatting />
+          <RichTextEditor.Code />
+        </RichTextEditor.ControlsGroup>
+
+        <RichTextEditor.ControlsGroup>
+          <RichTextEditor.H1 />
+          <RichTextEditor.H2 />
+          <RichTextEditor.H3 />
+          <RichTextEditor.H4 />
+        </RichTextEditor.ControlsGroup>
+
+        <RichTextEditor.ControlsGroup>
+          <RichTextEditor.Blockquote />
+          <RichTextEditor.Hr />
+          <RichTextEditor.BulletList />
+          <RichTextEditor.OrderedList />
+        </RichTextEditor.ControlsGroup>
+
+        <RichTextEditor.ControlsGroup>
+          <RichTextEditor.Link />
+          <RichTextEditor.Unlink />
+        </RichTextEditor.ControlsGroup>
+      </RichTextEditor.Toolbar>
+
+      <RichTextEditor.Content />
     </RichTextEditor>
   );
 };

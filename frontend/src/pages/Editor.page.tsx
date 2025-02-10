@@ -15,7 +15,15 @@ import {
   Modal,
   Textarea,
 } from '@mantine/core';
-import { IconRefresh, IconEdit, IconCheck, IconX, IconPencil, IconMessageCircle } from '@tabler/icons-react';
+import { 
+  IconRefresh, 
+  IconEdit, 
+  IconCheck, 
+  IconX, 
+  IconPencil, 
+  IconMessageCircle,
+  IconInfoCircle,
+} from '@tabler/icons-react';
 import RichTextEditorComponent from '../components/Editor';
 import { TableOfContents } from '@/components/TableOfContents';
 import { ConfigManager } from '../services/config/ConfigManager';
@@ -25,6 +33,7 @@ const COMMENT_WIDTH = 280;
 const TOC_WIDTH = 200;
 
 type CommentStatus = 'idle' | 'loading' | 'error' | 'success';
+type ReviewStatus = 'pending' | 'reviewing' | 'completed' | 'error';
 
 interface IComment {
   timestamp: string;
@@ -37,6 +46,8 @@ interface IComment {
 interface IBlockStatus {
   isLoading: boolean;
   error: string | null;
+  reviewStatus: ReviewStatus;
+  isInitialReview: boolean;
 }
 
 
@@ -62,9 +73,74 @@ export const EditorPage: React.FC = () => {
     const loadContent = () => {
       const blocks = configManager.load<IContentBlock[]>('contentBlocks') || [];
       setContentBlocks(blocks);
+      
+      // Initialize status for each block
+      const initialStatuses: Record<number, IBlockStatus> = {};
+      blocks.forEach(block => {
+        initialStatuses[block.id] = {
+          isLoading: true,
+          error: null,
+          reviewStatus: 'pending',
+          isInitialReview: true
+        };
+      });
+      setBlockStatuses(initialStatuses);
+
+      // timeout to stop loading blocks and add dummy content
+      setTimeout(() => {
+        const updatedBlocks = blocks.map(block => ({
+          ...block,
+          content: generateDummyContent(block.title, block.description),
+          comments: [
+            {
+              id: Math.floor(Math.random() * 1000),
+              timestamp: new Date().toISOString(),
+              user: 'AI Assistant',
+              comment: 'Initial review: This section needs more specific examples and clearer transitions between paragraphs.',
+              status: 'success' as CommentStatus
+            }
+          ]
+        }));
+
+        setContentBlocks(updatedBlocks);
+        configManager.save('contentBlocks', updatedBlocks);
+
+        // Update block statuses
+        blocks.forEach(block => {
+          setBlockStatuses(prev => ({
+            ...prev,
+            [block.id]: { 
+              ...prev[block.id], 
+              isLoading: false,
+              error: null,
+              reviewStatus: 'pending',
+              isInitialReview: true
+            }
+          }));
+        });
+      }, 1000);
     };
+
     loadContent();
   }, []);
+
+  // // Add effect to handle initial content loading and review
+  // useEffect(() => {
+  //   Object.entries(blockStatuses).forEach(([blockId, status]) => {
+  //     if (status.isLoading) {
+  //       // Simulate initial content loading
+  //       simulateContentGeneration(Number(blockId)).then(() => {
+  //         if (status.isInitialReview) {
+  //           // Automatically trigger first review
+  //           const commentId = contentBlocks.find(b => b.id === Number(blockId))?.comments[0]?.id;
+  //           if (commentId) {
+  //             simulateReview(Number(blockId), commentId);
+  //           }
+  //         }
+  //       });
+  //     }
+  //   });
+  // }, [blockStatuses]);
 
   const handleUpdate = (id: number, content: string) => {
     const updatedBlocks = contentBlocks.map(block =>
@@ -106,6 +182,14 @@ export const EditorPage: React.FC = () => {
 
   // Simulate AI review generation with random timeout
   const simulateReview = async (blockId: number, commentId: number, instructions?: string) => {
+    setBlockStatuses(prev => ({
+      ...prev,
+      [blockId]: { 
+        ...prev[blockId], 
+        reviewStatus: 'reviewing' 
+      }
+    }));
+
     const updateCommentStatus = (status: CommentStatus) => {
       setContentBlocks(blocks => 
         blocks.map(block => ({
@@ -120,10 +204,8 @@ export const EditorPage: React.FC = () => {
     updateCommentStatus('loading');
     
     try {
-      // Simulate API call with random timeout
       await new Promise(resolve => setTimeout(resolve, Math.random() * 3000 + 1000));
       
-      // Randomly throw error for demonstration
       if (Math.random() < 0.2) throw new Error('Failed to generate review');
       
       const newComment = `Updated AI review at ${new Date().toLocaleTimeString()}${
@@ -140,8 +222,24 @@ export const EditorPage: React.FC = () => {
           )
         }))
       );
+
+      setBlockStatuses(prev => ({
+        ...prev,
+        [blockId]: { 
+          ...prev[blockId], 
+          reviewStatus: 'completed',
+          isInitialReview: false 
+        }
+      }));
     } catch (error) {
       updateCommentStatus('error');
+      setBlockStatuses(prev => ({
+        ...prev,
+        [blockId]: { 
+          ...prev[blockId], 
+          reviewStatus: 'error' 
+        }
+      }));
     }
   };
 
@@ -149,7 +247,12 @@ export const EditorPage: React.FC = () => {
   const simulateContentGeneration = async (blockId: number) => {
     setBlockStatuses(prev => ({
       ...prev,
-      [blockId]: { isLoading: true, error: null }
+      [blockId]: { 
+        isLoading: true, 
+        error: null,
+        reviewStatus: prev[blockId]?.reviewStatus || 'pending',
+        isInitialReview: prev[blockId]?.isInitialReview || true
+      }
     }));
 
     try {
@@ -167,12 +270,24 @@ export const EditorPage: React.FC = () => {
 
       setBlockStatuses(prev => ({
         ...prev,
-        [blockId]: { isLoading: false, error: null }
+        [blockId]: {
+          ...prev[blockId],
+          isLoading: false,
+          error: null,
+          reviewStatus: prev[blockId]?.reviewStatus || 'pending',
+          isInitialReview: prev[blockId]?.isInitialReview || true
+        }
       }));
     } catch (error) {
       setBlockStatuses(prev => ({
         ...prev,
-        [blockId]: { isLoading: false, error: error.message }
+        [blockId]: {
+          ...prev[blockId],
+          isLoading: false,
+          error: error instanceof Error ? error.message : 'An unknown error occurred',
+          reviewStatus: 'error',
+          isInitialReview: prev[blockId]?.isInitialReview || true
+        }
       }));
     }
   };
@@ -198,8 +313,8 @@ export const EditorPage: React.FC = () => {
     <Paper 
       key={comment.id} 
       p="md" 
-      withBorder
-      shadow="sm"
+      withBorder={false}  // Remove border from comment cards
+      shadow="xs"
       radius="md"
     >
       <Group gap="sm" mb="xs">
@@ -289,22 +404,11 @@ export const EditorPage: React.FC = () => {
             </Text>
           )}
           
-          <Group position="apart" mt="md">
-            <Button
-              variant="light"
-              size="xs"
-              leftIcon={<IconMessageCircle size="1rem" />}
-              onClick={() => handleRequestReview(blockId, comment.id)}
-              loading={comment.status === 'loading'}
-              disabled={comment.status === 'loading'}
-            >
-              Request Re-review
-            </Button>
+          <Group justify='flex-end' mt="md">
             
             <Button
               color="blue"
               size="xs"
-              leftIcon={<IconPencil size="1rem" />}
               onClick={() => simulateContentGeneration(blockId)}
               loading={blockStatuses[blockId]?.isLoading}
               disabled={blockStatuses[blockId]?.isLoading}
@@ -317,26 +421,51 @@ export const EditorPage: React.FC = () => {
     </Paper>
   );
 
+  // Helper function to generate dummy content based on title and description
+  const generateDummyContent = (title: string, description: string) => {
+    return `<h2>${title}</h2>
+<p>${description}</p>
+
+<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+
+<h3>Key Points</h3>
+<ul>
+  <li>Important consideration one</li>
+  <li>Critical aspect two</li>
+  <li>Notable element three</li>
+</ul>
+
+<p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+
+<blockquote>
+  <p>Relevant quote or important highlight related to this section.</p>
+</blockquote>
+
+<p>Additional context and elaboration would be needed here to fully develop this section according to the outlined objectives.</p>`;
+  };
+
   return (
     <>
       <div style={{ 
         height: '100vh', 
         display: 'flex',
-        overflow: 'hidden' // Prevent body scroll
+        overflow: 'hidden',
+        backgroundColor: 'var(--mantine-color-body)'
       }}>
         {/* Fixed TOC sidebar */}
         <Paper 
+          shadow="xs"
           style={{ 
             width: TOC_WIDTH,
             height: '100vh',
-            borderRight: '1px solid var(--mantine-color-gray-3)',
+            borderRight: '1px solid var(--mantine-color-default-border)',
             display: 'flex',
-            flexDirection: 'column'
+            flexDirection: 'column',
           }}
         >
           {/* TOC Header */}
           <Box p="md" style={{ 
-            borderBottom: '1px solid var(--mantine-color-gray-3)',
+            borderBottom: '1px solid var(--mantine-color-default-border)',
             backgroundColor: 'var(--mantine-color-body)'
           }}>
             <Text size="sm" fw={700}>Table of Contents</Text>
@@ -358,7 +487,8 @@ export const EditorPage: React.FC = () => {
             flex: 1,
             height: '100vh',
             overflowY: 'auto',
-            padding: 'var(--mantine-spacing-xl)'
+            padding: 'var(--mantine-spacing-xl)',
+            backgroundColor: 'var(--mantine-color-body)'
           }}
         >
           <Container size="xl">
@@ -368,20 +498,46 @@ export const EditorPage: React.FC = () => {
                   key={block.id} 
                   id={`section-${block.id}`} 
                   align="flex-start" 
-                  noWrap
                   style={{ scrollMarginTop: '2rem' }}
                 >
                   {/* Editor Section */}
                   <Paper 
                     p="md" 
+                    withBorder={false}
                     style={{ 
                       flex: 1,
                       minHeight: '300px',
                       display: 'flex',
-                      flexDirection: 'column'
+                      flexDirection: 'column',
                     }}
                   >
-                    <Text size="lg" fw={500} mb="md">{block.title}</Text>
+                    <Group justify="apart" mb="md">
+                      <Group gap="xs">
+                        <Text size="lg" fw={500}>{block.title}</Text>
+                        <Tooltip
+                          label={block.description}
+                          position="right"
+                          multiline
+                          w={300}
+                          withArrow
+                        >
+                          <ActionIcon
+                            variant="subtle"
+                            color="gray"
+                            size="sm"
+                            aria-label="Section description"
+                          >
+                            <IconInfoCircle size="1rem" />
+                          </ActionIcon>
+                        </Tooltip>
+                      </Group>
+                      {blockStatuses[block.id]?.reviewStatus === 'reviewing' && (
+                        <Group gap="xs">
+                          <Loader size="xs" />
+                          <Text size="sm" c="dimmed">Review in progress...</Text>
+                        </Group>
+                      )}
+                    </Group>
                     <Box style={{ flex: 1, position: 'relative' }}>
                       {blockStatuses[block.id]?.isLoading && (
                         <div style={{
@@ -398,14 +554,14 @@ export const EditorPage: React.FC = () => {
                         }}>
                           <Stack align="center">
                             <Loader size="sm" />
-                            <Text size="sm">AI is writing...</Text>
+                            <Text size="sm">Loading content...</Text>
                           </Stack>
                         </div>
                       )}
                       <RichTextEditorComponent
                         content={block.content}
                         onUpdate={(content) => handleUpdate(block.id, content)}
-                        disabled={blockStatuses[block.id]?.isLoading}
+                        disabled={blockStatuses[block.id]?.isLoading || blockStatuses[block.id]?.reviewStatus === 'reviewing'}
                       />
                     </Box>
                     {blockStatuses[block.id]?.error && (
@@ -418,13 +574,14 @@ export const EditorPage: React.FC = () => {
                   {/* Comments Section */}
                   <Paper 
                     p="md" 
+                    withBorder={false}  
                     style={{ 
                       width: COMMENT_WIDTH,
                       flexShrink: 0,
                       alignSelf: 'stretch'
                     }}
                   >
-                    <Text size="sm" fw={500} c="dimmed" mb="md">Comments</Text>
+                    <Text size="sm" fw={500} c="dimmed" mb="md">Reviewer Comments</Text>
                     <Stack gap="md">
                       {block.comments.map(comment => renderCommentCard(comment, block.id))}
                     </Stack>
@@ -457,7 +614,7 @@ export const EditorPage: React.FC = () => {
             }))}
           />
 
-          <Group position="right" mt="md">
+          <Group justify="right" mt="md">
             <Button 
               variant="light" 
               onClick={() => setReviewInstructionsModal(prev => ({ ...prev, isOpen: false }))}

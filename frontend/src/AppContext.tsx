@@ -20,12 +20,14 @@ interface IComment {
   user: string;
   comment: string;
   id: number;
+  status: 'idle' | 'loading' | 'error' | 'success';
 }
 
 export interface IContentBlock {
   id: number;
   title: string;
   content: string;
+  description: string;
   comments: IComment[];
 }
 

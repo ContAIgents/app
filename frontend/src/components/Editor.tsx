@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { Link, RichTextEditor } from '@mantine/tiptap';
@@ -24,6 +24,13 @@ const RichTextEditorComponent: React.FC<RichTextEditorComponentProps> = ({
     },
     editable: !disabled
   });
+
+  // Add this effect to update editor's editable state when disabled prop changes
+  useEffect(() => {
+    if (editor) {
+      editor.setEditable(!disabled);
+    }
+  }, [disabled, editor]);
 
   return (
     <RichTextEditor editor={editor} variant="subtle">

@@ -1,38 +1,38 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
 import {
-  Container,
-  Title,
-  Paper,
-  Stack,
-  Textarea,
-  Button,
-  Group,
-  Badge,
-  SimpleGrid,
-  Card,
-  Text,
-  rem,
-  Modal,
-  ActionIcon,
-  TextInput,
-  Collapse,
-} from '@mantine/core';
-import { ConfigManager } from '../services/config/ConfigManager';
-import { 
-  IconArticle, 
-  IconBook, 
-  IconBrandBlogger, 
-  IconMicrophone, 
-  IconVideo, 
-  IconFileText,
+  IconArticle,
+  IconBook,
+  IconBrandBlogger,
   IconCircleCheck,
   IconEdit,
-  IconTrash,
-  IconPlus,
+  IconFileText,
   IconGripVertical,
+  IconMicrophone,
+  IconPlus,
+  IconTrash,
+  IconVideo,
 } from '@tabler/icons-react';
-import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import { useNavigate } from 'react-router-dom';
+import {
+  ActionIcon,
+  Badge,
+  Button,
+  Card,
+  Collapse,
+  Container,
+  Group,
+  Modal,
+  Paper,
+  rem,
+  SimpleGrid,
+  Stack,
+  Text,
+  Textarea,
+  TextInput,
+  Title,
+} from '@mantine/core';
+import { ConfigManager } from '../services/config/ConfigManager';
 
 interface ContentBlock {
   id: number;
@@ -42,142 +42,187 @@ interface ContentBlock {
 }
 
 const CONTENT_TYPES = [
-  { value: 'blog', label: 'Blog Post', icon: IconBrandBlogger, description: 'Create engaging blog content' },
-  { value: 'documentation', label: 'Documentation', icon: IconBook, description: 'Technical documentation and guides' },
-  { value: 'article', label: 'Article', icon: IconArticle, description: 'In-depth articles and analysis' },
-  { value: 'podcast', label: 'Podcast Script', icon: IconMicrophone, description: 'Engaging podcast scripts', disabled: true },
-  { value: 'reel', label: 'Social Media Reel', icon: IconVideo, description: 'Short-form video content', disabled: true },
-  { value: 'whitepaper', label: 'Whitepaper', icon: IconFileText, description: 'Professional whitepapers', disabled: true },
+  {
+    value: 'blog',
+    label: 'Blog Post',
+    icon: IconBrandBlogger,
+    description: 'Create engaging blog content',
+  },
+  {
+    value: 'documentation',
+    label: 'Documentation',
+    icon: IconBook,
+    description: 'Technical documentation and guides',
+  },
+  {
+    value: 'article',
+    label: 'Article',
+    icon: IconArticle,
+    description: 'In-depth articles and analysis',
+  },
+  {
+    value: 'podcast',
+    label: 'Podcast',
+    icon: IconMicrophone,
+    description: 'Expand your ideas into engaging podcast about any topics in minutes',
+    disabled: true,
+  },
+  {
+    value: 'reel',
+    label: 'Social Media Reel',
+    icon: IconVideo,
+    description: 'Create short, attention-grabbing social media content from your ideas',
+    disabled: true,
+  },
+  {
+    value: 'whitepaper',
+    label: 'Whitepaper',
+    icon: IconFileText,
+    description: 'Professional whitepapers',
+    disabled: true,
+  },
 ];
 
 const getStructuredBlocks = (type: string, idea: string) => {
-  const dummyComments = [
-    {
-      timestamp: new Date().toISOString(),
-      user: 'AI Assistant',
-      comment: 'Consider expanding this section with more specific examples.',
-      id: 1,
-    },
-    {
-      timestamp: new Date().toISOString(),
-      user: 'Editor',
-      comment: 'The tone here aligns well with our style guide.',
-      id: 2,
-    },
-    {
-      timestamp: new Date().toISOString(),
-      user: 'Technical Reviewer',
-      comment: 'Make sure to fact-check these statistics.',
-      id: 3,
-    }
-  ];
-
   const structures = {
     blog: [
-      { 
-        id: 1, 
-        title: 'Introduction', 
-        content: '# Introduction\n' + idea, 
-        comments: [dummyComments[0]]
+      {
+        id: 1,
+        title: 'Introduction',
+        content: '',
+        description:
+          'Set the context and hook the reader with a compelling opening that introduces your main topic.',
+        comments: [],
       },
-      { 
-        id: 2, 
-        title: 'The Current State of AI', 
-        content: '# The Current State of AI\nDiscuss the current landscape...', 
-        comments: [dummyComments[1], dummyComments[2]]
+      {
+        id: 2,
+        title: 'The Current State of AI',
+        content: '',
+        description:
+          'Provide an overview of the current AI landscape, including recent developments and key players.',
+        comments: [],
       },
-      { 
-        id: 3, 
-        title: 'Key Challenges and Opportunities', 
-        content: '# Key Challenges and Opportunities\nExplore the main challenges...', 
-        comments: [dummyComments[0], dummyComments[1]]
+      {
+        id: 3,
+        title: 'Key Challenges and Opportunities',
+        content: '',
+        description:
+          'Analyze major obstacles in AI development and potential areas for growth and innovation.',
+        comments: [],
       },
-      { 
-        id: 4, 
-        title: 'Real-World Applications', 
-        content: '# Real-World Applications\nPresent concrete examples...', 
-        comments: [dummyComments[2]]
+      {
+        id: 4,
+        title: 'Real-World Applications',
+        content: '',
+        description:
+          'Showcase practical implementations and success stories of AI in various industries.',
+        comments: [],
       },
-      { 
-        id: 5, 
-        title: 'Future Implications', 
-        content: '# Future Implications\nAnalyze potential future developments...', 
-        comments: [dummyComments[1]]
+      {
+        id: 5,
+        title: 'Future Implications',
+        content: '',
+        description:
+          'Explore potential future developments and their impact on society and technology.',
+        comments: [],
       },
-      { 
-        id: 6, 
-        title: 'Conclusion', 
-        content: '# Conclusion\nSummarize key points and provide final thoughts...', 
-        comments: [dummyComments[0]]
+      {
+        id: 6,
+        title: 'Conclusion',
+        content: '',
+        description: 'Summarize key points and provide actionable insights or final thoughts.',
+        comments: [],
       },
     ],
     documentation: [
-      { 
-        id: 1, 
-        title: 'Overview', 
-        content: '# Overview\n' + idea, 
-        comments: [dummyComments[0], dummyComments[1]]
+      {
+        id: 1,
+        title: 'Overview',
+        content: '',
+        description: 'Provide a high-level introduction to the system or feature being documented.',
+        comments: [],
       },
-      { 
-        id: 2, 
-        title: 'Getting Started', 
-        content: '# Getting Started\nStep-by-step guide...', 
-        comments: [dummyComments[2]]
+      {
+        id: 2,
+        title: 'Getting Started',
+        content: '',
+        description:
+          'Guide users through initial setup and basic usage with clear, step-by-step instructions.',
+        comments: [],
       },
-      { 
-        id: 3, 
-        title: 'Core Concepts', 
-        content: '# Core Concepts\nKey concepts and terminology...', 
-        comments: [dummyComments[0]]
+      {
+        id: 3,
+        title: 'Core Concepts',
+        content: '',
+        description:
+          'Explain fundamental concepts and terminology essential for understanding the system.',
+        comments: [],
       },
-      { 
-        id: 4, 
-        title: 'Advanced Usage', 
-        content: '# Advanced Usage\nDetailed examples...', 
-        comments: [dummyComments[1]]
+      {
+        id: 4,
+        title: 'Advanced Usage',
+        content: '',
+        description: 'Cover complex features and advanced implementation scenarios.',
+        comments: [],
       },
-      { 
-        id: 5, 
-        title: 'Troubleshooting', 
-        content: '# Troubleshooting\nCommon issues and solutions...', 
-        comments: [dummyComments[2]]
+      {
+        id: 5,
+        title: 'Troubleshooting',
+        content: '',
+        description: 'Address common issues and provide solutions to typical problems.',
+        comments: [],
       },
     ],
     article: [
-      { 
-        id: 1, 
-        title: 'Executive Summary', 
-        content: '# Executive Summary\n' + idea, 
-        comments: [dummyComments[0], dummyComments[2]]
+      {
+        id: 1,
+        title: 'Executive Summary',
+        content: '',
+        description: 'Provide a brief overview of the main points and key findings.',
+        comments: [],
       },
-      { 
-        id: 2, 
-        title: 'Background', 
-        content: '# Background\nContextual information...', 
-        comments: [dummyComments[1]]
+      {
+        id: 2,
+        title: 'Background',
+        content: '',
+        description: 'Present relevant context and historical information about the topic.',
+        comments: [],
       },
-      { 
-        id: 3, 
-        title: 'Analysis', 
-        content: '# Analysis\nIn-depth analysis...', 
-        comments: [dummyComments[0]]
+      {
+        id: 3,
+        title: 'Analysis',
+        content: '',
+        description: 'Examine the topic in detail, including data, research, and expert insights.',
+        comments: [],
       },
-      { 
-        id: 4, 
-        title: 'Key Findings', 
-        content: '# Key Findings\nMain discoveries...', 
-        comments: [dummyComments[2]]
+      {
+        id: 4,
+        title: 'Key Findings',
+        content: '',
+        description: 'Highlight the most important discoveries and conclusions from the analysis.',
+        comments: [],
       },
-      { 
-        id: 5, 
-        title: 'Recommendations', 
-        content: '# Recommendations\nActionable insights...', 
-        comments: [dummyComments[1], dummyComments[0]]
+      {
+        id: 5,
+        title: 'Recommendations',
+        content: '',
+        description: 'Provide actionable suggestions based on the analysis and findings.',
+        comments: [],
       },
     ],
   };
-  
-  return structures[type as keyof typeof structures] || [{ id: 1, title: 'Content', content: idea, comments: [] }];
+
+  return (
+    structures[type as keyof typeof structures] || [
+      {
+        id: 1,
+        title: 'Content',
+        content: '',
+        description: 'Add your content here...',
+        comments: [],
+      },
+    ]
+  );
 };
 
 export function EditorIdea() {
@@ -221,34 +266,32 @@ export function EditorIdea() {
 
   const handleUpdateBlock = (blockId: number, updates: Partial<ContentBlock>) => {
     if (!generatedBlocks) return;
-    
-    setGeneratedBlocks(blocks => 
-      blocks?.map(block => 
-        block.id === blockId ? { ...block, ...updates } : block
-      ) ?? null
+
+    setGeneratedBlocks(
+      (blocks) =>
+        blocks?.map((block) => (block.id === blockId ? { ...block, ...updates } : block)) ?? null
     );
   };
 
   const handleAddBlock = () => {
     if (!generatedBlocks) return;
-    
+
     const newBlock: ContentBlock = {
-      id: Math.max(...generatedBlocks.map(b => b.id)) + 1,
+      id: Math.max(...generatedBlocks.map((b) => b.id)) + 1,
       title: 'New Section',
-      content: '# New Section\nAdd your content here...',
-      comments: []
+      content: '',
+      description: 'Describe the purpose of this section...',
+      comments: [],
     };
-    
+
     setGeneratedBlocks([...generatedBlocks, newBlock]);
     setEditingBlockId(newBlock.id);
   };
 
   const handleDeleteBlock = (blockId: number) => {
     if (!generatedBlocks || generatedBlocks.length <= 1) return;
-    
-    setGeneratedBlocks(blocks => 
-      blocks?.filter(block => block.id !== blockId) ?? null
-    );
+
+    setGeneratedBlocks((blocks) => blocks?.filter((block) => block.id !== blockId) ?? null);
   };
 
   const handleDragEnd = (result: any) => {
@@ -269,8 +312,10 @@ export function EditorIdea() {
 
           <Paper shadow="sm" p="xl" withBorder>
             <Stack gap="md">
-              <Text size="lg" fw={500}>What would you like to create?</Text>
-              <SimpleGrid cols={3}>
+              <Text size="lg" fw={500}>
+                What would you like to create?
+              </Text>
+              <SimpleGrid cols={{ base: 3, sm: 4, md: 6 }} spacing="lg">
                 {CONTENT_TYPES.map((type) => (
                   <Card
                     key={type.value}
@@ -278,7 +323,7 @@ export function EditorIdea() {
                     padding="lg"
                     radius="md"
                     withBorder
-                    style={{ 
+                    style={{
                       cursor: type.disabled ? 'not-allowed' : 'pointer',
                       opacity: type.disabled ? 0.5 : 1,
                     }}
@@ -287,7 +332,9 @@ export function EditorIdea() {
                   >
                     <type.icon size={rem(32)} style={{ marginBottom: rem(10) }} />
                     <Text fw={500}>{type.label}</Text>
-                    <Text size="sm" c="dimmed">{type.description}</Text>
+                    <Text size="sm" c="dimmed">
+                      {type.description}
+                    </Text>
                     {type.disabled && (
                       <Badge color="yellow" style={{ position: 'absolute', top: 10, right: 10 }}>
                         Coming Soon
@@ -321,17 +368,15 @@ export function EditorIdea() {
         </Stack>
       </Container>
 
-      <Modal 
-        opened={showPlotModal} 
+      <Modal
+        opened={showPlotModal}
         onClose={handleRejectPlot}
         size="xl"
-        title={
-          <Title order={3}>Content Structure</Title>
-        }
+        title={<Title order={3}>Content Structure</Title>}
       >
         <Stack gap="md">
           <Text>
-            Review and customize your content structure. You can reorder sections by dragging them, 
+            Review and customize your content structure. You can reorder sections by dragging them,
             edit their titles, or add new sections as needed.
           </Text>
 
@@ -350,26 +395,32 @@ export function EditorIdea() {
                             p="sm"
                           >
                             <Group gap="xs">
-                              <ActionIcon 
-                                variant="subtle" 
+                              <ActionIcon
+                                variant="subtle"
                                 {...provided.dragHandleProps}
                                 aria-label="Drag to reorder"
                               >
                                 <IconGripVertical size={16} />
                               </ActionIcon>
 
-                              {editingBlockId === block.id ? (
-                                <TextInput
-                                  value={block.title}
-                                  onChange={(e) => handleUpdateBlock(block.id, { title: e.target.value })}
-                                  onBlur={() => setEditingBlockId(null)}
-                                  onKeyDown={(e) => e.key === 'Enter' && setEditingBlockId(null)}
-                                  autoFocus
-                                  style={{ flex: 1 }}
-                                />
-                              ) : (
-                                <Text fw={500} style={{ flex: 1 }}>{block.title}</Text>
-                              )}
+                              <Stack spacing="xs" style={{ flex: 1 }}>
+                                {editingBlockId === block.id ? (
+                                  <TextInput
+                                    value={block.title}
+                                    onChange={(e) =>
+                                      handleUpdateBlock(block.id, { title: e.target.value })
+                                    }
+                                    onBlur={() => setEditingBlockId(null)}
+                                    onKeyDown={(e) => e.key === 'Enter' && setEditingBlockId(null)}
+                                    autoFocus
+                                  />
+                                ) : (
+                                  <Text fw={500}>{block.title}</Text>
+                                )}
+                                <Text size="sm" c="dimmed">
+                                  {block.description}
+                                </Text>
+                              </Stack>
 
                               <Group gap="xs">
                                 <ActionIcon
@@ -400,8 +451,8 @@ export function EditorIdea() {
               </Droppable>
             </DragDropContext>
 
-            <Button 
-              variant="light" 
+            <Button
+              variant="light"
               leftSection={<IconPlus size={16} />}
               onClick={handleAddBlock}
               mt="md"
@@ -415,10 +466,7 @@ export function EditorIdea() {
             <Button variant="light" color="red" onClick={handleRejectPlot}>
               Start Over
             </Button>
-            <Button 
-              onClick={handleApprovePlot}
-              leftSection={<IconCircleCheck size={16} />}
-            >
+            <Button onClick={handleApprovePlot} leftSection={<IconCircleCheck size={16} />}>
               Proceed to Editor
             </Button>
           </Group>

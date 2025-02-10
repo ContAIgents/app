@@ -259,7 +259,6 @@ ${contentBlocks.map(b => `- ${b.title}: ${b.shortDescription}`).join('\n')}
 
 CURRENT SECTION
 Title: ${block.title}
-Description: ${block.description}
 Context: ${block.shortDescription}
 
 ${previousBlock ? `Previous Section: ${previousBlock.title}` : 'This is the first section'}

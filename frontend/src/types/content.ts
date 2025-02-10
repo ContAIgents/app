@@ -1,10 +1,13 @@
+import { Agent } from '@/services/agents/Agent';
+
 export interface ContentBlock {
   id: number;
   title: string;
   content: string;
-  description: string;
-  shortDescription: string;
   comments: Comment[];
+  shortDescription: string;
+  writer?: Agent;
+  reviewer?: Agent;
 }
 
 export interface Comment {

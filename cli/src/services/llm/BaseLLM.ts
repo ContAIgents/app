@@ -12,7 +12,7 @@ export abstract class BaseLLM implements LLMInterface {
   protected readonly fileService: FileService = new FileService();
 
   constructor(protected readonly providerConfig: ProviderConfig) {
-    this.storageKey = `llm_config_${providerConfig.name.toLowerCase()}`;
+    this.storageKey = `llm_config_${providerConfig.name.toLowerCase()}.json`;
     this.loadConfig();
   }
 

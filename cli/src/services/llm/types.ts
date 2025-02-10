@@ -1,4 +1,5 @@
 export interface PromptResponse {
+  reason?: string;
   content: string;
   raw?: any; // Raw response from the provider
 }

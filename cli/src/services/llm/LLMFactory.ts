@@ -1,35 +1,44 @@
-import { OpenAIProvider } from './OpenAIProvider';
-import { AnthropicProvider } from './AnthropicProvider';
-import { GoogleProvider } from './GoogleProvider';
-import { DeepSeekProvider } from './DeepSeekProvider';
-import { HuggingFaceProvider } from './HuggingFaceProvider';
-import { OllamaProvider } from './OllamaProvider';
-import { LLMInterface } from './types';
+import { AnthropicProvider } from "./AnthropicProvider";
+import { DeepSeekProvider } from "./DeepSeekProvider";
+import { GoogleProvider } from "./GoogleProvider";
+import { HuggingFaceProvider } from "./HuggingFaceProvider";
+import { OllamaProvider } from "./OllamaProvider";
+import { OpenAIProvider } from "./OpenAIProvider";
+import { LLMInterface } from "./types";
+
+export const providers = {
+  OpenAI: OpenAIProvider.providerConfig,
+  Anthropic: AnthropicProvider.providerConfig,
+  Google: GoogleProvider.providerConfig,
+  DeepSeek: DeepSeekProvider.providerConfig,
+  HuggingFace: HuggingFaceProvider.providerConfig,
+  Ollama: OllamaProvider.providerConfig,
+};
 
 export class LLMFactory {
   private static instances: Map<string, LLMInterface> = new Map();
 
   static getProvider(name: string): LLMInterface {
     const providerName = name.toLowerCase();
-    
+
     if (!this.instances.has(providerName)) {
       switch (providerName) {
-        case 'openai':
+        case "openai":
           this.instances.set(providerName, new OpenAIProvider());
           break;
-        case 'anthropic':
+        case "anthropic":
           this.instances.set(providerName, new AnthropicProvider());
           break;
-        case 'google':
+        case "google":
           this.instances.set(providerName, new GoogleProvider());
           break;
-        case 'deepseek':
+        case "deepseek":
           this.instances.set(providerName, new DeepSeekProvider());
           break;
-        case 'huggingface':
+        case "huggingface":
           this.instances.set(providerName, new HuggingFaceProvider());
           break;
-        case 'ollama':
+        case "ollama":
           this.instances.set(providerName, new OllamaProvider());
           break;
         default:
@@ -40,7 +49,26 @@ export class LLMFactory {
     return this.instances.get(providerName)!;
   }
 
+  static getConfiguredProvider(): LLMInterface | null {
+    for (const providerName of Object.keys(providers)) {
+      console.log("LLM:", providerName);
+      const llm = this.getProvider(providerName);
+      if (llm.isConfigured()) {
+        return llm;
+      }
+    }
+
+    return null;
+  }
+
   static getAvailableProviders(): string[] {
-    return ['OpenAI', 'Anthropic', 'Google', 'DeepSeek', 'HuggingFace', 'Ollama'];
+    return [
+      "OpenAI",
+      "Anthropic",
+      "Google",
+      "DeepSeek",
+      "HuggingFace",
+      "Ollama",
+    ];
   }
 }

@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import { FileService } from "./services/fileService";
 import apiRoutes from "./routes/api";
+import llmRoutes from "./routes/agent";
 
 export class Server {
   private app: express.Application;
@@ -24,6 +25,7 @@ export class Server {
 
   private setupRoutes(): void {
     this.app.use("/api", apiRoutes);
+    this.app.use("/api", llmRoutes);
   }
 
   private setupErrorHandling(): void {

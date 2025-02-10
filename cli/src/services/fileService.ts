@@ -1,12 +1,12 @@
-import fs from 'fs';
-import path from 'path';
-import { FileContent } from '../types';
+import fs from "fs";
+import path from "path";
+import { FileContent } from "../types";
 
 export class FileService {
   private baseDir: string;
 
   constructor() {
-    this.baseDir = path.join(process.env.HOME || process.env.USERPROFILE || '', '.ai-content');
+    this.baseDir = path.join(process.cwd(), "..", ".ai-content");
     this.ensureBaseDir();
   }
 
@@ -29,7 +29,7 @@ export class FileService {
 
   async readFile(filePath: string): Promise<string> {
     const fullPath = path.join(this.baseDir, filePath);
-    return fs.promises.readFile(fullPath, 'utf-8');
+    return fs.promises.readFile(fullPath, "utf-8");
   }
 
   async fileExists(filePath: string): Promise<boolean> {

@@ -40,6 +40,7 @@ export class OllamaProvider extends BaseLLM {
       },
       body: JSON.stringify({
         model: this.config.model,
+        stream: false,
         prompt: prompt,
         options: {
           temperature: options.temperature ?? 0.7,

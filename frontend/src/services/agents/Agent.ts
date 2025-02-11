@@ -1,8 +1,8 @@
+import { ConfigManager } from '@/services/config/ConfigManager';
+import { ContentBlock } from '@/types/content';
 import { KnowledgeBaseManager } from '../knowledgeBase/KnowledgeBaseManager';
 import { LLMFactory } from '../llm/LLMFactory';
 import { AgentConfig, AgentRole } from './types';
-import { ContentBlock } from '@/types/content';
-import { ConfigManager } from '@/services/config/ConfigManager';
 
 export class Agent {
   private config: AgentConfig;
@@ -53,7 +53,6 @@ export class Agent {
     const defaultDoc = knowledgeBaseManager.getDefaultDocument();
     const knowledgeBase = defaultDoc.content;
 
-    
     const llm = (() => {
       const providers = LLMFactory.getAvailableProviders();
       for (const providerName of providers) {
@@ -70,7 +69,8 @@ export class Agent {
     })();
 
     const systemPrompt = `You are an expert content strategist and writer. Your task is to create a detailed content structure.
-Format your response as a JSON array of content blocks. Each block must have:
+IMPORTANT: Respond ONLY with a valid JSON array, no additional text or markdown formatting.
+The response must be a raw JSON array of content blocks. Each block must have:
 - id (number)
 - title (string)
 - description (detailed section purpose, 1-2 sentences)
@@ -97,20 +97,30 @@ Generate a structured outline following the specified JSON format. Ensure each s
 
     try {
       const response = await llm.executePrompt(prompt, { temperature: 0.7 });
+      // console.log('response: ', response);
       const blocks = JSON.parse(response.content);
+      // console.log('blocks: ', blocks);
 
       // Validate the structure
       const isValid = blocks.every(
-        (block: any) =>
+        (block: ContentBlock) =>
           typeof block.id === 'number' &&
           typeof block.title === 'string' &&
-          typeof block.description === 'string' &&
           typeof block.shortDescription === 'string' &&
-          typeof block.content === 'string' &&
-          Array.isArray(block.comments)
+          typeof block.content === 'string'
       );
 
       if (!isValid) {
+        console.error(
+          'Invalid block structure:',
+          blocks.find(
+            (block: ContentBlock) =>
+              typeof block.id !== 'number' ||
+              typeof block.title !== 'string' ||
+              typeof block.shortDescription !== 'string' ||
+              typeof block.content !== 'string'
+          )
+        );
         throw new Error('Invalid block structure received from LLM');
       }
 
@@ -129,7 +139,7 @@ Generate a structured outline following the specified JSON format. Ensure each s
     const contentType = configManager.load<string>('contentType');
     const idea = configManager.load<string>('idea');
     const contentBlocks = configManager.load<ContentBlock[]>('contentBlocks') || [];
-    
+
     // Get knowledge base
     const defaultDoc = knowledgeBaseManager.getDefaultDocument();
     const knowledgeBase = defaultDoc.content;
@@ -154,7 +164,7 @@ with a ${this.config.writingStyle} writing style and ${this.config.tone} tone.
 ${this.config.systemPrompt}`;
 
     // Get the position of the current block in the outline
-    const blockIndex = contentBlocks.findIndex(b => b.id === block.id);
+    const blockIndex = contentBlocks.findIndex((b) => b.id === block.id);
     const previousBlock = blockIndex > 0 ? contentBlocks[blockIndex - 1] : null;
     const nextBlock = blockIndex < contentBlocks.length - 1 ? contentBlocks[blockIndex + 1] : null;
 
@@ -167,12 +177,11 @@ Content Type: ${contentType}
 Main Idea: ${idea}
 
 DOCUMENT STRUCTURE
-${contentBlocks.map(b => `- ${b.title}: ${b.shortDescription}`).join('\n')}
+${contentBlocks.map((b) => `- ${b.title}: ${b.shortDescription}`).join('\n')}
 
 CURRENT SECTION
 Title: ${block.title}
-Description: ${block.description}
-Context: ${block.shortDescription}
+Description: ${block.shortDescription}
 
 ${previousBlock ? `Previous Section: ${previousBlock.title}` : 'This is the first section'}
 ${nextBlock ? `Next Section: ${nextBlock.title}` : 'This is the final section'}
@@ -193,9 +202,9 @@ Generate the content now:`;
     try {
       // console.log("generating content for block:",prompt);
       // return prompt;
-      const response = await llm.executePrompt(prompt, { 
+      const response = await llm.executePrompt(prompt, {
         temperature: 0.7,
-        maxTokens: 2000 // Adjust based on your needs
+        maxTokens: 2000, // Adjust based on your needs
       });
 
       return response.content;
@@ -217,7 +226,7 @@ Generate the content now:`;
     const contentType = configManager.load<string>('contentType');
     const idea = configManager.load<string>('idea');
     const contentBlocks = configManager.load<ContentBlock[]>('contentBlocks') || [];
-    
+
     // Get knowledge base
     const defaultDoc = knowledgeBaseManager.getDefaultDocument();
     const knowledgeBase = defaultDoc.content;
@@ -242,7 +251,7 @@ with a ${this.config.writingStyle} writing style and ${this.config.tone} tone.
 ${this.config.systemPrompt}`;
 
     // Get the position of the current block in the outline
-    const blockIndex = contentBlocks.findIndex(b => b.id === block.id);
+    const blockIndex = contentBlocks.findIndex((b) => b.id === block.id);
     const previousBlock = blockIndex > 0 ? contentBlocks[blockIndex - 1] : null;
     const nextBlock = blockIndex < contentBlocks.length - 1 ? contentBlocks[blockIndex + 1] : null;
 
@@ -255,7 +264,7 @@ Content Type: ${contentType}
 Main Idea: ${idea}
 
 DOCUMENT STRUCTURE
-${contentBlocks.map(b => `- ${b.title}: ${b.shortDescription}`).join('\n')}
+${contentBlocks.map((b) => `- ${b.title}: ${b.shortDescription}`).join('\n')}
 
 CURRENT SECTION
 Title: ${block.title}
@@ -285,9 +294,9 @@ Rewrite this section's content to:
 Generate the improved content now:`;
 
     try {
-      const response = await llm.executePrompt(prompt, { 
+      const response = await llm.executePrompt(prompt, {
         temperature: 0.7,
-        maxTokens: 2000
+        maxTokens: 2000,
       });
 
       return response.content;

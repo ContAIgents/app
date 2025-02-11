@@ -39,8 +39,9 @@ export function ExportPage() {
             style={{
               border: '1px solid var(--mantine-color-gray-3)',
               borderRadius: 'var(--mantine-radius-md)',
-              height: 'calc(100vh - 250px)',
+              // height: 'calc(100vh - 250px)',
               overflow: 'auto',
+              height: '100%',
             }}
           >
             <MarkdownEditorComponent
@@ -112,7 +113,7 @@ export function ExportPage() {
 
           <ExportCard
             title="Create Blog"
-            content="Directly post to Medium"
+            content="Directly create a Medium post draft"
             onBtnClick={() => {}}
             imageSrc="https://miro.medium.com/v2/resize:fit:1400/0*sG6BT7e579CET2QA"
             buttonText="Create Blog"

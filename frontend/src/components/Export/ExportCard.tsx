@@ -35,7 +35,7 @@ const ExportCard = ({
 
       <Group justify="space-between" mt="md" mb="xs">
         <Text fw={500}>{title}</Text>
-        {isPremium && <Badge color={isPremium ? 'pink' : 'gray'}>Premium</Badge>}
+        {isPremium && <Text size='xl'>✨</Text>}
       </Group>
 
       <Text size="sm" c="dimmed">

@@ -1,11 +1,10 @@
 import React from 'react';
-import { Box, Paper, Stack, Avatar, Text, Menu, ActionIcon, Button, Group } from '@mantine/core';
 import { IconChevronDown } from '@tabler/icons-react';
-import { Agent } from '@/services/agents/Agent';
+import { ActionIcon, Avatar, Box, Button, Group, Menu, Paper, Stack, Text } from '@mantine/core';
+import { useBlockAgents } from '@/hooks/useBlockAgents';
 import { ConfigManager } from '@/services/config/ConfigManager';
 import { ContentBlock } from '@/types/content';
 import { IBlockStatus } from '@/types/editor';
-import { useBlockAgents } from '@/hooks/useBlockAgents';
 
 interface EmptyBlockContentProps {
   blockId: number;
@@ -68,7 +67,7 @@ export const EmptyBlockContent: React.FC<EmptyBlockContentProps> = ({
 
       // Generate initial review
       const reviewResponse = await selectedReviewer.generateReview(block, expandedContent);
-      
+
       setContentBlocks((blocks) =>
         blocks.map((b) =>
           b.id === blockId

@@ -269,21 +269,46 @@ export const EditorPage: React.FC = () => {
   const handleRequestReview = async (block: ContentBlock, commentId: number) => {
     const blockId = block?.id;
     if (block?.reviewer?.config === undefined) return;
+    
     try {
-      const instructions = await getReviewInstructionsFromUser();
-      // console.log("instructions",instructions)
-      const reviewResponse = await new Agent(block?.reviewer?.config).generateReview(
-        block,
-        instructions
-      );
+      // Set loading state before getting instructions
+      setBlockStatuses((prev) => ({
+        ...prev,
+        [blockId]: {
+          ...prev[blockId],
+          reviewStatus: 'reviewing',
+        },
+      }));
+
+      // Update comment to loading state
       setContentBlocks((blocks) =>
         blocks.map((b) =>
           b.id === blockId
             ? {
                 ...b,
+                comments: b.comments.map((c) =>
+                  c.id === commentId
+                    ? { ...c, status: 'loading' }
+                    : c
+                ),
+              }
+            : b
+        )
+      );
 
+      const instructions = await getReviewInstructionsFromUser();
+      const reviewResponse = await new Agent(block?.reviewer?.config).generateReview(
+        block,
+        instructions
+      );
+
+      setContentBlocks((blocks) =>
+        blocks.map((b) =>
+          b.id === blockId
+            ? {
+                ...b,
                 comments: [
-                  ...b.comments,
+                  ...b.comments.filter(c => c.id !== commentId),
                   {
                     id: commentId,
                     timestamp: new Date().toISOString(),
@@ -296,6 +321,7 @@ export const EditorPage: React.FC = () => {
             : b
         )
       );
+
       setBlockStatuses((prev) => ({
         ...prev,
         [blockId]: {
@@ -303,11 +329,34 @@ export const EditorPage: React.FC = () => {
           reviewStatus: 'pending',
         },
       }));
-
       
     } catch (error) {
-      // Handle modal cancellation or errors
-      console.log('Review instructions modal cancelled or failed');
+      console.error('Review generation failed:', error);
+      
+      // Set error states
+      setBlockStatuses((prev) => ({
+        ...prev,
+        [blockId]: {
+          ...prev[blockId],
+          reviewStatus: 'error',
+        },
+      }));
+
+      // Update comment to error state
+      setContentBlocks((blocks) =>
+        blocks.map((b) =>
+          b.id === blockId
+            ? {
+                ...b,
+                comments: b.comments.map((c) =>
+                  c.id === commentId
+                    ? { ...c, status: 'error' }
+                    : c
+                ),
+              }
+            : b
+        )
+      );
     }
   };
 

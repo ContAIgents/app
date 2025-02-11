@@ -143,19 +143,17 @@ Generate a structured outline following the specified JSON format. Ensure each s
 
     const llm = LLMFactory.getConfiguredProvider();
 
-    const systemPrompt = `You are an expert content writer. Your task is to expand a specific section of content.
-You will be provided with the overall context and the specific section to work on.
-Generate detailed, well-structured content that maintains consistency with the overall document flow.
+    const systemPrompt = `You are an expert content writer. Your task is to write content for a specific section.
+IMPORTANT: Respond ONLY with the section content. Do not include any explanations, introductions, or meta-commentary.
 
-Writing Guidelines:
+Content Requirements:
 - Write in a ${this.config.writingStyle} style
 - Maintain a ${this.config.tone} tone
 - Focus on accuracy and clarity
-- Include relevant examples and explanations
-- Ensure the content flows naturally from previous sections
-- Keep the content focused on this specific section without creating subsections
-- Use paragraphs and bullet points for organization instead of hierarchical headers
-- Stay within the scope of the section's description`;
+- Include relevant examples where needed
+- Ensure content flows naturally
+- Use paragraphs and bullet points for organization
+- Stay within the section's scope`;
 
     const writerPersona = `Acting as ${this.config.name}, an expert ${(this.config.expertise ?? []).join(', ')}
 with a ${this.config.writingStyle} writing style and ${this.config.tone} tone.
@@ -188,22 +186,12 @@ ${nextBlock ? `Next Section: ${nextBlock.title}` : 'This is the final section'}
 KNOWLEDGE BASE CONTEXT
 ${knowledgeBase}
 
-TASK
-Generate comprehensive content for this section that:
-1. Aligns with the section's purpose and description
-2. Maintains consistency with the overall document flow
-3. Incorporates relevant information from the knowledge base
-4. Uses appropriate formatting (headers, lists, paragraphs)
-5. Provides specific examples and explanations where needed
-
-Generate the content now:`;
+Write the section content now. Respond ONLY with the content:`;
 
     try {
-      // console.log("generating content for block:",prompt);
-      // return prompt;
       const response = await llm.executePrompt(prompt, {
         temperature: 0.7,
-        maxTokens: 2000, // Adjust based on your needs
+        maxTokens: 2000,
       });
 
       return response.content;
@@ -233,17 +221,15 @@ Generate the content now:`;
     const llm = LLMFactory.getConfiguredProvider();
 
     const systemPrompt = `You are an expert content writer. Your task is to rewrite a specific section of content based on reviewer feedback.
-Your PRIMARY FOCUS must be addressing EACH POINT from the reviewer's feedback, even if they are brief comments.
-Treat every sentence in the reviewer's feedback as a critical point that must be addressed in the rewrite.
+IMPORTANT: Respond ONLY with the rewritten content. Do not include any explanations, introductions, or meta-commentary.
 
-Writing Guidelines:
-- Address EACH point from the reviewer's feedback as your top priority
-- Break down reviewer's feedback sentence by sentence and ensure each is addressed
-- Write in a ${this.config.writingStyle} style
-- Maintain a ${this.config.tone} tone
-- Preserve valuable elements from the current content only if they don't conflict with reviewer feedback
-- Ensure improved clarity and readability
-- Maintain consistency with the document's overall flow`;
+Your rewrite must:
+- Address EACH point from the reviewer's feedback as top priority
+- Break down and implement every reviewer suggestion
+- Use ${this.config.writingStyle} style and ${this.config.tone} tone
+- Preserve valuable elements from current content only if they don't conflict with feedback
+- Ensure clarity and readability
+- Maintain consistency with document flow`;
 
     const writerPersona = `Acting as ${this.config.name}, an expert ${(this.config.expertise ?? []).join(', ')}
 with a ${this.config.writingStyle} writing style and ${this.config.tone} tone.
@@ -283,15 +269,7 @@ KNOWLEDGE BASE CONTEXT
 ${knowledgeBase}
 
 TASK
-1. First, analyze each sentence in the reviewer's feedback
-2. Then rewrite the content ensuring:
-   - EVERY point from the reviewer's feedback is explicitly addressed
-   - Each suggestion is implemented, even if brief
-   - The content maintains professional quality and flow
-   - Appropriate formatting (paragraphs, lists) is used
-   - Relevant knowledge base information is incorporated
-
-Generate the improved content now, prioritizing the reviewer's feedback:`;
+Rewrite the content now, incorporating all reviewer feedback. Respond ONLY with the new content:`;
 
     try {
       const response = await llm.executePrompt(prompt, {

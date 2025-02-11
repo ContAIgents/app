@@ -6,6 +6,7 @@ import { LLMFactory } from './llm/LLMFactory';
 export interface ExportAgentConfig {
   id?: string;
   name?: string;
+  maxWords?: number;
 }
 
 export class ExportAgent {
@@ -15,6 +16,7 @@ export class ExportAgent {
     this.config = {
       id: config.id || crypto.randomUUID(),
       name: config.name || 'New Final Agent',
+      maxWords: config.maxWords || 500,
     };
   }
 
@@ -61,6 +63,7 @@ Remember, you are creating a ${contentType} based on the main idea: ${idea}. Don
     try {
       const response = await llm.executePrompt(prompt, {
         temperature: 0.7,
+        maxTokens: this.config.maxWords,
       });
 
       return response.content;

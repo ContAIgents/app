@@ -5,7 +5,7 @@ import { LLMFactory } from '../llm/LLMFactory';
 import { AgentConfig, AgentRole } from './types';
 
 export class Agent {
-  private config: AgentConfig;
+  public config: AgentConfig;
 
   constructor(config: Partial<AgentConfig>) {
     this.config = {
@@ -153,6 +153,8 @@ Writing Guidelines:
 - Focus on accuracy and clarity
 - Include relevant examples and explanations
 - Ensure the content flows naturally from previous sections
+- Keep the content focused on this specific section without creating subsections
+- Use paragraphs and bullet points for organization instead of hierarchical headers
 - Stay within the scope of the section's description`;
 
     const writerPersona = `Acting as ${this.config.name}, an expert ${(this.config.expertise ?? []).join(', ')}
@@ -231,14 +233,15 @@ Generate the content now:`;
     const llm = LLMFactory.getConfiguredProvider();
 
     const systemPrompt = `You are an expert content writer. Your task is to rewrite a specific section of content based on reviewer feedback.
-You will be provided with the current content, reviewer suggestions, and overall context.
-Generate improved content that addresses the reviewer's feedback while maintaining document consistency.
+Your PRIMARY FOCUS must be addressing EACH POINT from the reviewer's feedback, even if they are brief comments.
+Treat every sentence in the reviewer's feedback as a critical point that must be addressed in the rewrite.
 
 Writing Guidelines:
+- Address EACH point from the reviewer's feedback as your top priority
+- Break down reviewer's feedback sentence by sentence and ensure each is addressed
 - Write in a ${this.config.writingStyle} style
 - Maintain a ${this.config.tone} tone
-- Address all points from the reviewer's feedback
-- Preserve valuable elements from the current content
+- Preserve valuable elements from the current content only if they don't conflict with reviewer feedback
 - Ensure improved clarity and readability
 - Maintain consistency with the document's overall flow`;
 
@@ -270,25 +273,25 @@ Context: ${block.description}
 ${previousBlock ? `Previous Section: ${previousBlock.title}` : 'This is the first section'}
 ${nextBlock ? `Next Section: ${nextBlock.title}` : 'This is the final section'}
 
+REVIEWER FEEDBACK (HIGHEST PRIORITY)
+${reviewerSuggestion}
+
 CURRENT CONTENT
 ${currentValue}
-
-REVIEWER FEEDBACK
-${reviewerSuggestion}
 
 KNOWLEDGE BASE CONTEXT
 ${knowledgeBase}
 
 TASK
-Rewrite this section's content to:
-1. Address all points from the reviewer's feedback
-2. Maintain or improve the existing good elements
-3. Ensure better clarity and readability
-4. Keep consistency with the overall document flow
-5. Use appropriate formatting (headers, lists, paragraphs)
-6. Incorporate relevant knowledge base information
+1. First, analyze each sentence in the reviewer's feedback
+2. Then rewrite the content ensuring:
+   - EVERY point from the reviewer's feedback is explicitly addressed
+   - Each suggestion is implemented, even if brief
+   - The content maintains professional quality and flow
+   - Appropriate formatting (paragraphs, lists) is used
+   - Relevant knowledge base information is incorporated
 
-Generate the improved content now:`;
+Generate the improved content now, prioritizing the reviewer's feedback:`;
 
     try {
       const response = await llm.executePrompt(prompt, {

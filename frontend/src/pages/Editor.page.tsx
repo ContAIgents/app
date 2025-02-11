@@ -369,7 +369,10 @@ export const EditorPage: React.FC = () => {
   };
 
   // Simulate content generation
-  const simulateContentGeneration = async (blockId: number, comment: Comment) => {
+  const simulateContentGeneration = async (block: ContentBlock, comment: Comment) => {
+    const blockId = block.id;
+    if (!blockId) return;
+
     setBlockStatuses((prev) => ({
       ...prev,
       [blockId]: {
@@ -379,14 +382,16 @@ export const EditorPage: React.FC = () => {
       },
     }));
 
-    const block = contentBlocks.find((b) => b.id === blockId);
-    if (!block) return;
-
     try {
-      // Get the latest comment as the reviewer suggestion
 
+      if(!block?.writer?.config) return;
+
+      const selectedWriter = new Agent(block?.writer?.config || {});
+
+      if (!selectedWriter) throw new Error('No writer selected for this block');
+      
       const rewrittenContent = await selectedWriter.rewrite(block, block.content, comment.comment);
-
+      
       setContentBlocks((blocks) =>
         blocks.map((b) => (b.id === blockId ? { ...b, content: rewrittenContent } : b))
       );
@@ -530,7 +535,7 @@ export const EditorPage: React.FC = () => {
               <Button
                 color="blue"
                 size="xs"
-                onClick={() => simulateContentGeneration(block.id, comment)}
+                onClick={() => simulateContentGeneration(block, comment)}
                 loading={blockStatuses[block.id]?.isLoading}
                 disabled={blockStatuses[block.id]?.isLoading}
               >

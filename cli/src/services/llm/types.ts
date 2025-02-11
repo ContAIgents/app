@@ -26,8 +26,8 @@ export interface LLMInterface {
 export interface ConfigField {
   name: string;
   required: boolean;
-  options?: string[];
-  default?: string;
+  options?: any[];
+  default?: any;
 }
 
 export interface ProviderConfig {

@@ -3,6 +3,7 @@ import { DeepSeekProvider } from "./DeepSeekProvider";
 import { GoogleProvider } from "./GoogleProvider";
 import { HuggingFaceProvider } from "./HuggingFaceProvider";
 import { OllamaProvider } from "./OllamaProvider";
+import { OllamaApiProvider } from "./OllamaApiProvider";
 import { OpenAIProvider } from "./OpenAIProvider";
 import { LLMInterface } from "./types";
 
@@ -13,6 +14,7 @@ export const providers = {
   DeepSeek: DeepSeekProvider.providerConfig,
   HuggingFace: HuggingFaceProvider.providerConfig,
   Ollama: OllamaProvider.providerConfig,
+  OllamaApi: OllamaApiProvider.providerConfig,
 };
 
 export class LLMFactory {
@@ -40,6 +42,9 @@ export class LLMFactory {
           break;
         case "ollama":
           this.instances.set(providerName, new OllamaProvider());
+          break;
+        case "ollamaapi":
+          this.instances.set(providerName, new OllamaApiProvider());
           break;
         default:
           throw new Error(`Unknown provider: ${name}`);

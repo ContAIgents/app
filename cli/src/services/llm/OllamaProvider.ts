@@ -1,5 +1,6 @@
 import { BaseLLM } from "./BaseLLM";
 import { PromptOptions, PromptResponse, ProviderConfig } from "./types";
+import ollama from "ollama";
 
 export class OllamaProvider extends BaseLLM {
   static readonly providerConfig: ProviderConfig = {
@@ -23,6 +24,12 @@ export class OllamaProvider extends BaseLLM {
         ],
         default: "deepseek-r1:8b",
       },
+      {
+        name: "stream",
+        required: false,
+        options: [true, false],
+        default: true,
+      },
     ],
   };
 
@@ -39,57 +46,28 @@ export class OllamaProvider extends BaseLLM {
       throw new Error("Ollama provider is not configured");
     }
 
-    const response = await fetch(`${this.config.endpoint}/api/generate`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: this.config.model,
-        prompt: prompt,
-        options: {
-          temperature: options.temperature ?? 0.7,
-          num_predict: options.maxTokens,
-        },
-      }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(`Ollama API error: ${error.error || "Unknown error"}`);
-    }
-
-    const reader = response.body?.getReader();
-    if (!reader) {
-      throw new Error("Failed to get reader from response body");
-    }
-
-    const decoder = new TextDecoder();
+    const { model, stream } = this.config;
     let result = "";
-    let done = false;
-
-    while (!done) {
-      const { value, done: doneReading } = await reader.read();
-      done = doneReading;
-      if (value) {
-        const resp = decoder.decode(value, { stream: true });
-        const jsonResp = JSON.parse(resp);
-        console.log("Partial response:", jsonResp.response);
-        result += jsonResp.response;
+    console.log("stream: ", stream);
+    if (stream) {
+      const response = await ollama.generate({ model, prompt, stream });
+      for await (const part of response) {
+        result += part.response;
       }
+    } else {
+      const response = await ollama.generate({ model, prompt });
+      result = response.response;
     }
-    // split the response -> Between <think> and </think -> Rest of the response
+
     const thinkTag = "<think>";
     const thinkEndTag = "</think>";
-    let thinkPart = "";
-    let responsePart = "";
-
-    if (result.includes(thinkTag) && result.includes(thinkEndTag)) {
-      thinkPart = result.split(thinkTag)[1]?.split(thinkEndTag)[0] || "";
-      responsePart = result.split(thinkEndTag)[1] || "";
-    } else {
-      responsePart = result;
-    }
+    const thinkPart =
+      result.includes(thinkTag) && result.includes(thinkEndTag)
+        ? result.split(thinkTag)[1]?.split(thinkEndTag)[0] || ""
+        : "";
+    const responsePart = result.includes(thinkEndTag)
+      ? result.split(thinkEndTag)[1] || ""
+      : result;
 
     return {
       reason: thinkPart.replace(/[\n\t]/g, ""),

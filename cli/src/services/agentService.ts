@@ -2,7 +2,7 @@ import { FileService } from "./fileService";
 import { LLMFactory } from "./llm/LLMFactory";
 
 export interface AgentConfig {
-  llm: string;
+  llmProvider: string;
 }
 
 export class AgentService {
@@ -25,7 +25,7 @@ export class AgentService {
   async generateResponse(prompt: string): Promise<string> {
     const config = await this.loadConfig();
     console.log("Loaded config: ", config);
-    const llm = LLMFactory.getProvider(config.llm);
+    const llm = LLMFactory.getProvider(config.llmProvider);
     if (!llm) {
       throw new Error("No provider configured");
     }

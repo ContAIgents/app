@@ -95,13 +95,16 @@ export function EditorIdea() {
 
     setIsGenerating(true);
     try {
+      if (!selectedWriter || !contentType) {
+        throw new Error('Writer and content type must be selected');
+      }
       const contentBlocks = await selectedWriter.generateStructuredBlocks(contentType, idea);
       setGeneratedBlocks(contentBlocks);
       setShowPlotModal(true);
     } catch (error) {
       console.error('Failed to generate blocks:', error);
       setGeneratedBlocks(
-        getStructuredBlocks(contentType, idea).map((block) => ({
+        getStructuredBlocks(contentType || '', idea).map((block) => ({
           ...block,
           description: block.description,
         }))
@@ -218,7 +221,7 @@ export function EditorIdea() {
                         onClick={() => {
                           if (!type.disabled) {
                             setContentType(type.value);
-                            nextStep();
+                            setActiveStep(1); // Directly set to next step instead of using nextStep()
                           }
                         }}
                         bg={contentType === type.value ? 'blue.1' : undefined}

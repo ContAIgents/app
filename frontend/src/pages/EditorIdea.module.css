@@ -1,0 +1,13 @@
+.stepIcon {
+  background-color: var(--mantine-color-blue-6);
+  border-color: var(--mantine-color-blue-6);
+}
+
+.stepCompleted {
+  background-color: var(--mantine-color-teal-6);
+  border-color: var(--mantine-color-teal-6);
+}
+
+.separator {
+  border-color: var(--mantine-color-blue-6);
+}

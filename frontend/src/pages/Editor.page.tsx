@@ -10,6 +10,7 @@ import {
   IconRefresh,
   IconX,
 } from '@tabler/icons-react';
+import { useNavigate } from 'react-router-dom';
 import {
   ActionIcon,
   Avatar,
@@ -45,6 +46,7 @@ const COMMENT_WIDTH = 280;
 const TOC_WIDTH = 200;
 
 export const EditorPage: React.FC = () => {
+  const navigate = useNavigate();
   const [contentBlocks, setContentBlocks] = useState<ContentBlock[]>([]);
   // const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
   // const [editedComment, setEditedComment] = useState('');
@@ -319,6 +321,19 @@ export const EditorPage: React.FC = () => {
           backgroundColor: 'var(--mantine-color-body)',
         }}
       >
+        <Button
+          onClick={() => {
+            navigate('/export');
+          }}
+          style={{
+            position: 'fixed',
+            top: '1rem',
+            right: '5rem',
+            zIndex: 1000,
+          }}
+        >
+          Finalise Content
+        </Button>
         {/* Fixed TOC sidebar */}
         <Paper
           shadow="xs"

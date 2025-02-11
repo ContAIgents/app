@@ -7,6 +7,7 @@ import { KnowledgeBase } from './pages/KnowledgeBase.page';
 import { KnowledgeBaseEdit } from './pages/KnowledgeBaseEdit.page';
 import { LlmConfig } from './pages/LlmConfig.page';
 import { ResetPage } from './pages/Reset.page';
+import { ExportPage } from './pages/Export.page';
 
 const router = createBrowserRouter([
   {
@@ -36,6 +37,10 @@ const router = createBrowserRouter([
   {
     path: '/editor',
     element: <EditorPage />,
+  },
+  {
+    path: '/export',
+    element: <ExportPage />,
   },
   {
     path: '/reset',

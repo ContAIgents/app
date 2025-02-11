@@ -5,7 +5,7 @@ export interface ContentBlock {
   title: string;
   content: string;
   comments: Comment[];
-  shortDescription: string;
+  description: string;
   writer?: Agent;
   reviewer?: Agent;
 }

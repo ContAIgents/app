@@ -257,8 +257,7 @@ const generateStructuredBlocks = async (
 Format your response as a JSON array of content blocks. Each block must have:
 - id (number)
 - title (string)
-- description (detailed section purpose, 1-2 sentences)
-- shortDescription (brief context for AI, helps maintain consistency)
+- description (brief context for AI, helps maintain consistency)
 - content (empty string)
 - comments (empty array)
 
@@ -290,7 +289,6 @@ Generate a structured outline following the specified JSON format. Ensure each s
         typeof block.id === 'number' &&
         typeof block.title === 'string' &&
         typeof block.description === 'string' &&
-        typeof block.shortDescription === 'string' &&
         typeof block.content === 'string' &&
         Array.isArray(block.comments)
     );
@@ -340,7 +338,7 @@ export function EditorIdea() {
       setGeneratedBlocks(
         getStructuredBlocks(contentType, idea).map((block) => ({
           ...block,
-          shortDescription: block.description, // Using description as shortDescription fallback
+          description: block.description,
         }))
       );
     } finally {
@@ -382,7 +380,6 @@ export function EditorIdea() {
       id: Math.max(...generatedBlocks.map((b) => b.id)) + 1,
       title: 'New Section',
       content: '',
-      shortDescription: '',
       description: 'Describe the purpose of this section...',
       comments: [],
     };

@@ -74,7 +74,6 @@ The response must be a raw JSON array of content blocks. Each block must have:
 - id (number)
 - title (string)
 - description (detailed section purpose, 1-2 sentences)
-- shortDescription (brief context for AI, helps maintain consistency)
 - content (empty string)
 - comments (empty array)
 
@@ -106,7 +105,6 @@ Generate a structured outline following the specified JSON format. Ensure each s
         (block: ContentBlock) =>
           typeof block.id === 'number' &&
           typeof block.title === 'string' &&
-          typeof block.shortDescription === 'string' &&
           typeof block.content === 'string'
       );
 
@@ -117,7 +115,6 @@ Generate a structured outline following the specified JSON format. Ensure each s
             (block: ContentBlock) =>
               typeof block.id !== 'number' ||
               typeof block.title !== 'string' ||
-              typeof block.shortDescription !== 'string' ||
               typeof block.content !== 'string'
           )
         );
@@ -177,11 +174,11 @@ Content Type: ${contentType}
 Main Idea: ${idea}
 
 DOCUMENT STRUCTURE
-${contentBlocks.map((b) => `- ${b.title}: ${b.shortDescription}`).join('\n')}
+${contentBlocks.map((b) => `- ${b.title}: ${b.description}`).join('\n')}
 
 CURRENT SECTION
 Title: ${block.title}
-Description: ${block.shortDescription}
+Description: ${block.description}
 
 ${previousBlock ? `Previous Section: ${previousBlock.title}` : 'This is the first section'}
 ${nextBlock ? `Next Section: ${nextBlock.title}` : 'This is the final section'}
@@ -264,11 +261,11 @@ Content Type: ${contentType}
 Main Idea: ${idea}
 
 DOCUMENT STRUCTURE
-${contentBlocks.map((b) => `- ${b.title}: ${b.shortDescription}`).join('\n')}
+${contentBlocks.map((b) => `- ${b.title}: ${b.description}`).join('\n')}
 
 CURRENT SECTION
 Title: ${block.title}
-Context: ${block.shortDescription}
+Context: ${block.description}
 
 ${previousBlock ? `Previous Section: ${previousBlock.title}` : 'This is the first section'}
 ${nextBlock ? `Next Section: ${nextBlock.title}` : 'This is the final section'}

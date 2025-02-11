@@ -10,6 +10,7 @@ import {
   IconRefresh,
   IconX,
 } from '@tabler/icons-react';
+import { useNavigate } from 'react-router-dom';
 import {
   ActionIcon,
   Avatar,
@@ -27,6 +28,7 @@ import {
   TextInput,
   Tooltip,
 } from '@mantine/core';
+import { EmptyBlockContent } from '@/components/Editor/EmptyBlockContent';
 import MarkdownEditorComponent from '@/components/MarkdownEditor';
 import { TableOfContents } from '@/components/TableOfContents';
 import { Agent } from '@/services/agents/Agent';
@@ -35,7 +37,6 @@ import { CommentStatus, ReviewStatus } from '@/services/agents/types';
 import { Comment, ContentBlock } from '@/types/content';
 import RichTextEditorComponent from '../components/Editor';
 import { ConfigManager } from '../services/config/ConfigManager';
-import { EmptyBlockContent } from '@/components/Editor/EmptyBlockContent';
 
 const COMMENT_WIDTH = 280;
 const TOC_WIDTH = 200;
@@ -48,6 +49,7 @@ interface IBlockStatus {
 }
 
 export const EditorPage: React.FC = () => {
+  const navigate = useNavigate();
   const [contentBlocks, setContentBlocks] = useState<ContentBlock[]>([]);
   const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
   const [editedComment, setEditedComment] = useState('');
@@ -209,15 +211,14 @@ export const EditorPage: React.FC = () => {
     }));
 
     try {
-
-      if(!block?.writer?.config) return;
+      if (!block?.writer?.config) return;
 
       const selectedWriter = new Agent(block?.writer?.config || {});
 
       if (!selectedWriter) throw new Error('No writer selected for this block');
-      
+
       const rewrittenContent = await selectedWriter.rewrite(block, block.content, comment.comment);
-      
+
       setContentBlocks((blocks) =>
         blocks.map((b) => (b.id === blockId ? { ...b, content: rewrittenContent } : b))
       );
@@ -383,6 +384,19 @@ export const EditorPage: React.FC = () => {
           backgroundColor: 'var(--mantine-color-body)',
         }}
       >
+        <Button
+          onClick={() => {
+            navigate('/export');
+          }}
+          style={{
+            position: 'fixed',
+            top: '1rem',
+            right: '5rem',
+            zIndex: 1000,
+          }}
+        >
+          Finalise Content
+        </Button>
         {/* Fixed TOC sidebar */}
         <Paper
           shadow="xs"

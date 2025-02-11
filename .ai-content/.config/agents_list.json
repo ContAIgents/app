@@ -1,0 +1,28 @@
+[
+  {
+    "id": "2fe4f676-2c39-46d4-8c5b-c233a33754c0",
+    "name": "Sooraj",
+    "role": "content_writer",
+    "systemPrompt": "details",
+    "expertise": [
+      "Technical Writing"
+    ],
+    "writingStyle": "professional",
+    "tone": "neutral",
+    "createdAt": 1739287271364,
+    "updatedAt": 1739287271364
+  },
+  {
+    "id": "e6cca592-5198-4ccc-8bdd-51a8ef953690",
+    "name": "Ajay",
+    "role": "content_reviewer",
+    "systemPrompt": "Attention to detail",
+    "expertise": [
+      "Technical Writing"
+    ],
+    "writingStyle": "professional",
+    "tone": "authoritative",
+    "createdAt": 1739287288071,
+    "updatedAt": 1739287288071
+  }
+]

@@ -31,4 +31,17 @@ router.get("/files/:path", async (req, res) => {
   }
 });
 
+router.delete("/files/:path", async (req, res) => {
+  try {
+    await fileService.deleteFile(req.params.path);
+    res.status(200).json({ message: "File deleted successfully" });
+  } catch (error) {
+    if ((error as any).code === 'ENOENT') {
+      res.status(404).json({ error: "File not found" });
+    } else {
+      res.status(500).json({ error: "Failed to delete file" });
+    }
+  }
+});
+
 export default router;

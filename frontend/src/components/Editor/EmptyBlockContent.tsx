@@ -25,6 +25,7 @@ export const EmptyBlockContent: React.FC<EmptyBlockContentProps> = ({
 }) => {
   const { selectedWriter, availableAgents, updateWriter, selectedReviewer } =
     useBlockAgents(blockId);
+    const avaialbleWriters= availableAgents.filter((agent) => agent.getConfig().role === 'content_writer');
 
   const handleGenerateContent = async () => {
     setBlockStatuses((prev) => ({
@@ -141,7 +142,7 @@ export const EmptyBlockContent: React.FC<EmptyBlockContentProps> = ({
                   </ActionIcon>
                 </Menu.Target>
                 <Menu.Dropdown>
-                  {availableAgents.map((w) => (
+                  {avaialbleWriters.map((w) => (
                     <Menu.Item
                       key={w.getConfig().id}
                       leftSection={

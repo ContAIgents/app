@@ -32,6 +32,8 @@ export class OllamaApiProvider extends BaseLLM {
 
   async executePrompt(
     prompt: string,
+    systemPrompt?: string,
+    template?: string,
     options: PromptOptions = {}
   ): Promise<PromptResponse> {
     await this.loadConfig();

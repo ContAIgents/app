@@ -27,7 +27,10 @@ import {
   TextInput,
   Tooltip,
 } from '@mantine/core';
+import { modals } from '@mantine/modals';
+import { EmptyBlockContent } from '@/components/Editor/EmptyBlockContent';
 import MarkdownEditorComponent from '@/components/MarkdownEditor';
+import { getReviewInstructionsFromUser } from '@/components/ReviewInstructionsModal/ReviewInstructionsModal';
 import { TableOfContents } from '@/components/TableOfContents';
 import { Agent } from '@/services/agents/Agent';
 import { AgentManager } from '@/services/agents/AgentManager';
@@ -35,7 +38,6 @@ import { CommentStatus, ReviewStatus } from '@/services/agents/types';
 import { Comment, ContentBlock } from '@/types/content';
 import RichTextEditorComponent from '../components/Editor';
 import { ConfigManager } from '../services/config/ConfigManager';
-import { EmptyBlockContent } from '@/components/Editor/EmptyBlockContent';
 
 const COMMENT_WIDTH = 280;
 const TOC_WIDTH = 200;
@@ -52,17 +54,6 @@ export const EditorPage: React.FC = () => {
   const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
   const [editedComment, setEditedComment] = useState('');
   const [blockStatuses, setBlockStatuses] = useState<Record<number, IBlockStatus>>({});
-  const [reviewInstructionsModal, setReviewInstructionsModal] = useState<{
-    isOpen: boolean;
-    blockId: number | null;
-    commentId: number | null;
-    instructions: string;
-  }>({
-    isOpen: false,
-    blockId: null,
-    commentId: null,
-    instructions: '',
-  });
   const configManager = new ConfigManager('editor_');
   const setSelectedWriter = (writer: Agent) => {
     configManager.save('selectedWriter', writer.getConfig());
@@ -75,20 +66,49 @@ export const EditorPage: React.FC = () => {
     const blocks = configManager.load<ContentBlock[]>('contentBlocks') || [];
     setContentBlocks(blocks);
 
-    // Initialize status for each block
-    const initialStatuses: Record<number, IBlockStatus> = {};
-    blocks.forEach((block) => {
-      initialStatuses[block.id] = {
-        isLoading: false,
-        error: null,
-        reviewStatus: 'pending',
-        isInitialReview: !block.content,
-      };
-    });
-    setBlockStatuses(initialStatuses);
+    // Load blockStatuses from ConfigManager, or initialize if not found
+    const savedBlockStatuses = configManager.load<Record<number, IBlockStatus>>('blockStatuses');
+    if (savedBlockStatuses) {
+      setBlockStatuses(savedBlockStatuses);
+    } else {
+      const initialStatuses: Record<number, IBlockStatus> = {};
+      blocks.forEach((block) => {
+        initialStatuses[block.id] = {
+          isLoading: false,
+          error: null,
+          reviewStatus: 'pending',
+          isInitialReview: !block.content,
+        };
+      });
+      setBlockStatuses(initialStatuses);
+      configManager.save('blockStatuses', initialStatuses);
+    }
   }, []);
 
+  // Create a useEffect to save blockStatuses whenever it changes
+  useEffect(() => {
+    if (Object.keys(blockStatuses).length > 0) {
+      configManager.save('blockStatuses', blockStatuses);
+    }
+  }, [blockStatuses]);
+
+  const openModal = () =>
+    modals.openConfirmModal({
+      title: 'Please confirm your action',
+      children: (
+        <Text size="sm">
+          This action is so important that you are required to confirm it with a modal. Please click
+          one of these buttons to proceed.
+        </Text>
+      ),
+      labels: { confirm: 'Confirm', cancel: 'Cancel' },
+      onCancel: () => console.log('Cancel'),
+      onConfirm: () => console.log('Confirmed'),
+    });
+
   const handleUpdate = (id: number, content: string) => {
+    if (!id || content === null) return;
+
     const updatedBlocks = contentBlocks.map((block) =>
       block.id === id ? { ...block, content } : block
     );
@@ -126,78 +146,78 @@ export const EditorPage: React.FC = () => {
       .toUpperCase();
   };
 
-  // Simulate AI review generation with random timeout
-  const simulateReview = async (blockId: number, commentId: number, instructions?: string) => {
-    setBlockStatuses((prev) => ({
-      ...prev,
-      [blockId]: {
-        ...prev[blockId],
-        reviewStatus: 'reviewing',
-      },
-    }));
+  // // Simulate AI review generation with random timeout
+  // const simulateReview = async (blockId: number, commentId: number, instructions?: string) => {
+  //   setBlockStatuses((prev) => ({
+  //     ...prev,
+  //     [blockId]: {
+  //       ...prev[blockId],
+  //       reviewStatus: 'reviewing',
+  //     },
+  //   }));
 
-    const updateCommentStatus = (status: CommentStatus) => {
-      setContentBlocks((blocks) =>
-        blocks.map((block) => ({
-          ...block,
-          comments: block.comments.map((comment) =>
-            comment.id === commentId ? { ...comment, status } : comment
-          ),
-        }))
-      );
-    };
+  //   const updateCommentStatus = (status: CommentStatus) => {
+  //     setContentBlocks((blocks) =>
+  //       blocks.map((block) => ({
+  //         ...block,
+  //         comments: block.comments.map((comment) =>
+  //           comment.id === commentId ? { ...comment, status } : comment
+  //         ),
+  //       }))
+  //     );
+  //   };
 
-    updateCommentStatus('loading');
+  //   updateCommentStatus('loading');
 
-    try {
-      await new Promise((resolve) => setTimeout(resolve, Math.random() * 3000 + 1000));
+  //   try {
+  //     await new Promise((resolve) => setTimeout(resolve, Math.random() * 3000 + 1000));
 
-      if (Math.random() < 0.2) throw new Error('Failed to generate review');
+  //     if (Math.random() < 0.2) throw new Error('Failed to generate review');
 
-      const newComment = `Updated AI review at ${new Date().toLocaleTimeString()}${
-        instructions ? `\n\nFocused on: ${instructions}` : ''
-      }`;
+  //     const newComment = `Updated AI review at ${new Date().toLocaleTimeString()}${
+  //       instructions ? `\n\nFocused on: ${instructions}` : ''
+  //     }`;
 
-      setContentBlocks((blocks) =>
-        blocks.map((block) => ({
-          ...block,
-          comments: block.comments.map((comment) =>
-            comment.id === commentId
-              ? {
-                  ...comment,
-                  comment: newComment,
-                  status: 'success',
-                  user: selectedReviewer.getConfig().name,
-                }
-              : comment
-          ),
-        }))
-      );
+  //     setContentBlocks((blocks) =>
+  //       blocks.map((block) => ({
+  //         ...block,
+  //         comments: block.comments.map((comment) =>
+  //           comment.id === commentId
+  //             ? {
+  //                 ...comment,
+  //                 comment: newComment,
+  //                 status: 'success',
+  //                 user: block?.reviewer?.config?.name || 'AI Assistant',
+  //               }
+  //             : comment
+  //         ),
+  //       }))
+  //     );
 
-      setBlockStatuses((prev) => ({
-        ...prev,
-        [blockId]: {
-          ...prev[blockId],
-          reviewStatus: 'completed',
-          isInitialReview: false,
-        },
-      }));
-    } catch (error) {
-      updateCommentStatus('error');
-      setBlockStatuses((prev) => ({
-        ...prev,
-        [blockId]: {
-          ...prev[blockId],
-          reviewStatus: 'error',
-        },
-      }));
-    }
-  };
+  //     setBlockStatuses((prev) => ({
+  //       ...prev,
+  //       [blockId]: {
+  //         ...prev[blockId],
+  //         reviewStatus: 'completed',
+  //         isInitialReview: false,
+  //       },
+  //     }));
+  //   } catch (error) {
+  //     updateCommentStatus('error');
+  //     setBlockStatuses((prev) => ({
+  //       ...prev,
+  //       [blockId]: {
+  //         ...prev[blockId],
+  //         reviewStatus: 'error',
+  //       },
+  //     }));
+  //   }
+  // };
 
   // Simulate content generation
   const simulateContentGeneration = async (block: ContentBlock, comment: Comment) => {
-    const blockId = block.id;
-    if (!blockId) return;
+    const blockId = block?.id;
+    if (!blockId || !block || !comment) return;
 
     setBlockStatuses((prev) => ({
       ...prev,
@@ -209,15 +229,18 @@ export const EditorPage: React.FC = () => {
     }));
 
     try {
+      if (!block?.writer?.config) return;
 
-      if(!block?.writer?.config) return;
-
-      const selectedWriter = new Agent(block?.writer?.config || {});
+      const selectedWriter = new Agent(block.writer.config);
 
       if (!selectedWriter) throw new Error('No writer selected for this block');
-      
-      const rewrittenContent = await selectedWriter.rewrite(block, block.content, comment.comment);
-      
+
+      const rewrittenContent = await selectedWriter.rewrite(
+        block,
+        block.content || '', // Provide default empty string if content is null
+        comment.comment || '' // Provide default empty string if comment is null
+      );
+
       setContentBlocks((blocks) =>
         blocks.map((b) => (b.id === blockId ? { ...b, content: rewrittenContent } : b))
       );
@@ -228,7 +251,7 @@ export const EditorPage: React.FC = () => {
           ...prev[blockId],
           isLoading: false,
           error: null,
-          reviewStatus: prev[blockId]?.reviewStatus || 'pending',
+          reviewStatus: 'completed',
           isInitialReview: prev[blockId]?.isInitialReview || true,
         },
       }));
@@ -246,32 +269,58 @@ export const EditorPage: React.FC = () => {
     }
   };
 
-  const handleRequestReview = (blockId: number, commentId: number) => {
-    setReviewInstructionsModal({
-      isOpen: true,
-      blockId,
-      commentId,
-      instructions: '',
-    });
-  };
-
-  const handleSubmitReviewRequest = async () => {
-    const { blockId, commentId, instructions } = reviewInstructionsModal;
-    if (blockId === null || commentId === null) return;
-
-    setReviewInstructionsModal((prev) => ({ ...prev, isOpen: false }));
-    await simulateReview(blockId, commentId, instructions);
+  const handleRequestReview = async (block: ContentBlock, commentId: number) => {
+    const blockId = block?.id;
+    if (block?.reviewer?.config === undefined) return;
+    try {
+      const instructions = await getReviewInstructionsFromUser();
+      // console.log("instructions",instructions)
+      const reviewResponse = await new Agent(block?.reviewer?.config).generateReview(
+        block,
+        instructions
+      );
+      setContentBlocks((blocks) =>
+        blocks.map((b) =>
+          b.id === blockId
+            ? {
+                ...b,
+                comments: [
+                  ...b.comments,
+                  {
+                    id: Date.now(),
+                    timestamp: new Date().toISOString(),
+                    user: block?.reviewer?.config?.name || 'AI Assistant',
+                    comment: reviewResponse,
+                    status: 'success',
+                  },
+                ],
+              }
+            : b
+        )
+      );
+    } catch (error) {
+      // Handle modal cancellation or errors
+      console.log('Review instructions modal cancelled or failed');
+    }
   };
 
   const renderCommentCard = (comment: Comment, block: ContentBlock) => {
+    // If review is completed, only show the re-review button
+    if (blockStatuses[block.id]?.reviewStatus === 'completed') {
+      return (
+        <Button
+          size="sm"
+          variant="light"
+          onClick={() => handleRequestReview(block, comment.id)}
+          fullWidth
+        >
+          Ask {block?.reviewer?.config?.name || 'AI Assistant'} to re-review
+        </Button>
+      );
+    }
+
     return (
-      <Paper
-        key={comment.id}
-        p="md"
-        withBorder={false} // Remove border from comment cards
-        shadow="xs"
-        radius="md"
-      >
+      <Paper key={comment.id} p="md" withBorder={false} shadow="xs" radius="md">
         <Group gap="sm" mb="xs">
           <Avatar color={getAvatarColor(comment.user)} radius="xl" size="sm">
             {getInitials(comment.user)}
@@ -312,10 +361,12 @@ export const EditorPage: React.FC = () => {
 
         {editingCommentId === comment.id ? (
           <Stack gap="xs">
-            <TextInput
+            <Textarea
               value={editedComment}
               onChange={(e) => setEditedComment(e.target.value)}
               size="sm"
+              autosize
+              minRows={2}
             />
             <Group gap="xs" justify="flex-end">
               <ActionIcon
@@ -373,6 +424,8 @@ export const EditorPage: React.FC = () => {
       </Paper>
     );
   };
+
+  
   return (
     <>
       <div
@@ -529,46 +582,6 @@ export const EditorPage: React.FC = () => {
           </Container>
         </div>
       </div>
-
-      <Modal
-        opened={reviewInstructionsModal.isOpen}
-        onClose={() => setReviewInstructionsModal((prev) => ({ ...prev, isOpen: false }))}
-        title="Request Re-review"
-        size="md"
-      >
-        <Stack>
-          <Text size="sm">
-            Provide specific instructions for the reviewer to focus on during this review:
-          </Text>
-
-          <Textarea
-            placeholder="e.g., Please focus on technical accuracy and code examples"
-            minRows={3}
-            value={reviewInstructionsModal.instructions}
-            onChange={(e) =>
-              setReviewInstructionsModal((prev) => ({
-                ...prev,
-                instructions: e.currentTarget.value,
-              }))
-            }
-          />
-
-          <Group justify="right" mt="md">
-            <Button
-              variant="light"
-              onClick={() => setReviewInstructionsModal((prev) => ({ ...prev, isOpen: false }))}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSubmitReviewRequest}
-              disabled={!reviewInstructionsModal.instructions.trim()}
-            >
-              Submit Request
-            </Button>
-          </Group>
-        </Stack>
-      </Modal>
     </>
   );
 };

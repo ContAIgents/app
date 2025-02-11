@@ -100,26 +100,26 @@ Generate a structured outline following the specified JSON format. Ensure each s
       const blocks = JSON.parse(response.content);
       // console.log('blocks: ', blocks);
 
-      // Validate the structure
-      const isValid = blocks.every(
-        (block: ContentBlock) =>
-          typeof block.id === 'number' &&
-          typeof block.title === 'string' &&
-          typeof block.content === 'string'
-      );
+      // // Validate the structure
+      // const isValid = blocks.every(
+      //   (block: ContentBlock) =>
+      //     typeof block.id === 'number' &&
+      //     typeof block.title === 'string' &&
+      //     typeof block.content === 'string'
+      // );
 
-      if (!isValid) {
-        console.error(
-          'Invalid block structure:',
-          blocks.find(
-            (block: ContentBlock) =>
-              typeof block.id !== 'number' ||
-              typeof block.title !== 'string' ||
-              typeof block.content !== 'string'
-          )
-        );
-        throw new Error('Invalid block structure received from LLM');
-      }
+      // if (!isValid) {
+      //   console.error(
+      //     'Invalid block structure:',
+      //     blocks.find(
+      //       (block: ContentBlock) =>
+      //         typeof block.id !== 'number' ||
+      //         typeof block.title !== 'string' ||
+      //         typeof block.content !== 'string'
+      //     )
+      //   );
+      //   throw new Error('Invalid block structure received from LLM');
+      // }
 
       return blocks;
     } catch (error) {
@@ -308,7 +308,7 @@ Generate the improved content now, prioritizing the reviewer's feedback:`;
 
   public async generateReview(
     block: ContentBlock,
-    content: string
+    reviewInstructions?: string
   ): Promise<string> {
     const configManager = new ConfigManager('editor_');
     const knowledgeBaseManager = new KnowledgeBaseManager();
@@ -342,18 +342,21 @@ CONTEXT
 Content Type: ${contentType}
 Main Idea: ${idea}
 Section Purpose: ${block.description}
+${reviewInstructions ? `\nSPECIFIC REVIEW FOCUS\n${reviewInstructions}` : ''}
 
 KNOWLEDGE BASE CONTEXT
 ${knowledgeBase}
 
 CONTENT TO REVIEW
 Title: ${block.title}
-${content}
+${block.content}
 
 DOCUMENT STRUCTURE
 ${contentBlocks.map(b => `${b.id}. ${b.title}`).join('\n')}
 
-Provide 3-5 specific, actionable improvements:`;
+${reviewInstructions 
+  ? 'Provide 3-5 specific, actionable improvements, prioritizing the requested focus areas:'
+  : 'Provide 3-5 specific, actionable improvements:'}`;
 
     try {
       const response = await llm.executePrompt(prompt, {

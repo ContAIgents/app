@@ -1,0 +1,17 @@
+.waveBar {
+  width: 2px;
+  background-color: var(--mantine-color-gray-4);
+  animation: wave 1s ease-in-out infinite;
+}
+
+@keyframes wave {
+  0% {
+    height: 6px;
+  }
+  50% {
+    height: 20px;
+  }
+  100% {
+    height: 6px;
+  }
+}

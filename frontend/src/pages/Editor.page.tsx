@@ -1,6 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   IconInfoCircle,
+  IconMicrophone,
+  IconWand,
+  IconArrowRight,
 } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -26,6 +29,7 @@ import { CommentStatus, ReviewStatus } from '@/services/agents/types';
 import { Comment, ContentBlock } from '@/types/content';
 import { IBlockStatus } from '@/types/editor';
 import { ConfigManager } from '../services/config/ConfigManager';
+import { VoiceInput } from '@/components/VoiceInput/VoiceInput';
 
 const COMMENT_WIDTH = 280;
 const TOC_WIDTH = 200;
@@ -316,19 +320,36 @@ export const EditorPage: React.FC = () => {
           backgroundColor: 'var(--mantine-color-body)',
         }}
       >
-        <Button
-          onClick={() => {
-            navigate('/export');
-          }}
+        <Group
           style={{
             position: 'fixed',
             top: '1rem',
-            right: '5rem',
+            right: '2rem',
             zIndex: 1000,
+            gap: '8px'
           }}
         >
-          Finalise Content
-        </Button>
+          <Tooltip
+            label="Let AI combine and polish all sections into a final piece"
+            position="bottom"
+            multiline
+            w={220}
+          >
+            <Button
+              onClick={() => navigate('/export')}
+              size="md"
+              variant="gradient"
+              gradient={{ from: 'indigo', to: 'cyan' }}
+              leftSection={<IconWand size="1rem" />}
+              rightSection={<IconArrowRight size="1rem" />}
+              style={{
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+              }}
+            >
+              Generate Final Draft
+            </Button>
+          </Tooltip>
+        </Group>
         {/* Fixed TOC sidebar */}
         <Paper
           shadow="xs"
@@ -377,7 +398,7 @@ export const EditorPage: React.FC = () => {
           }}
         >
           <Container size="xl">
-            <Stack gap="md">
+            <Stack gap="md" pt='xl'>
               {contentBlocks.map((block) => (
                 <Group
                   key={block.id}
@@ -465,6 +486,9 @@ export const EditorPage: React.FC = () => {
                     <Text size="sm" fw={500} c="dimmed" mb="md">
                       Reviewer Comments
                     </Text>
+
+                    <VoiceInput />
+
                     <Stack gap="md">
                       {block.comments.map((comment) => (
                         <CommentCard

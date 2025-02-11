@@ -1,19 +1,25 @@
 import { useEffect, useState } from 'react';
 import { IconLock } from '@tabler/icons-react';
-import { Button, Container, Group, Stack, Text, Textarea, Title, Tooltip } from '@mantine/core';
+import { Button, Container, Group, Stack, Text, Title, Tooltip } from '@mantine/core';
 import ExportCard from '@/components/Export/ExportCard';
-import { ConfigManager } from '@/services/config/ConfigManager';
-import { ContentBlock } from '@/types/content';
+import MarkdownEditorComponent from '@/components/MarkdownEditor';
+import { ExportAgent } from '@/services/exportAgent';
 
 export function ExportPage() {
   const [finalContent, setFinalContent] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [editMode, setEditMode] = useState(true);
+
+  const generateFinalContent = async () => {
+    const exportAgent = new ExportAgent({ name: 'Final Agent' });
+    const finalContent = await exportAgent.generateFinalContent();
+    setFinalContent(finalContent);
+    setIsGenerating(false);
+  };
 
   useEffect(() => {
-    const configManager = new ConfigManager('editor_');
-    const contentBlocks: ContentBlock[] = configManager.load('contentBlocks') || [];
-    console.log(contentBlocks);
-    const finalContent = contentBlocks.map((block: ContentBlock) => block.content).join('\n');
-    setFinalContent(finalContent);
+    setIsGenerating(true);
+    generateFinalContent();
   }, []);
 
   const handleExport = (format: string) => {
@@ -26,18 +32,30 @@ export function ExportPage() {
       <Stack gap="xl">
         <Group justify="space-between" mb="md">
           <div>
-            <Title order={1}>Final Content</Title>
+            <Title order={1}>Final Preview</Title>
             <Text c="dimmed" size="sm">
-              Export your content in various formats
+              Almost there... Time to share your content. Export your content in various formats
             </Text>
           </div>
         </Group>
         <Group align="stretch" style={{ width: '100%' }}>
-          <Textarea
-            value={finalContent}
-            autosize
-            style={{ height: '100%', flex: 1, marginRight: '20px' }}
-          />
+          {isGenerating ? (
+            <div style={{ height: '100%', flex: 1, marginRight: '20px' }}>
+              <Text size="sm" c="dimmed">
+                Generating Final Content...
+              </Text>
+            </div>
+          ) : (
+            <div style={{ height: '100%', flex: 1, marginRight: '20px' }}>
+              <MarkdownEditorComponent
+                content={finalContent}
+                onUpdate={(newContent) => {
+                  setFinalContent(newContent);
+                }}
+                disabled={editMode}
+              />
+            </div>
+          )}
 
           <Stack gap="md" align="stretch">
             <Button onClick={() => handleExport('pdf')}>Export as PDF </Button>

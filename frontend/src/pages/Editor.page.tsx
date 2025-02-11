@@ -1,31 +1,18 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  IconCheck,
-  IconChevronDown,
-  IconEdit,
   IconInfoCircle,
-  IconLock,
-  IconMessageCircle,
-  IconPencil,
-  IconRefresh,
-  IconX,
 } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import {
   ActionIcon,
-  Avatar,
   Box,
   Button,
   Container,
   Group,
   Loader,
-  Menu,
-  Modal,
   Paper,
   Stack,
   Text,
-  Textarea,
-  TextInput,
   Tooltip,
 } from '@mantine/core';
 import { modals } from '@mantine/modals';
@@ -35,11 +22,9 @@ import MarkdownEditorComponent from '@/components/MarkdownEditor';
 import { getReviewInstructionsFromUser } from '@/components/ReviewInstructionsModal/ReviewInstructionsModal';
 import { TableOfContents } from '@/components/TableOfContents';
 import { Agent } from '@/services/agents/Agent';
-import { AgentManager } from '@/services/agents/AgentManager';
 import { CommentStatus, ReviewStatus } from '@/services/agents/types';
 import { Comment, ContentBlock } from '@/types/content';
 import { IBlockStatus } from '@/types/editor';
-import RichTextEditorComponent from '../components/Editor';
 import { ConfigManager } from '../services/config/ConfigManager';
 
 const COMMENT_WIDTH = 280;
@@ -48,8 +33,6 @@ const TOC_WIDTH = 200;
 export const EditorPage: React.FC = () => {
   const navigate = useNavigate();
   const [contentBlocks, setContentBlocks] = useState<ContentBlock[]>([]);
-  // const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
-  // const [editedComment, setEditedComment] = useState('');
   const [blockStatuses, setBlockStatuses] = useState<Record<number, IBlockStatus>>({});
   const configManager = new ConfigManager('editor_');
   const setSelectedWriter = (writer: Agent) => {
@@ -89,20 +72,6 @@ export const EditorPage: React.FC = () => {
     }
   }, [blockStatuses]);
 
-  const openModal = () =>
-    modals.openConfirmModal({
-      title: 'Please confirm your action',
-      children: (
-        <Text size="sm">
-          This action is so important that you are required to confirm it with a modal. Please click
-          one of these buttons to proceed.
-        </Text>
-      ),
-      labels: { confirm: 'Confirm', cancel: 'Cancel' },
-      onCancel: () => console.log('Cancel'),
-      onConfirm: () => console.log('Confirmed'),
-    });
-
   const handleUpdate = (id: number, content: string) => {
     if (!id || content === null) return;
 
@@ -119,29 +88,6 @@ export const EditorPage: React.FC = () => {
     link: `#section-${block.id}`,
     order: 1,
   }));
-
-  // Helper function to get avatar color based on user role
-  const getAvatarColor = (user: string) => {
-    switch (user) {
-      case 'AI Assistant':
-        return 'blue';
-      case 'Editor':
-        return 'green';
-      case 'Technical Reviewer':
-        return 'orange';
-      default:
-        return 'gray';
-    }
-  };
-
-  // Helper function to get initials from user name
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map((word) => word[0])
-      .join('')
-      .toUpperCase();
-  };
 
   // // Simulate AI review generation with random timeout
   const simulateReview = async (blockId: number, commentId: number, instructions?: string) => {

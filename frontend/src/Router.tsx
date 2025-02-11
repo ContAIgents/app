@@ -6,6 +6,7 @@ import { HomePage } from './pages/Home.page';
 import { KnowledgeBase } from './pages/KnowledgeBase.page';
 import { KnowledgeBaseEdit } from './pages/KnowledgeBaseEdit.page';
 import { LlmConfig } from './pages/LlmConfig.page';
+import { ResetPage } from './pages/Reset.page';
 
 const router = createBrowserRouter([
   {
@@ -35,6 +36,10 @@ const router = createBrowserRouter([
   {
     path: '/editor',
     element: <EditorPage />,
+  },
+  {
+    path: '/reset',
+    element: <ResetPage />,
   },
 ]);
 

@@ -5,34 +5,22 @@ import { useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { useEffect, useState } from 'react';
 import { KnowledgeBaseManager } from '../services/knowledgeBase/KnowledgeBaseManager';
+import MarkdownEditorComponent from '@/components/MarkdownEditor';
 
 const PLACEHOLDER_CONTENT = `
-<h1>Knowledge Base</h1>
+# Welcome to Your Knowledge Base
 
-<p>Welcome to your AI assistant's knowledge base. This is where you can provide context and information that your AI will use when generating content. Here are some suggestions for what to include:</p>
+This is a sample knowledge base to help you get started. Your actual knowledge base should contain information specific to your needs, such as:
 
-<h2>Company/Brand Information</h2>
-<ul>
-  <li>Company overview and mission</li>
-  <li>Brand voice and tone guidelines</li>
-  <li>Key products or services</li>
-</ul>
+- Company/brand information
+- Style guidelines
+- Content rules
+- Industry-specific knowledge
+- Common terminology and phrases
 
-<h2>Style Guidelines</h2>
-<ul>
-  <li>Writing style preferences</li>
-  <li>Formatting conventions</li>
-  <li>Common terminology and phrases</li>
-</ul>
+The more detailed and structured your knowledge base is, the better your AI assistant will understand your requirements.
 
-<h2>Content Rules</h2>
-<ul>
-  <li>Topics to focus on</li>
-  <li>Topics to avoid</li>
-  <li>Specific requirements or restrictions</li>
-</ul>
-
-<p>Feel free to modify this template to match your specific needs. The more detailed and structured your knowledge base is, the better your AI assistant will understand your requirements.</p>
+Feel free to modify this content or start from scratch to create a knowledge base that suits your specific needs.
 `;
 
 export function KnowledgeBaseEdit() {
@@ -73,31 +61,10 @@ export function KnowledgeBaseEdit() {
           </Group>
         </Group>
 
-        <RichTextEditor editor={editor} style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <RichTextEditor.Toolbar sticky>
-            <RichTextEditor.ControlsGroup>
-              <RichTextEditor.Bold />
-              <RichTextEditor.Italic />
-              <RichTextEditor.Underline />
-              <RichTextEditor.Strikethrough />
-              <RichTextEditor.ClearFormatting />
-            </RichTextEditor.ControlsGroup>
-
-            <RichTextEditor.ControlsGroup>
-              <RichTextEditor.H1 />
-              <RichTextEditor.H2 />
-              <RichTextEditor.H3 />
-            </RichTextEditor.ControlsGroup>
-
-            <RichTextEditor.ControlsGroup>
-              <RichTextEditor.BulletList />
-              <RichTextEditor.OrderedList />
-              <RichTextEditor.Link />
-            </RichTextEditor.ControlsGroup>
-          </RichTextEditor.Toolbar>
-
-          <RichTextEditor.Content style={{ flex: 1 }} />
-        </RichTextEditor>
+        <MarkdownEditorComponent
+          content={content}
+          onUpdate={(newContent) => setContent(newContent)}
+        />
       </Paper>
     </Container>
   );

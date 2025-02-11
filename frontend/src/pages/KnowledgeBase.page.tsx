@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { IconInfoCircle } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import { Alert, Button, Container, Group, Paper, Stack, Text, Title, Tooltip } from '@mantine/core';
 import { OnboardingNavigation } from '../components/OnboardingNavigation/OnboardingNavigation';
@@ -61,7 +62,19 @@ export function KnowledgeBase() {
               </Text>
             </Alert>
           )}
-
+          <Alert
+            icon={<IconInfoCircle />}
+            color="blue"
+            radius="md"
+            mb="lg"
+            title="Coming Soon: Local Knowledge Base Files"
+          >
+            <Text size="sm">
+              Soon you'll be able to add .txt, .md, and .pdf files to your local knowledge base
+              folder. These files will be made available to agents to consume. Use descriptive file
+              names to help identify content (e.g., brand-guidelines.md, product-specs.pdf).
+            </Text>
+          </Alert>
           <Paper shadow="sm" p="md" withBorder>
             <Group justify="space-between" align="center">
               <div>

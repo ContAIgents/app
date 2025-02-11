@@ -9,6 +9,7 @@ import {
   Stack,
   TextInput,
   Title,
+  Text,
 } from '@mantine/core';
 import { AnthropicProvider } from '@/services/llm/AnthropicProvider';
 import { DeepSeekProvider } from '@/services/llm/DeepSeekProvider';
@@ -108,6 +109,14 @@ export function LlmConfig() {
       <Title order={1} mb="xl">
         LLM Configuration
       </Title>
+
+      <Alert color="blue" radius="md" mb="lg">
+        <Text fw={500} mb={4}>Privacy Notice</Text>
+        <Text size="sm">
+          Your LLM credentials are never stored on our servers. When using the CLI, configurations are stored locally in your filesystem. 
+          In browser-only mode, credentials are temporarily stored in your browser's localStorage.
+        </Text>
+      </Alert>
 
       <Paper shadow="sm" p="xl" withBorder>
         <Stack>

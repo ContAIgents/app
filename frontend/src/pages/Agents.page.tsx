@@ -13,6 +13,7 @@ import {
   Modal,
   MultiSelect,
   Paper,
+  Rating,
   Select,
   SimpleGrid,
   Stack,
@@ -27,9 +28,9 @@ import { OnboardingNavigation } from '../components/OnboardingNavigation/Onboard
 import { Agent } from '../services/agents/Agent';
 import { AgentManager } from '../services/agents/AgentManager';
 import { AgentConfig, AgentRole, ToneOfVoice, WritingStyle } from '../services/agents/types';
-import { PROVIDER_MODELS } from '../services/llm/types';
 import { ConfigManager } from '../services/config/ConfigManager';
 import { LLMFactory } from '../services/llm/LLMFactory';
+import { PROVIDER_MODELS } from '../services/llm/types';
 
 // Static Data moved outside the component
 const dummyCommunityAgents: AgentConfig[] = [
@@ -219,11 +220,64 @@ const toneOptions = [
 
 const llmOptions = Object.entries(PROVIDER_MODELS).map(([provider, models]) => ({
   group: provider,
-  items: models.map(model => ({
+  items: models.map((model) => ({
     value: `${provider}:${model}`,
-    label: model
-  }))
+    label: model,
+  })),
 }));
+
+const skillOptions = [
+  {
+    value: 'web_search',
+    label: 'Web Search',
+    description: 'Can search and analyze real-time web content',
+  },
+  {
+    value: 'web_scraping',
+    label: 'Web Scraping',
+    description: 'Can extract structured data from websites',
+  },
+  {
+    value: 'video_analysis',
+    label: 'Video Learning',
+    description: 'Can analyze and learn from video content',
+  },
+  {
+    value: 'image_analysis',
+    label: 'Image Analysis',
+    description: 'Can understand and analyze images',
+  },
+  {
+    value: 'data_analysis',
+    label: 'Data Analysis',
+    description: 'Can process and analyze structured data',
+  },
+  {
+    value: 'pdf_processing',
+    label: 'PDF Processing',
+    description: 'Can extract and analyze PDF documents',
+  },
+  {
+    value: 'research_synthesis',
+    label: 'Research Synthesis',
+    description: 'Can combine information from multiple sources',
+  },
+  {
+    value: 'math_computation',
+    label: 'Mathematical Analysis',
+    description: 'Can perform complex mathematical calculations',
+  },
+  {
+    value: 'sentiment_analysis',
+    label: 'Sentiment Analysis',
+    description: 'Can analyze emotional tone in content',
+  },
+  {
+    value: 'translation',
+    label: 'Translation',
+    description: 'Can translate between multiple languages',
+  },
+];
 
 const initialFormState: Partial<AgentConfig> = {
   expertise: [],
@@ -232,8 +286,10 @@ const initialFormState: Partial<AgentConfig> = {
   llm: (() => {
     const configManager = new ConfigManager('llm_');
     try {
-      const providers = LLMFactory.getAvailableProviders().map(name => LLMFactory.getProvider(name));
-      const configuredProvider = providers.find(provider => provider.isConfigured());
+      const providers = LLMFactory.getAvailableProviders().map((name) =>
+        LLMFactory.getProvider(name)
+      );
+      const configuredProvider = providers.find((provider) => provider.isConfigured());
       if (configuredProvider) {
         const config = configuredProvider.getConfig();
         return `${configuredProvider.constructor.name.replace('Provider', '')}:${config.model}`;
@@ -320,9 +376,20 @@ export function Agents() {
               </Badge>
             ))}
           </Group>
-          <Text c="dimmed" size="sm">
-            {config.role === 'content_writer' ? 'Content Writer' : 'Content Reviewer'}
-          </Text>
+          <Group gap="xs">
+            <Text c="dimmed" size="sm">
+              {config.role === 'content_writer' ? 'Content Writer' : 'Content Reviewer'}
+            </Text>
+            {isDisabled ? (
+              <Tooltip label="Community reviews coming soon!" position="right">
+                <div>
+                  <Rating value={4.5} fractions={2} readOnly size="xs" />
+                </div>
+              </Tooltip>
+            ) : (
+              <Rating value={4.5} fractions={2} readOnly size="xs" />
+            )}
+          </Group>
           <Text size="sm" mt="xs" lineClamp={2}>
             {config.systemPrompt}
           </Text>
@@ -509,6 +576,19 @@ As a seasoned tech journalist with 10+ years of experience, this agent excels in
             onChange={(e) => setFormData({ ...formData, systemPrompt: e.target.value })}
             autosize
             minRows={5}
+          />
+          <MultiSelect
+            label={
+              <Group gap="xs">
+                <Text>Skills</Text>
+                <Badge size="xs">Coming Soon</Badge>
+              </Group>
+            }
+            placeholder="Agent capabilities"
+            data={skillOptions}
+            disabled
+            defaultValue={skillOptions.map((i) => i.value)}
+            description="Special capabilities that enhance agent performance"
           />
           <Button onClick={handleSave}>Save</Button>
         </Stack>

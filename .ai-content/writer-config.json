@@ -1,5 +1,5 @@
 {
-  "name": "reviewer",
+  "name": "writer",
   "llm": "ollama",
   "systemPrompt": "Please review the following content for accuracy and clarity.",
   "expertise": "technical writing",

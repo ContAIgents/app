@@ -1,9 +1,8 @@
+import { AgentConfig } from "../types";
 import { FileService } from "./fileService";
 import { LLMFactory } from "./llm/LLMFactory";
 
-export interface AgentConfig {
-  llmProvider: string;
-}
+
 
 export class AgentService {
   private fileService: FileService;
@@ -25,7 +24,7 @@ export class AgentService {
   async generateResponse(prompt: string): Promise<string> {
     const config = await this.loadConfig();
     console.log("Loaded config: ", config);
-    const llm = LLMFactory.getProvider(config.llmProvider);
+    const llm = LLMFactory.getProvider(config.llm);
     if (!llm) {
       throw new Error("No provider configured");
     }

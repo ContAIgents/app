@@ -62,19 +62,7 @@ export function KnowledgeBase() {
               </Text>
             </Alert>
           )}
-          <Alert
-            icon={<IconInfoCircle />}
-            color="blue"
-            radius="md"
-            mb="lg"
-            title="Coming Soon: Local Knowledge Base Files"
-          >
-            <Text size="sm">
-              Soon you'll be able to add .txt, .md, and .pdf files to your local knowledge base
-              folder. These files will be made available to agents to consume. Use descriptive file
-              names to help identify content (e.g., brand-guidelines.md, product-specs.pdf).
-            </Text>
-          </Alert>
+
           <Paper shadow="sm" p="md" withBorder>
             <Group justify="space-between" align="center">
               <div>
@@ -96,6 +84,19 @@ export function KnowledgeBase() {
           <Text size="sm" c="dimmed" mb="md">
             Additional Features
           </Text>
+          <Alert
+            icon={<IconInfoCircle />}
+            color="blue"
+            radius="md"
+            mb="lg"
+            title="Coming Soon: Local Knowledge Base Files"
+          >
+            <Text size="sm">
+              Soon you'll be able to add .txt, .md, and .pdf files to your local knowledge base
+              folder. These files will be made available to agents to consume. Use descriptive file
+              names to help identify content (e.g., brand-guidelines.md, product-specs.pdf).
+            </Text>
+          </Alert>
           <Group grow>
             <Tooltip label="Coming Soon: Upload and analyze your own documents!" position="top">
               <Button disabled>Upload Document</Button>

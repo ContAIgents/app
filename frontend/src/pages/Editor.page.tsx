@@ -28,6 +28,7 @@ import {
   Tooltip,
 } from '@mantine/core';
 import { modals } from '@mantine/modals';
+import { CommentCard } from '@/components/CommentCard/CommentCard';
 import { EmptyBlockContent } from '@/components/Editor/EmptyBlockContent';
 import MarkdownEditorComponent from '@/components/MarkdownEditor';
 import { getReviewInstructionsFromUser } from '@/components/ReviewInstructionsModal/ReviewInstructionsModal';
@@ -36,23 +37,17 @@ import { Agent } from '@/services/agents/Agent';
 import { AgentManager } from '@/services/agents/AgentManager';
 import { CommentStatus, ReviewStatus } from '@/services/agents/types';
 import { Comment, ContentBlock } from '@/types/content';
+import { IBlockStatus } from '@/types/editor';
 import RichTextEditorComponent from '../components/Editor';
 import { ConfigManager } from '../services/config/ConfigManager';
 
 const COMMENT_WIDTH = 280;
 const TOC_WIDTH = 200;
 
-interface IBlockStatus {
-  isLoading: boolean;
-  error: string | null;
-  reviewStatus: ReviewStatus;
-  isInitialReview: boolean;
-}
-
 export const EditorPage: React.FC = () => {
   const [contentBlocks, setContentBlocks] = useState<ContentBlock[]>([]);
-  const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
-  const [editedComment, setEditedComment] = useState('');
+  // const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
+  // const [editedComment, setEditedComment] = useState('');
   const [blockStatuses, setBlockStatuses] = useState<Record<number, IBlockStatus>>({});
   const configManager = new ConfigManager('editor_');
   const setSelectedWriter = (writer: Agent) => {
@@ -147,72 +142,72 @@ export const EditorPage: React.FC = () => {
   };
 
   // // Simulate AI review generation with random timeout
-  // const simulateReview = async (blockId: number, commentId: number, instructions?: string) => {
-  //   setBlockStatuses((prev) => ({
-  //     ...prev,
-  //     [blockId]: {
-  //       ...prev[blockId],
-  //       reviewStatus: 'reviewing',
-  //     },
-  //   }));
+  const simulateReview = async (blockId: number, commentId: number, instructions?: string) => {
+    setBlockStatuses((prev) => ({
+      ...prev,
+      [blockId]: {
+        ...prev[blockId],
+        reviewStatus: 'reviewing',
+      },
+    }));
 
-  //   const updateCommentStatus = (status: CommentStatus) => {
-  //     setContentBlocks((blocks) =>
-  //       blocks.map((block) => ({
-  //         ...block,
-  //         comments: block.comments.map((comment) =>
-  //           comment.id === commentId ? { ...comment, status } : comment
-  //         ),
-  //       }))
-  //     );
-  //   };
+    const updateCommentStatus = (status: CommentStatus) => {
+      setContentBlocks((blocks) =>
+        blocks.map((block) => ({
+          ...block,
+          comments: block.comments.map((comment) =>
+            comment.id === commentId ? { ...comment, status } : comment
+          ),
+        }))
+      );
+    };
 
-  //   updateCommentStatus('loading');
+    updateCommentStatus('loading');
 
-  //   try {
-  //     await new Promise((resolve) => setTimeout(resolve, Math.random() * 3000 + 1000));
+    try {
+      await new Promise((resolve) => setTimeout(resolve, Math.random() * 3000 + 1000));
 
-  //     if (Math.random() < 0.2) throw new Error('Failed to generate review');
+      if (Math.random() < 0.2) throw new Error('Failed to generate review');
 
-  //     const newComment = `Updated AI review at ${new Date().toLocaleTimeString()}${
-  //       instructions ? `\n\nFocused on: ${instructions}` : ''
-  //     }`;
+      const newComment = `Updated AI review at ${new Date().toLocaleTimeString()}${
+        instructions ? `\n\nFocused on: ${instructions}` : ''
+      }`;
 
-  //     setContentBlocks((blocks) =>
-  //       blocks.map((block) => ({
-  //         ...block,
-  //         comments: block.comments.map((comment) =>
-  //           comment.id === commentId
-  //             ? {
-  //                 ...comment,
-  //                 comment: newComment,
-  //                 status: 'success',
-  //                 user: block?.reviewer?.config?.name || 'AI Assistant',
-  //               }
-  //             : comment
-  //         ),
-  //       }))
-  //     );
+      setContentBlocks((blocks) =>
+        blocks.map((block) => ({
+          ...block,
+          comments: block.comments.map((comment) =>
+            comment.id === commentId
+              ? {
+                  ...comment,
+                  comment: newComment,
+                  status: 'success',
+                  user: block?.reviewer?.config?.name || 'AI Assistant',
+                }
+              : comment
+          ),
+        }))
+      );
 
-  //     setBlockStatuses((prev) => ({
-  //       ...prev,
-  //       [blockId]: {
-  //         ...prev[blockId],
-  //         reviewStatus: 'completed',
-  //         isInitialReview: false,
-  //       },
-  //     }));
-  //   } catch (error) {
-  //     updateCommentStatus('error');
-  //     setBlockStatuses((prev) => ({
-  //       ...prev,
-  //       [blockId]: {
-  //         ...prev[blockId],
-  //         reviewStatus: 'error',
-  //       },
-  //     }));
-  //   }
-  // };
+      setBlockStatuses((prev) => ({
+        ...prev,
+        [blockId]: {
+          ...prev[blockId],
+          reviewStatus: 'completed',
+          isInitialReview: false,
+        },
+      }));
+    } catch (error) {
+      updateCommentStatus('error');
+      setBlockStatuses((prev) => ({
+        ...prev,
+        [blockId]: {
+          ...prev[blockId],
+          reviewStatus: 'error',
+        },
+      }));
+    }
+  };
 
   // Simulate content generation
   const simulateContentGeneration = async (block: ContentBlock, comment: Comment) => {
@@ -284,10 +279,11 @@ export const EditorPage: React.FC = () => {
           b.id === blockId
             ? {
                 ...b,
+
                 comments: [
                   ...b.comments,
                   {
-                    id: Date.now(),
+                    id: commentId,
                     timestamp: new Date().toISOString(),
                     user: block?.reviewer?.config?.name || 'AI Assistant',
                     comment: reviewResponse,
@@ -298,134 +294,21 @@ export const EditorPage: React.FC = () => {
             : b
         )
       );
+      setBlockStatuses((prev) => ({
+        ...prev,
+        [blockId]: {
+          ...prev[blockId],
+          reviewStatus: 'pending',
+        },
+      }));
+
+      
     } catch (error) {
       // Handle modal cancellation or errors
       console.log('Review instructions modal cancelled or failed');
     }
   };
 
-  const renderCommentCard = (comment: Comment, block: ContentBlock) => {
-    // If review is completed, only show the re-review button
-    if (blockStatuses[block.id]?.reviewStatus === 'completed') {
-      return (
-        <Button
-          size="sm"
-          variant="light"
-          onClick={() => handleRequestReview(block, comment.id)}
-          fullWidth
-        >
-          Ask {block?.reviewer?.config?.name || 'AI Assistant'} to re-review
-        </Button>
-      );
-    }
-
-    return (
-      <Paper key={comment.id} p="md" withBorder={false} shadow="xs" radius="md">
-        <Group gap="sm" mb="xs">
-          <Avatar color={getAvatarColor(comment.user)} radius="xl" size="sm">
-            {getInitials(comment.user)}
-          </Avatar>
-          <Box style={{ flex: 1 }}>
-            <Text size="sm" fw={500}>
-              {comment.user}
-            </Text>
-            <Text size="xs" c="dimmed">
-              {new Date(comment.timestamp).toLocaleDateString()}
-            </Text>
-          </Box>
-          <Group gap="xs">
-            <ActionIcon
-              size="sm"
-              variant="subtle"
-              onClick={() => {
-                setEditingCommentId(comment.id);
-                setEditedComment(comment.comment);
-              }}
-            >
-              <IconEdit size="1rem" />
-            </ActionIcon>
-            <Tooltip label="Regenerate review">
-              <ActionIcon
-                size="sm"
-                variant="subtle"
-                color="blue"
-                onClick={() => simulateReview(block.id, comment.id)}
-                loading={comment.status === 'loading'}
-                disabled={comment.status === 'loading'}
-              >
-                <IconRefresh size="1rem" />
-              </ActionIcon>
-            </Tooltip>
-          </Group>
-        </Group>
-
-        {editingCommentId === comment.id ? (
-          <Stack gap="xs">
-            <Textarea
-              value={editedComment}
-              onChange={(e) => setEditedComment(e.target.value)}
-              size="sm"
-              autosize
-              minRows={2}
-            />
-            <Group gap="xs" justify="flex-end">
-              <ActionIcon
-                size="sm"
-                variant="subtle"
-                color="red"
-                onClick={() => setEditingCommentId(null)}
-              >
-                <IconX size="1rem" />
-              </ActionIcon>
-              <ActionIcon
-                size="sm"
-                variant="subtle"
-                color="green"
-                onClick={() => {
-                  setContentBlocks((blocks) =>
-                    blocks.map((block) => ({
-                      ...block,
-                      comments: block.comments.map((c) =>
-                        c.id === comment.id ? { ...c, comment: editedComment } : c
-                      ),
-                    }))
-                  );
-                  setEditingCommentId(null);
-                }}
-              >
-                <IconCheck size="1rem" />
-              </ActionIcon>
-            </Group>
-          </Stack>
-        ) : (
-          <>
-            <Text size="sm" style={{ whiteSpace: 'pre-wrap' }}>
-              {comment.comment}
-            </Text>
-            {comment.status === 'error' && (
-              <Text size="sm" c="red" mt="xs">
-                Failed to generate review. Please try again.
-              </Text>
-            )}
-
-            <Group justify="flex-end" mt="md">
-              <Button
-                color="blue"
-                size="xs"
-                onClick={() => simulateContentGeneration(block, comment)}
-                loading={blockStatuses[block.id]?.isLoading}
-                disabled={blockStatuses[block.id]?.isLoading}
-              >
-                Ask {block?.writer?.getConfig?.()?.name ?? 'AI Writer'} to rewrite
-              </Button>
-            </Group>
-          </>
-        )}
-      </Paper>
-    );
-  };
-
-  
   return (
     <>
       <div
@@ -573,7 +456,29 @@ export const EditorPage: React.FC = () => {
                       Reviewer Comments
                     </Text>
                     <Stack gap="md">
-                      {block.comments.map((comment) => renderCommentCard(comment, block))}
+                      {block.comments.map((comment) => (
+                        <CommentCard
+                          key={comment.id}
+                          comment={comment}
+                          block={block}
+                          blockStatus={blockStatuses[block.id]}
+                          onRequestReview={handleRequestReview}
+                          onSimulateReview={(blockId, commentId) =>
+                            simulateReview(blockId, commentId)
+                          }
+                          onSimulateContentGeneration={simulateContentGeneration}
+                          onUpdateComment={(commentId, newComment) => {
+                            setContentBlocks((blocks) =>
+                              blocks.map((block) => ({
+                                ...block,
+                                comments: block.comments.map((c) =>
+                                  c.id === commentId ? { ...c, comment: newComment } : c
+                                ),
+                              }))
+                            );
+                          }}
+                        />
+                      ))}
                     </Stack>
                   </Paper>
                 </Group>

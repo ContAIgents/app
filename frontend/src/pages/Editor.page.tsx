@@ -27,6 +27,7 @@ import {
   TextInput,
   Tooltip,
 } from '@mantine/core';
+import MarkdownEditorComponent from '@/components/MarkdownEditor';
 import { TableOfContents } from '@/components/TableOfContents';
 import { Agent } from '@/services/agents/Agent';
 import { AgentManager } from '@/services/agents/AgentManager';
@@ -167,7 +168,7 @@ const EmptyBlockContent: React.FC<{
               </Menu>
             </Group>
             <Text size="sm" c="dimmed">
-              AI Content Writer
+              {selectedWriter.getConfig().expertise?.join(', ') || 'AI Content Writer'}
             </Text>
           </Stack>
 
@@ -718,7 +719,7 @@ export const EditorPage: React.FC = () => {
                     </Group>
                     <Box style={{ flex: 1, position: 'relative' }}>
                       {block.content ? (
-                        <RichTextEditorComponent
+                        <MarkdownEditorComponent
                           content={block.content}
                           onUpdate={(content) => handleUpdate(block.id, content)}
                           disabled={blockStatuses[block.id]?.isLoading}

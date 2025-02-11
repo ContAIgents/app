@@ -48,76 +48,43 @@ export class Agent {
     contentType: string,
     idea: string
   ): Promise<ContentBlock[]> {
-    // Load knowledge base from KnowledgeBaseManager
     const knowledgeBaseManager = new KnowledgeBaseManager();
     const defaultDoc = knowledgeBaseManager.getDefaultDocument();
     const knowledgeBase = defaultDoc.content;
 
-    const llm = (() => {
-      const providers = LLMFactory.getAvailableProviders();
-      for (const providerName of providers) {
-        try {
-          const provider = LLMFactory.getProvider(providerName);
-          if (provider.isConfigured()) {
-            return provider;
-          }
-        } catch (error) {
-          console.error(`Error checking ${providerName} configuration:`, error);
-        }
-      }
-      throw new Error('No configured LLM provider found');
-    })();
+    const llm = LLMFactory.getConfiguredProvider();
 
-    const writerPersona = `Acting as ${this.config.name}, an expert ${(this.config.expertise ?? []).join(', ')} with a ${this.config.writingStyle} writing style and ${this.config.tone} tone.`;
+    const systemPrompt = `You are an expert content strategist and writer. Your task is to create a detailed content structure.
+IMPORTANT: Respond ONLY with a valid JSON array, no additional text or markdown formatting.
+The response must be a raw JSON array of content blocks. Each block must have:
+- id (number)
+- title (string)
+- description (detailed section purpose, 1-2 sentences)
+- content (empty string)
+- comments (empty array)
 
-    const prompt = `You are an expert content strategist and writer. Your task is to create a detailed content structure.
+Use the provided knowledge base ONLY as context for understanding style, tone, and requirements - DO NOT include it as content sections.
+Ensure the structure is comprehensive and follows best practices for ${contentType} content.`;
 
-      ${writerPersona}
+    const writerPersona = `Acting as ${this.config.name}, an expert ${(this.config.expertise ?? []).join(', ')}
+with a ${this.config.writingStyle} writing style and ${this.config.tone} tone.`;
 
-      Content Type: '''${contentType}'''
-      Main Idea: '''${idea}'''
-      Knowledge Base: '''${knowledgeBase}'''
+    const prompt = `${systemPrompt}
 
+${writerPersona}
 
-      IMPORTANT: Respond ONLY with a valid JSON array, no additional text or markdown formatting.
-      The response must be a raw JSON array of content blocks. Each block must have:
-      - id (number)
-      - title (string)
-      - description (detailed section purpose, 1-2 sentences)
-      - content (empty string)
-      - comments (empty array)
+Content Type: ${contentType}
+Main Idea: ${idea}
 
-      Ensure the structure is comprehensive and follows best practices for ${contentType} content.
+REFERENCE INFORMATION (Use this knowledge to inform your writing - DO NOT copy directly):
+${knowledgeBase}
 
-      Generate a structured outline following the specified JSON format. Ensure each section builds logically on the previous one.`;
+Generate a structured outline following the specified JSON format. Ensure each section builds logically on the previous one.
+DO NOT include knowledge base sections in the outline - use it only as reference for style and requirements.`;
 
     try {
       const response = await llm.executePrompt(prompt, { temperature: 0.7 });
-      // console.log('response: ', response);
       const blocks = JSON.parse(response.content);
-      // console.log('blocks: ', blocks);
-
-      // // Validate the structure
-      // const isValid = blocks.every(
-      //   (block: ContentBlock) =>
-      //     typeof block.id === 'number' &&
-      //     typeof block.title === 'string' &&
-      //     typeof block.content === 'string'
-      // );
-
-      // if (!isValid) {
-      //   console.error(
-      //     'Invalid block structure:',
-      //     blocks.find(
-      //       (block: ContentBlock) =>
-      //         typeof block.id !== 'number' ||
-      //         typeof block.title !== 'string' ||
-      //         typeof block.content !== 'string'
-      //     )
-      //   );
-      //   throw new Error('Invalid block structure received from LLM');
-      // }
-
       return blocks;
     } catch (error) {
       console.error('Failed to generate blocks:', error);
@@ -141,7 +108,10 @@ export class Agent {
     const llm = LLMFactory.getConfiguredProvider();
 
     const systemPrompt = `You are an expert content writer. Your task is to write content for a specific section.
-IMPORTANT: Respond ONLY with the section content. Do not include any explanations, introductions, or meta-commentary.
+IMPORTANT: 
+- Respond ONLY with the section content
+- Do not include any explanations, introductions, or meta-commentary
+- Do not copy or include the knowledge base content directly - use it as reference information to inform your writing
 
 Content Requirements:
 - Write in a ${this.config.writingStyle} style
@@ -180,7 +150,7 @@ Description: ${block.description}
 ${previousBlock ? `Previous Section: ${previousBlock.title}` : 'This is the first section'}
 ${nextBlock ? `Next Section: ${nextBlock.title}` : 'This is the final section'}
 
-KNOWLEDGE BASE CONTEXT
+REFERENCE INFORMATION (Use this knowledge to inform your writing - DO NOT copy directly):
 ${knowledgeBase}
 
 Write the section content now. Respond ONLY with the content:`;
@@ -218,7 +188,10 @@ Write the section content now. Respond ONLY with the content:`;
     const llm = LLMFactory.getConfiguredProvider();
 
     const systemPrompt = `You are an expert content writer. Your task is to rewrite a specific section of content based on reviewer feedback.
-IMPORTANT: Respond ONLY with the rewritten content. Do not include any explanations, introductions, or meta-commentary.
+IMPORTANT: 
+- Respond ONLY with the rewritten content
+- Do not include any explanations, introductions, or meta-commentary
+- Do not copy or include the knowledge base content directly - use it as reference information to inform your writing
 
 Your rewrite must:
 - Address EACH point from the reviewer's feedback as top priority
@@ -262,7 +235,7 @@ ${reviewerSuggestion}
 CURRENT CONTENT
 ${currentValue}
 
-KNOWLEDGE BASE CONTEXT
+REFERENCE INFORMATION (Use this knowledge to inform your writing - DO NOT copy directly):
 ${knowledgeBase}
 
 TASK
@@ -316,7 +289,7 @@ Main Idea: ${idea}
 Section Purpose: ${block.description}
 ${reviewInstructions ? `\nSPECIFIC REVIEW FOCUS\n${reviewInstructions}` : ''}
 
-KNOWLEDGE BASE CONTEXT
+REFERENCE INFORMATION (Use this knowledge to inform your writing - DO NOT copy directly):
 ${knowledgeBase}
 
 CONTENT TO REVIEW

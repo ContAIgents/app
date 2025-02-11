@@ -30,6 +30,7 @@ import { Comment, ContentBlock } from '@/types/content';
 import { IBlockStatus } from '@/types/editor';
 import { ConfigManager } from '../services/config/ConfigManager';
 import { VoiceInput } from '@/components/VoiceInput/VoiceInput';
+import { ContentImportMenu } from '../components/ContentImportMenu/ContentImportMenu';
 
 const COMMENT_WIDTH = 280;
 const TOC_WIDTH = 200;
@@ -487,7 +488,10 @@ export const EditorPage: React.FC = () => {
                       Reviewer Comments
                     </Text>
 
-                    <VoiceInput />
+                    <Group mb="md">
+                      <VoiceInput />
+                      <ContentImportMenu />
+                    </Group>
 
                     <Stack gap="md">
                       {block.comments.map((comment) => (

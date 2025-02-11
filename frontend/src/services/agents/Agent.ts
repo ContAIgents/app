@@ -68,31 +68,28 @@ export class Agent {
       throw new Error('No configured LLM provider found');
     })();
 
-    const systemPrompt = `You are an expert content strategist and writer. Your task is to create a detailed content structure.
-IMPORTANT: Respond ONLY with a valid JSON array, no additional text or markdown formatting.
-The response must be a raw JSON array of content blocks. Each block must have:
-- id (number)
-- title (string)
-- description (detailed section purpose, 1-2 sentences)
-- content (empty string)
-- comments (empty array)
+    const writerPersona = `Acting as ${this.config.name}, an expert ${(this.config.expertise ?? []).join(', ')} with a ${this.config.writingStyle} writing style and ${this.config.tone} tone.`;
 
-Ensure the structure is comprehensive and follows best practices for ${contentType} content.`;
+    const prompt = `You are an expert content strategist and writer. Your task is to create a detailed content structure.
 
-    const writerPersona = `Acting as ${this.config.name}, an expert ${(this.config.expertise ?? []).join(', ')}
-with a ${this.config.writingStyle} writing style and ${this.config.tone} tone.`;
+      ${writerPersona}
 
-    const prompt = `${systemPrompt}
+      Content Type: '''${contentType}'''
+      Main Idea: '''${idea}'''
+      Knowledge Base: '''${knowledgeBase}'''
 
-${writerPersona}
 
-Content Type: ${contentType}
-Main Idea: ${idea}
+      IMPORTANT: Respond ONLY with a valid JSON array, no additional text or markdown formatting.
+      The response must be a raw JSON array of content blocks. Each block must have:
+      - id (number)
+      - title (string)
+      - description (detailed section purpose, 1-2 sentences)
+      - content (empty string)
+      - comments (empty array)
 
-Knowledge Base:
-${knowledgeBase}
+      Ensure the structure is comprehensive and follows best practices for ${contentType} content.
 
-Generate a structured outline following the specified JSON format. Ensure each section builds logically on the previous one.`;
+      Generate a structured outline following the specified JSON format. Ensure each section builds logically on the previous one.`;
 
     try {
       const response = await llm.executePrompt(prompt, { temperature: 0.7 });
@@ -284,10 +281,7 @@ Rewrite the content now, incorporating all reviewer feedback. Respond ONLY with 
     }
   }
 
-  public async generateReview(
-    block: ContentBlock,
-    reviewInstructions?: string
-  ): Promise<string> {
+  public async generateReview(block: ContentBlock, reviewInstructions?: string): Promise<string> {
     const configManager = new ConfigManager('editor_');
     const knowledgeBaseManager = new KnowledgeBaseManager();
 
@@ -330,11 +324,13 @@ Title: ${block.title}
 ${block.content}
 
 DOCUMENT STRUCTURE
-${contentBlocks.map(b => `${b.id}. ${b.title}`).join('\n')}
+${contentBlocks.map((b) => `${b.id}. ${b.title}`).join('\n')}
 
-${reviewInstructions 
-  ? 'Provide 3-5 specific, actionable improvements, prioritizing the requested focus areas:'
-  : 'Provide 3-5 specific, actionable improvements:'}`;
+${
+  reviewInstructions
+    ? 'Provide 3-5 specific, actionable improvements, prioritizing the requested focus areas:'
+    : 'Provide 3-5 specific, actionable improvements:'
+}`;
 
     try {
       const response = await llm.executePrompt(prompt, {

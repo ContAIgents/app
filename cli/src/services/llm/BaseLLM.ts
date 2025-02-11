@@ -18,15 +18,19 @@ export abstract class BaseLLM implements LLMInterface {
 
   abstract executePrompt(
     prompt: string,
+    systemPrompt?: string,
+    template?: string,
     options?: PromptOptions
   ): Promise<PromptResponse>;
 
   async executePrompts(
     prompts: string[],
+    systemPrompt?: string,
+    template?: string,
     options?: PromptOptions
   ): Promise<PromptResponse[]> {
     return Promise.all(
-      prompts.map((prompt) => this.executePrompt(prompt, options))
+      prompts.map((prompt) => this.executePrompt(prompt, systemPrompt, template, options))
     );
   }
 

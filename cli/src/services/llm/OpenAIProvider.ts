@@ -24,6 +24,8 @@ export class OpenAIProvider extends BaseLLM {
 
   async executePrompt(
     prompt: string,
+    systemPrompt?: string,
+    template?: string,
     options: PromptOptions = {}
   ): Promise<PromptResponse> {
     if (!this.isConfigured()) {

@@ -9,15 +9,19 @@ const agentService = new AgentService();
 
 router.post("/agent/generate", async (req, res) => {
   try {
-    const { prompt } = req.body;
+    const { agent_name, prompt } = req.body;
+    console.log("Agent Name: ", agent_name);
     console.log("Prompt: ", prompt);
-    const response = await agentService.generateResponse(prompt);
-    console.log("Response: ", response);
-
+    const response = await agentService.generateResponse(agent_name, prompt);
     res.status(200).json({ response });
   } catch (error) {
     console.error("Error generating response: ", error);
-    res.status(500).json({ error: "Failed to generate response" });
+    res
+      .status(500)
+      .json({
+        error: "Failed to generate response",
+        message: (error as any)?.message,
+      });
   }
 });
 router.post("/agent/config", async (req, res) => {

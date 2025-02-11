@@ -23,7 +23,9 @@ export class DeepSeekProvider extends BaseLLM {
   }
 
   async executePrompt(
-    prompt: string,
+    prompt: string,    
+    systemPrompt?: string,
+    template?: string,
     options: PromptOptions = {}
   ): Promise<PromptResponse> {
     if (!this.isConfigured()) {

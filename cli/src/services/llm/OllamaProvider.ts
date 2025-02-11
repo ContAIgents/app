@@ -39,6 +39,8 @@ export class OllamaProvider extends BaseLLM {
 
   async executePrompt(
     prompt: string,
+    systemPrompt?: string,
+    template?: string,
     options: PromptOptions = {}
   ): Promise<PromptResponse> {
     await this.loadConfig();
@@ -50,12 +52,23 @@ export class OllamaProvider extends BaseLLM {
     let result = "";
     console.log("stream: ", stream);
     if (stream) {
-      const response = await ollama.generate({ model, prompt, stream });
+      const response = await ollama.generate({
+        model,
+        prompt,
+        stream,
+        system: systemPrompt,
+        template: template,
+      });
       for await (const part of response) {
         result += part.response;
       }
     } else {
-      const response = await ollama.generate({ model, prompt });
+      const response = await ollama.generate({
+        model,
+        prompt,
+        system: systemPrompt,
+        template: template,
+      });
       result = response.response;
     }
 

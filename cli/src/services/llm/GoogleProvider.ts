@@ -12,8 +12,15 @@ export class GoogleProvider extends BaseLLM {
       {
         name: "model",
         required: true,
-        options: ["gemini-pro", "gemini-pro-vision"],
-        default: "gemini-pro",
+        options: [
+          "gemini-2.0-flash",
+          "gemini-2.0-flash-lite-preview-02-05",
+          "gemini-1.5-flash",
+          "gemini-1.5-flash-8b",
+          "gemini-1.5-pro",
+          "gemini-1.0-pro",
+        ],
+        default: "gemini-2.0-flash",
       },
     ],
   };
@@ -33,7 +40,7 @@ export class GoogleProvider extends BaseLLM {
     }
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1/models/${this.config.model}:generateContent`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${this.config.model}:generateContent?key=${this.config.apiKey}`,
       {
         method: "POST",
         headers: {

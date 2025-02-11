@@ -5,6 +5,7 @@ import { HuggingFaceProvider } from "./HuggingFaceProvider";
 import { OllamaProvider } from "./OllamaProvider";
 import { OllamaApiProvider } from "./OllamaApiProvider";
 import { OpenAIProvider } from "./OpenAIProvider";
+import { GeminiProvider } from "./GeminiProvider";
 import { LLMInterface } from "./types";
 
 export const providers = {
@@ -15,6 +16,7 @@ export const providers = {
   HuggingFace: HuggingFaceProvider.providerConfig,
   Ollama: OllamaProvider.providerConfig,
   OllamaApi: OllamaApiProvider.providerConfig,
+  Gemini: GeminiProvider.providerConfig,
 };
 
 export class LLMFactory {
@@ -45,6 +47,9 @@ export class LLMFactory {
           break;
         case "ollamaapi":
           this.instances.set(providerName, new OllamaApiProvider());
+          break;
+        case "gemini":
+          this.instances.set(providerName, new GeminiProvider());
           break;
         default:
           throw new Error(`Unknown provider: ${name}`);

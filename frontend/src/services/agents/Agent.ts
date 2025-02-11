@@ -43,6 +43,33 @@ export class Agent {
       updatedAt: Date.now(),
     };
   }
+  private parseStructuredResponse(content: string): ContentBlock[] {
+    const sections = content
+      .split('====')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const blocks: ContentBlock[] = [];
+
+    for (let i = 0; i < sections.length; i += 2) {
+      const titleLine = sections[i];
+      const description = sections[i + 1];
+
+      if (titleLine && description) {
+        const match = titleLine.match(/(\d+)\.\s*(.+)/);
+        if (match) {
+          blocks.push({
+            id: parseInt(match[1]),
+            title: match[2].trim(),
+            description: description.trim(),
+            content: '',
+            comments: [],
+          });
+        }
+      }
+    }
+
+    return blocks;
+  }
 
   public async generateStructuredBlocks(
     contentType: string,
@@ -55,16 +82,26 @@ export class Agent {
     const llm = LLMFactory.getConfiguredProvider();
 
     const systemPrompt = `You are an expert content strategist and writer. Your task is to create a detailed content structure.
-IMPORTANT: Respond ONLY with a valid JSON array, no additional text or markdown formatting.
-The response must be a raw JSON array of content blocks. Each block must have:
-- id (number)
-- title (string)
-- description (detailed section purpose, 1-2 sentences)
-- content (empty string)
-- comments (empty array)
+IMPORTANT: Format your response EXACTLY as shown in the example below, using "====" to separate sections:
 
-Use the provided knowledge base ONLY as context for understanding style, tone, and requirements - DO NOT include it as content sections.
-Ensure the structure is comprehensive and follows best practices for ${contentType} content.`;
+EXAMPLE OUTPUT:
+1. Introduction
+====
+Hook readers and set expectations for the content
+====
+2. Main Benefits
+====
+Explore the key advantages and their impact
+====
+3. Implementation Steps
+====
+Step-by-step guide for practical application
+====
+
+Each section MUST have:
+1. Number and title on first line
+2. Description on third line (1-2 sentences)
+3. Sections separated by "====" on their own lines`;
 
     const writerPersona = `Acting as ${this.config.name}, an expert ${(this.config.expertise ?? []).join(', ')}
 with a ${this.config.writingStyle} writing style and ${this.config.tone} tone.`;
@@ -79,12 +116,12 @@ Main Idea: ${idea}
 REFERENCE INFORMATION (Use this knowledge to inform your writing - DO NOT copy directly):
 ${knowledgeBase}
 
-Generate a structured outline following the specified JSON format. Ensure each section builds logically on the previous one.
-DO NOT include knowledge base sections in the outline - use it only as reference for style and requirements.`;
+Generate a structured outline following the EXACT format shown in the example above.
+Ensure each section builds logically on the previous one.`;
 
     try {
       const response = await llm.executePrompt(prompt, { temperature: 0.7 });
-      const blocks = JSON.parse(response.content);
+      const blocks = this.parseStructuredResponse(response.content);
       return blocks;
     } catch (error) {
       console.error('Failed to generate blocks:', error);

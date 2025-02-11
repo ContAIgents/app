@@ -5,7 +5,6 @@ import { HuggingFaceProvider } from "./HuggingFaceProvider";
 import { OllamaProvider } from "./OllamaProvider";
 import { OllamaApiProvider } from "./OllamaApiProvider";
 import { OpenAIProvider } from "./OpenAIProvider";
-import { GeminiProvider } from "./GeminiProvider";
 import { LLMInterface } from "./types";
 
 export const providers = {

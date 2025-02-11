@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { IconLock } from '@tabler/icons-react';
-import { Button, Container, Stack, Text, Title, Tooltip } from '@mantine/core';
+import { IconLock, IconFileText, IconDownload } from '@tabler/icons-react';
+import { Button, Container, Stack, Text, Title, Tooltip, Group } from '@mantine/core';
 import ExportCard from '@/components/Export/ExportCard';
 import MarkdownEditorComponent from '@/components/MarkdownEditor';
 import { ConfigManager } from '@/services/config/ConfigManager';
@@ -8,6 +8,7 @@ import { ContentBlock } from '@/types/content';
 
 export function ExportPage() {
   const [finalContent, setFinalContent] = useState('');
+  const [isDownloading, setIsDownloading] = useState(false);
   const configManager = new ConfigManager('editor_');
 
   useEffect(() => {
@@ -20,6 +21,26 @@ export function ExportPage() {
 
   const handleExport = (format: string) => {
     console.log(`Exporting as ${format}`);
+  };
+
+  const downloadMarkdown = async () => {
+    try {
+      setIsDownloading(true);
+      const blob = new Blob([finalContent], { type: 'text/markdown' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      const date = new Date().toISOString().split('T')[0];
+      link.download = `content-${date}.md`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
+    } catch (error) {
+      console.error('Failed to download markdown:', error);
+      // You might want to add a notification here
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   return (
@@ -54,9 +75,24 @@ export function ExportPage() {
 
         {/* Export Options - Right Side */}
         <Stack style={{ flex: '0 0 25%' }} gap="md">
-          <Button size="md" fullWidth onClick={() => handleExport('pdf')}>
-            Export as PDF
-          </Button>
+          <Group grow>
+            <Button 
+              size="md"
+              leftSection={<IconFileText size="1rem" />}
+              onClick={() => handleExport('pdf')}
+            >
+              Export PDF
+            </Button>
+            <Button
+              size="md"
+              variant="light"
+              leftSection={<IconDownload size="1rem" />}
+              onClick={downloadMarkdown}
+              loading={isDownloading}
+            >
+              Export MD
+            </Button>
+          </Group>
 
           <Tooltip label="Coming Soon!">
             <Button

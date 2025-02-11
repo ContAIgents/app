@@ -473,8 +473,6 @@ export function Agents() {
             value={formData.expertise || []}
             onChange={(value) => setFormData({ ...formData, expertise: value })}
             searchable
-            creatable
-            getCreateLabel={(query: string) => `+ Create "${query}"`}
           />
           <Select
             label={formData.role === 'content_reviewer' ? 'Review Style' : 'Writing Style'}

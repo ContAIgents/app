@@ -44,6 +44,7 @@ import { Agent } from '../services/agents/Agent';
 import { AgentManager } from '../services/agents/AgentManager';
 import { ConfigManager } from '../services/config/ConfigManager';
 import { CONTENT_TYPES, getStructuredBlocks } from './Ideahub';
+import { keyframes } from '@emotion/react';
 
 const CONTENT_TYPE_PLACEHOLDERS = {
   blog: [
@@ -133,6 +134,12 @@ const getRandomPlaceholder = (contentType: string | null): string => {
   const placeholders = CONTENT_TYPE_PLACEHOLDERS[contentType as keyof typeof CONTENT_TYPE_PLACEHOLDERS];
   return placeholders[Math.floor(Math.random() * placeholders.length)];
 };
+
+const waveAnimation = keyframes`
+  0% { transform: translateX(0) }
+  50% { transform: translateX(5px) }
+  100% { transform: translateX(0) }
+`;
 
 export function EditorIdea() {
   const navigate = useNavigate();
@@ -370,7 +377,7 @@ export function EditorIdea() {
                 <Stack gap="xl">
                   <Title order={2} size="2.5rem" ta="center">What's your idea?</Title>
 
-                  <Group align="flex-start" spacing="md">
+                  <Group align="flex-start" gap="md">
                     <Textarea
                       placeholder={currentPlaceholder}
                       autosize
@@ -416,12 +423,7 @@ export function EditorIdea() {
                       <IconArrowRight 
                         size="2rem"
                         style={{
-                          animation: idea.trim() ? 'wave 2s infinite' : 'none',
-                          '@keyframes wave': {
-                            '0%': { transform: 'translateX(0)' },
-                            '50%': { transform: 'translateX(5px)' },
-                            '100%': { transform: 'translateX(0)' },
-                          },
+                          animation: idea.trim() ? `${waveAnimation} 2s infinite` : 'none',
                         }}
                       />
                     </Button>
@@ -623,7 +625,7 @@ export function EditorIdea() {
                                 <IconGripVertical size={16} />
                               </ActionIcon>
 
-                              <Stack spacing="xs" style={{ flex: 1 }}>
+                              <Stack gap="xs" style={{ flex: 1 }}>
                                 {editingBlockId === block.id ? (
                                   <TextInput
                                     value={block.title}

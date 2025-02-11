@@ -1,18 +1,22 @@
-import { IContentBlock } from "@/AppContext";
+import { ContentBlock } from "@/types/content";
 
 class EditorStateManager {
-  private editors: IContentBlock[] = [
-    {   id: 1,
-        content: 'Hello World',
-        comments: [
-          {
-            timestamp: '2021-08-01',
-            user: 'John Doe',
-            comment: 'This is a comment',
-            id: 1,
-          },
-        ],
-      },
+  private editors: ContentBlock[] = [
+    {
+      id: 1,
+      content: 'Hello World',
+      comments: [
+        {
+          timestamp: '2021-08-01',
+          user: 'John Doe',
+          comment: 'This is a comment',
+          id: 1,
+          status: 'idle'
+        },
+      ],
+      title: "",
+      description: ""
+    },
       {
         id: 2,
         content: 'Hello World 2',
@@ -22,14 +26,21 @@ class EditorStateManager {
             user: 'John Doe',
             comment: 'This is a comment',
             id: 2,
+            status: "idle"
           },
         ],
+        title: "",
+        description: ""
       },
   ];
 
   addEditor(content: string = '') {
     const id = this.editors.length + 1;
-    this.editors.push({ id, content, comments: [] });
+    this.editors.push({
+      id, content, comments: [],
+      title: "",
+      description: ""
+    });
   }
 
   updateEditor(id: number, content: string) {

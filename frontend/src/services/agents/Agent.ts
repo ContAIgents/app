@@ -305,4 +305,66 @@ Generate the improved content now, prioritizing the reviewer's feedback:`;
       throw error;
     }
   }
+
+  public async generateReview(
+    block: ContentBlock,
+    content: string
+  ): Promise<string> {
+    const configManager = new ConfigManager('editor_');
+    const knowledgeBaseManager = new KnowledgeBaseManager();
+
+    // Get context from ConfigManager
+    const contentType = configManager.load<string>('contentType');
+    const idea = configManager.load<string>('idea');
+    const contentBlocks = configManager.load<ContentBlock[]>('contentBlocks') || [];
+
+    // Get knowledge base
+    const defaultDoc = knowledgeBaseManager.getDefaultDocument();
+    const knowledgeBase = defaultDoc.content;
+
+    const llm = LLMFactory.getConfiguredProvider();
+
+    const systemPrompt = `You are a concise content reviewer. Provide brief, actionable feedback in 3-5 bullet points.
+Each point must be:
+- Specific and actionable
+- Maximum 2 sentences
+- Focused on critical improvements only
+Do not include general praise or lengthy explanations.`;
+
+    const reviewerPersona = `Acting as ${this.config.name}, an expert ${(this.config.expertise ?? []).join(', ')}
+with a ${this.config.writingStyle} review style and ${this.config.tone} tone.`;
+
+    const prompt = `${systemPrompt}
+
+${reviewerPersona}
+
+CONTEXT
+Content Type: ${contentType}
+Main Idea: ${idea}
+Section Purpose: ${block.description}
+
+KNOWLEDGE BASE CONTEXT
+${knowledgeBase}
+
+CONTENT TO REVIEW
+Title: ${block.title}
+${content}
+
+DOCUMENT STRUCTURE
+${contentBlocks.map(b => `${b.id}. ${b.title}`).join('\n')}
+
+Provide 3-5 specific, actionable improvements:`;
+
+    try {
+      const response = await llm.executePrompt(prompt, {
+        temperature: 0.7,
+        maxTokens: 500,
+      });
+
+      return response.content;
+    } catch (error) {
+      console.error('Failed to generate review:', error);
+      throw error;
+    }
+  }
 }

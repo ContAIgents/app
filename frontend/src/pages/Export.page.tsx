@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { IconLock } from '@tabler/icons-react';
+import { IconLock, IconPencil, IconPresentation, IconReload } from '@tabler/icons-react';
 import { Button, Container, Group, NumberInput, Stack, Text, Title, Tooltip } from '@mantine/core';
 import ExportCard from '@/components/Export/ExportCard';
 import MarkdownEditorComponent from '@/components/MarkdownEditor';
@@ -35,122 +35,137 @@ export function ExportPage() {
           <div>
             <Title order={1}>Final Preview</Title>
             <Text c="dimmed" size="sm">
-              Your content is ready! Choose your preferred format and share your creativity with the
-              world.
+              Your content is almost ready! Choose your preferred format and share your creativity
+              with the world.
             </Text>
           </div>
         </Group>
         <Group align="stretch" style={{ width: '100%' }}>
           {isGenerating ? (
-            <div style={{ height: '100%', flex: 1, marginRight: '20px' }}>
+            <div
+              style={{
+                height: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
               <Text size="sm" c="dimmed">
-                Generating Final Content...
+                Generating Final Content... Please wait...
               </Text>
             </div>
           ) : (
-            <div style={{ height: '100%', flex: 1, marginRight: '20px' }}>
-              <div
-                style={{
-                  marginBottom: '20px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                }}
-              >
-                <NumberInput
-                  label="Max Words"
-                  value={maxWords}
-                  onChange={(value) => {
-                    setMaxWords(parseInt(value.toString()));
+            <>
+              <div style={{ height: '100%', flex: 1, marginRight: '20px' }}>
+                <div
+                  style={{
+                    marginBottom: '20px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
                   }}
-                  allowNegative={false}
-                  allowDecimal={false}
-                />
-                <Button onClick={generateFinalContent} disabled={isGenerating}>
-                  Regenerate Content
-                </Button>
-                <Button
-                  onClick={() => {
-                    setEditMode(editMode);
-                  }}
-                  disabled={isGenerating}
                 >
-                  {editMode ? 'Preview Mode' : 'Edit Mode'}
-                </Button>
+                  <NumberInput
+                    label="Max Words"
+                    value={maxWords}
+                    onChange={(value) => {
+                      setMaxWords(parseInt(value.toString()));
+                    }}
+                    allowNegative={false}
+                    allowDecimal={false}
+                  />
+                  <Button
+                    onClick={generateFinalContent}
+                    disabled={isGenerating}
+                    leftSection={<IconReload size={16} />}
+                  >
+                    Regenerate Content
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setEditMode(!editMode);
+                    }}
+                    disabled={isGenerating}
+                    leftSection={
+                      editMode ? <IconPencil size={16} /> : <IconPresentation size={16} />
+                    }
+                    style={{ width: '120px' }}
+                  >
+                    {editMode ? 'Edit' : 'Preview'}
+                  </Button>
+                </div>
+                <MarkdownEditorComponent
+                  content={finalContent}
+                  onUpdate={(newContent) => {
+                    setFinalContent(newContent);
+                  }}
+                  disabled={editMode}
+                />
               </div>
-              <MarkdownEditorComponent
-                content={finalContent}
-                onUpdate={(newContent) => {
-                  setFinalContent(newContent);
-                }}
-                disabled={editMode}
-              />
-            </div>
-          )}
-          {!isGenerating && (
-            <Stack gap="md" align="stretch">
-              <Button onClick={() => handleExport('pdf')}>Export as PDF </Button>
-              <Tooltip label="Coming Soon!">
-                <Button variant="light" disabled onClick={() => handleExport('image')}>
-                  Send Newsletter <IconLock size="1rem" />
-                </Button>
-              </Tooltip>
+              <Stack gap="md" align="stretch">
+                <Button onClick={() => handleExport('pdf')}>Export as PDF </Button>
+                <Tooltip label="Coming Soon!">
+                  <Button variant="light" disabled onClick={() => handleExport('image')}>
+                    Send Newsletter <IconLock size="1rem" />
+                  </Button>
+                </Tooltip>
 
-              <ExportCard
-                title="No Limits to Creativity"
-                content="Use generative AI to create impressive videos based on your content"
-                imageSrc="https://siteefy.com/wp-content/uploads/2023/09/Synthesia.png"
-                onBtnClick={() => {}}
-                buttonText="Generate Video"
-                isLocked={true}
-                isPremium={true}
-              />
-              <ExportCard
-                title="Social Together"
-                content="Share your thoughts with your friends and followers"
-                onBtnClick={() => {}}
-                imageSrc="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRPdb_m0eYeQQNGk796cpoGFfcHbCiVm4vRUg&s"
-                buttonText="Share on Social Media"
-                isLocked={true}
-                isPremium={false}
-              />
-              <Tooltip label="Coming Soon!">
-                <Button variant="light" disabled onClick={() => handleExport('image')}>
-                  Create Shorts <IconLock size="1rem" />
-                </Button>
-              </Tooltip>
-              <Tooltip label="Coming Soon!">
-                <Button variant="light" disabled onClick={() => handleExport('video')}>
-                  Create Reels <IconLock size="1rem" />
-                </Button>
-              </Tooltip>
-              <ExportCard
-                title="Create Blog"
-                content="Directly post to Medium "
-                onBtnClick={() => {}}
-                imageSrc="https://miro.medium.com/v2/resize:fit:1400/0*sG6BT7e579CET2QA"
-                buttonText="Create Blog"
-                isLocked={true}
-                isPremium={false}
-              />
-              <ExportCard
-                title="No Limits to Creativity"
-                content="Use generative AI to create an image from your content"
-                onBtnClick={() => {}}
-                buttonText="Generate Image"
-                isLocked={true}
-                isPremium={true}
-              />
-              <ExportCard
-                title="Create Podcast"
-                content="Use Elevenlabs to create a podcast"
-                onBtnClick={() => {}}
-                imageSrc="https://nomusica.com/wp-content/uploads/2024/11/ElevenLabs.jpg"
-                buttonText="Create Podcast"
-                isLocked={true}
-                isPremium={true}
-              />
-            </Stack>
+                <ExportCard
+                  title="No Limits to Creativity"
+                  content="Use generative AI to create impressive videos based on your content"
+                  imageSrc="https://siteefy.com/wp-content/uploads/2023/09/Synthesia.png"
+                  onBtnClick={() => {}}
+                  buttonText="Generate Video"
+                  isLocked={true}
+                  isPremium={true}
+                />
+                <ExportCard
+                  title="Social Together"
+                  content="Share your thoughts with your friends and followers"
+                  onBtnClick={() => {}}
+                  imageSrc="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRPdb_m0eYeQQNGk796cpoGFfcHbCiVm4vRUg&s"
+                  buttonText="Share on Social Media"
+                  isLocked={true}
+                  isPremium={false}
+                />
+                <Tooltip label="Coming Soon!">
+                  <Button variant="light" disabled onClick={() => handleExport('image')}>
+                    Create Shorts <IconLock size="1rem" />
+                  </Button>
+                </Tooltip>
+                <Tooltip label="Coming Soon!">
+                  <Button variant="light" disabled onClick={() => handleExport('video')}>
+                    Create Reels <IconLock size="1rem" />
+                  </Button>
+                </Tooltip>
+                <ExportCard
+                  title="Create Blog"
+                  content="Directly post to Medium "
+                  onBtnClick={() => {}}
+                  imageSrc="https://miro.medium.com/v2/resize:fit:1400/0*sG6BT7e579CET2QA"
+                  buttonText="Create Blog"
+                  isLocked={true}
+                  isPremium={false}
+                />
+                <ExportCard
+                  title="No Limits to Creativity"
+                  content="Use generative AI to create an image from your content"
+                  onBtnClick={() => {}}
+                  buttonText="Generate Image"
+                  isLocked={true}
+                  isPremium={true}
+                />
+                <ExportCard
+                  title="Create Podcast"
+                  content="Use Elevenlabs to create a podcast"
+                  onBtnClick={() => {}}
+                  imageSrc="https://nomusica.com/wp-content/uploads/2024/11/ElevenLabs.jpg"
+                  buttonText="Create Podcast"
+                  isLocked={true}
+                  isPremium={true}
+                />
+              </Stack>
+            </>
           )}
         </Group>
       </Stack>

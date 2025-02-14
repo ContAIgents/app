@@ -16,8 +16,16 @@ export class OpenAIProvider extends BaseLLM {
         label: 'Model',
         type: 'select',
         required: true,
-        options: ['gpt-4', 'gpt-3.5-turbo', 'gpt-4-turbo-preview'],
-        default: 'gpt-4',
+        options: [
+          'gpt-4o',
+          'gpt-4',
+          'gpt-3.5-turbo',
+          'gpt-4-turbo-preview',
+          'gpt-4-0125-preview',
+          'gpt-4-1106-preview',
+          'gpt-3.5-turbo-0125',
+        ],
+        default: 'gpt-4o',
       },
     ],
   };
@@ -35,7 +43,7 @@ export class OpenAIProvider extends BaseLLM {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.config.apiKey}`,
+        Authorization: `Bearer ${this.config.apiKey}`,
       },
       body: JSON.stringify({
         model: this.config.model,
@@ -51,7 +59,7 @@ export class OpenAIProvider extends BaseLLM {
     }
 
     const data = await response.json();
-    
+
     return {
       content: data.choices[0].message.content,
       raw: data,

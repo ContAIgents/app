@@ -43,7 +43,7 @@ import { ContentBlock } from '@/types/content';
 import { Agent } from '../services/agents/Agent';
 import { AgentManager } from '../services/agents/AgentManager';
 import { ConfigManager } from '../services/config/ConfigManager';
-import { CONTENT_TYPES, getStructuredBlocks } from './Ideahub';
+import { CONTENT_TYPES, getStructuredBlocks } from '../constants/ideahub';
 import { keyframes } from '@emotion/react';
 
 const CONTENT_TYPE_PLACEHOLDERS = {

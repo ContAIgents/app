@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { IconArrowRight, IconInfoCircle, IconMicrophone, IconWand } from '@tabler/icons-react';
-import { useNavigate } from 'react-router-dom';
+import { IconArrowRight, IconBook, IconInfoCircle, IconMicrophone, IconWand } from '@tabler/icons-react';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   ActionIcon,
   Box,
@@ -374,6 +374,20 @@ export const EditorPage: React.FC = () => {
             }}
           >
             <TableOfContents links={tocLinks} />
+          </Box>
+
+          {/* Knowledge Base Section */}
+          <Box
+            style={{
+              borderTop: '1px solid var(--mantine-color-default-border)',
+              backgroundColor: 'var(--mantine-color-body)',
+            }}
+          >
+            <Box>
+              <Button component={Link} to="/knowledgeBase" variant="light" size="sm" fullWidth leftSection={<IconBook size="1rem" />}>
+                Knowledge Base
+              </Button>
+            </Box>
           </Box>
         </Paper>
 

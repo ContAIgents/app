@@ -48,7 +48,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
   const dumpToFile = useCallback(() => {
     const data = JSON.stringify(editorStateManager.getEditors());
-    console.log(data);
   },[])
 
   return <AppCtx.Provider value={{ editorState, setEditorState, updateEditorState, dumpToFile }}>{children}</AppCtx.Provider>;

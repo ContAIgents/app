@@ -1,10 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import {
-  IconInfoCircle,
-  IconMicrophone,
-  IconWand,
-  IconArrowRight,
-} from '@tabler/icons-react';
+import { IconArrowRight, IconInfoCircle, IconMicrophone, IconWand } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import {
   ActionIcon,
@@ -24,13 +19,13 @@ import { EmptyBlockContent } from '@/components/Editor/EmptyBlockContent';
 import MarkdownEditorComponent from '@/components/MarkdownEditor';
 import { getReviewInstructionsFromUser } from '@/components/ReviewInstructionsModal/ReviewInstructionsModal';
 import { TableOfContents } from '@/components/TableOfContents';
+import { VoiceInput } from '@/components/VoiceInput/VoiceInput';
 import { Agent } from '@/services/agents/Agent';
 import { CommentStatus, ReviewStatus } from '@/services/agents/types';
 import { Comment, ContentBlock } from '@/types/content';
 import { IBlockStatus } from '@/types/editor';
-import { ConfigManager } from '../services/config/ConfigManager';
-import { VoiceInput } from '@/components/VoiceInput/VoiceInput';
 import { ContentImportMenu } from '../components/ContentImportMenu/ContentImportMenu';
+import { ConfigManager } from '../services/config/ConfigManager';
 
 const COMMENT_WIDTH = 280;
 const TOC_WIDTH = 200;
@@ -220,7 +215,7 @@ export const EditorPage: React.FC = () => {
   const handleRequestReview = async (block: ContentBlock, commentId: number) => {
     const blockId = block?.id;
     if (block?.reviewer?.config === undefined) return;
-    
+
     try {
       // Set loading state before getting instructions
       setBlockStatuses((prev) => ({
@@ -238,9 +233,7 @@ export const EditorPage: React.FC = () => {
             ? {
                 ...b,
                 comments: b.comments.map((c) =>
-                  c.id === commentId
-                    ? { ...c, status: 'loading' }
-                    : c
+                  c.id === commentId ? { ...c, status: 'loading' } : c
                 ),
               }
             : b
@@ -259,7 +252,7 @@ export const EditorPage: React.FC = () => {
             ? {
                 ...b,
                 comments: [
-                  ...b.comments.filter(c => c.id !== commentId),
+                  ...b.comments.filter((c) => c.id !== commentId),
                   {
                     id: commentId,
                     timestamp: new Date().toISOString(),
@@ -280,10 +273,9 @@ export const EditorPage: React.FC = () => {
           reviewStatus: 'pending',
         },
       }));
-      
     } catch (error) {
       console.error('Review generation failed:', error);
-      
+
       // Set error states
       setBlockStatuses((prev) => ({
         ...prev,
@@ -300,9 +292,7 @@ export const EditorPage: React.FC = () => {
             ? {
                 ...b,
                 comments: b.comments.map((c) =>
-                  c.id === commentId
-                    ? { ...c, status: 'error' }
-                    : c
+                  c.id === commentId ? { ...c, status: 'error' } : c
                 ),
               }
             : b
@@ -327,7 +317,7 @@ export const EditorPage: React.FC = () => {
             top: '1rem',
             right: '2rem',
             zIndex: 1000,
-            gap: '8px'
+            gap: '8px',
           }}
         >
           <Tooltip
@@ -399,7 +389,7 @@ export const EditorPage: React.FC = () => {
           }}
         >
           <Container size="xl">
-            <Stack gap="md" pt='xl'>
+            <Stack gap="md" pt="xl">
               {contentBlocks.map((block) => (
                 <Group
                   key={block.id}
@@ -488,9 +478,8 @@ export const EditorPage: React.FC = () => {
                       Reviewer Comments
                     </Text>
 
-                    <Group mb="md">
+                    <Group gap={0} mb="md">
                       <VoiceInput />
-                      <ContentImportMenu />
                     </Group>
 
                     <Stack gap="md">

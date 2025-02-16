@@ -14,19 +14,19 @@ export class DummyLLM extends BaseLLM {
   private simulateNetworkDelay(): Promise<void> {
     // Random delay between 1-3 seconds
     const delay = this.getRandomDelay(1000, 3000);
-    return new Promise(resolve => setTimeout(resolve, delay));
+    return new Promise((resolve) => setTimeout(resolve, delay));
   }
 
   private simulateThinkingDelay(): Promise<void> {
     // Random "thinking" delay between 2-4 seconds
     const delay = this.getRandomDelay(2000, 4000);
-    return new Promise(resolve => setTimeout(resolve, delay));
+    return new Promise((resolve) => setTimeout(resolve, delay));
   }
 
   private async simulateOccasionalTimeout(): Promise<void> {
     // 10% chance of timeout
     if (Math.random() < 0.1) {
-      await new Promise(resolve => setTimeout(resolve, 5000));
+      await new Promise((resolve) => setTimeout(resolve, 5000));
       throw new Error('Request timed out');
     }
   }
@@ -44,16 +44,17 @@ export class DummyLLM extends BaseLLM {
     try {
       // Simulate network latency
       await this.simulateNetworkDelay();
-      
+
       // Simulate occasional timeouts
       // await this.simulateOccasionalTimeout();
-      
+
       // Simulate AI "thinking" time
       // await this.simulateThinkingDelay();
 
       // Return dummy structured content
-      return {
-        content: `1. Introduction
+      if (prompt.startsWith('You are an expert content strategist and writer.'))
+        return {
+          content: `1. Introduction
 ====
 Setting the context and main objectives
 ====
@@ -72,15 +73,28 @@ Addressing potential issues and solutions
 5. Conclusion
 ====
 Summary and next steps`,
-        raw: {
-          model: 'dummy-gpt-3.5',
-          usage: {
-            prompt_tokens: 147,
-            completion_tokens: 238,
-            total_tokens: 385
-          }
-        }
-      };
+          raw: {
+            model: 'dummy-gpt-3.5',
+            usage: {
+              prompt_tokens: 147,
+              completion_tokens: 238,
+              total_tokens: 385,
+            },
+          },
+        };
+      else {
+        return {
+          content: 'This is a dummy response from the DummyLLM provider.',
+          raw: {
+            model: 'dummy-gpt-3.5',
+            usage: {
+              prompt_tokens: 147,
+              completion_tokens: 238,
+              total_tokens: 385,
+            },
+          },
+        };
+      }
     } catch (error) {
       // Simulate error response format similar to real LLM providers
       throw new Error(`DummyLLM API error: ${error.message}`);

@@ -121,9 +121,7 @@ Ensure each section builds logically on the previous one.`;
 
     try {
       const response = await llm.executePrompt(prompt, { temperature: 0.7 });
-      console.log('Structured response:', response.content);
       const blocks = this.parseStructuredResponse(response.content);
-      console.log('Blocks:', blocks);
       return blocks;
     } catch (error) {
       console.error('Failed to generate blocks:', error);

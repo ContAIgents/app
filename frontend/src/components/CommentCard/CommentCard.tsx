@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { 
   Paper, 
   Group, 
@@ -41,6 +41,7 @@ export function CommentCard({
 }: CommentCardProps) {
   const [editingComment, setEditingComment] = useState(false);
   const [editedComment, setEditedComment] = useState(comment.comment);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const getAvatarColor = (user: string) => {
     switch (user) {
@@ -62,7 +63,7 @@ export function CommentCard({
   if (blockStatus?.reviewStatus === 'completed') {
     return (
       <Button
-        size="sm"
+        size="xs"
         variant="light"
         onClick={() => onRequestReview(block, comment.id)}
         fullWidth
@@ -87,14 +88,14 @@ export function CommentCard({
           </Text>
         </Box>
         <Group gap="xs">
-          <ActionIcon
+          {/* <ActionIcon
             size="sm"
             variant="subtle"
             onClick={() => setEditingComment(true)}
           >
             <IconEdit size="1rem" />
-          </ActionIcon>
-          <Tooltip label="Regenerate review">
+          </ActionIcon> */}
+          <Tooltip label="Regenerate review - Click to request a new review for this comment">
             <ActionIcon
               size="sm"
               variant="subtle"
@@ -112,18 +113,31 @@ export function CommentCard({
       {editingComment ? (
         <Stack gap="xs">
           <Textarea
+            ref={textareaRef}
             value={editedComment}
             onChange={(e) => setEditedComment(e.currentTarget.value)}
             size="sm"
             autosize
             minRows={2}
+            placeholder="Type your comment here..."
           />
           <Group gap="xs" justify="flex-end">
             <ActionIcon
               size="sm"
               variant="subtle"
               color="red"
-              onClick={() => setEditingComment(false)}
+              onClick={() => {
+                if (comment.comment === '') {
+                  // Remove the empty comment if canceled
+                  setContentBlocks((blocks) =>
+                    blocks.map((b) => ({
+                      ...b,
+                      comments: b.comments.filter((c) => c.id !== comment.id),
+                    }))
+                  );
+                }
+                setEditingComment(false);
+              }}
             >
               <IconX size="1rem" />
             </ActionIcon>
@@ -132,8 +146,10 @@ export function CommentCard({
               variant="subtle"
               color="green"
               onClick={() => {
-                onUpdateComment(comment.id, editedComment);
-                setEditingComment(false);
+                if (editedComment.trim()) {
+                  onUpdateComment(comment.id, editedComment);
+                  setEditingComment(false);
+                }
               }}
             >
               <IconCheck size="1rem" />
@@ -151,7 +167,14 @@ export function CommentCard({
             </Text>
           )}
 
-          <Group justify="flex-end" mt="md">
+          <Group justify="flex-end" mt="md" gap="xs">
+            <Button
+              variant="light"
+              size="xs"
+              onClick={() => setEditingComment(true)}
+            >
+              Instruct
+            </Button>
             <Button
               color="blue"
               size="xs"
@@ -159,7 +182,7 @@ export function CommentCard({
               loading={blockStatus?.isLoading}
               disabled={blockStatus?.isLoading}
             >
-              Ask {block?.writer?.config?.name || 'AI Writer'} to rewrite
+              Rewrite Content
             </Button>
           </Group>
         </>

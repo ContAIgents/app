@@ -5,6 +5,7 @@ import StarterKit from '@tiptap/starter-kit';
 import { common, createLowlight } from 'lowlight';
 import { Markdown } from 'tiptap-markdown';
 import { RichTextEditor } from '@mantine/tiptap';
+import { ContentImportMenu } from './ContentImportMenu/ContentImportMenu';
 
 interface MarkdownEditorComponentProps {
   content: string;
@@ -83,10 +84,12 @@ const MarkdownEditorComponent: React.FC<MarkdownEditorComponentProps> = ({
           <RichTextEditor.CodeBlock />
         </RichTextEditor.ControlsGroup>
 
-        <RichTextEditor.ControlsGroup>
-          <RichTextEditor.Link />
+        {/* <RichTextEditor.ControlsGroup>
           <RichTextEditor.Unlink />
-        </RichTextEditor.ControlsGroup>
+          <RichTextEditor.Link />
+          <RichTextEditor.Image />
+        </RichTextEditor.ControlsGroup> */}
+          <ContentImportMenu />
       </RichTextEditor.Toolbar>
 
       <RichTextEditor.Content />

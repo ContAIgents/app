@@ -14,8 +14,9 @@ export const VoiceInput: React.FC<VoiceInputProps> = ({
   return (
     <Tooltip label={tooltipLabel}>
       <Paper
-        p="sm"
-        mb="md"
+        p="xs"
+        mb="xs"
+        w="100%"
         style={{
           border: '1px solid var(--mantine-color-gray-3)',
           borderRadius: 'var(--mantine-radius-md)',
@@ -23,10 +24,10 @@ export const VoiceInput: React.FC<VoiceInputProps> = ({
           cursor: disabled ? 'not-allowed' : 'pointer',
         }}
       >
-        <Group justify="space-between" align="center">
+        <Group justify="space-between" align="center" gap="xs">
           <Group gap="xs">
             <IconMicrophone 
-              size="1.2rem" 
+              size="1rem" 
               style={{ color: 'var(--mantine-color-gray-6)' }}
             />
             <Text size="sm" c="dimmed">Instruct with Voice</Text>
@@ -37,7 +38,7 @@ export const VoiceInput: React.FC<VoiceInputProps> = ({
             display: 'flex', 
             alignItems: 'center', 
             gap: '2px', 
-            height: '20px' 
+            height: '16px' 
           }}>
             {[...Array(5)].map((_, i) => (
               <div

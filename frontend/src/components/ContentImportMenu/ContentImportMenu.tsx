@@ -59,7 +59,7 @@ export const ContentImportMenu = () => {
   return (
     <Menu shadow="md" width={300}>
       <Menu.Target>
-        <Button variant="light" leftSection={<IconFileImport size="1.1rem" />}>
+        <Button m={10} size='xs' variant="light" leftSection={<IconFileImport size="1.1rem" />}>
           Add Content
         </Button>
       </Menu.Target>

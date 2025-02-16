@@ -84,7 +84,18 @@ Summary and next steps`,
         };
       else {
         return {
-          content: 'This is a dummy response from the DummyLLM provider.',
+          content: `# Dummy Response from DummyLLM Provider
+
+## Introduction
+This is a larger dummy Markdown text response from the DummyLLM provider.
+
+## Main Content
+- Point 1: Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+- Point 2: Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+- Point 3: Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.
+
+## Conclusion
+In conclusion, this dummy text demonstrates a more substantial response.`,
           raw: {
             model: 'dummy-gpt-3.5',
             usage: {

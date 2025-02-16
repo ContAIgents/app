@@ -10,7 +10,7 @@ import {
   IconTable,
   IconTimeline,
 } from '@tabler/icons-react';
-import { Button, Menu, Text, Tooltip } from '@mantine/core';
+import { ActionIcon, Button, Menu, Text, Tooltip } from '@mantine/core';
 
 export const ContentImportMenu = () => {
   const menuItems = [
@@ -57,11 +57,11 @@ export const ContentImportMenu = () => {
   ];
 
   return (
-    <Menu shadow="md" width={300}>
+    <Menu width={300}>
       <Menu.Target>
-        <Button m={10} size='xs' variant="light" leftSection={<IconFileImport size="1.1rem" />}>
-          Add Content
-        </Button>
+        <ActionIcon variant="light" size="md">
+          <IconFileImport size="1.1rem" />
+        </ActionIcon>
       </Menu.Target>
 
       <Menu.Dropdown>

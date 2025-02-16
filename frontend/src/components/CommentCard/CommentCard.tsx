@@ -24,6 +24,7 @@ interface CommentCardProps {
     reviewStatus: ReviewStatus;
     isInitialReview: boolean;
   };
+  setContentBlocks: React.Dispatch<React.SetStateAction<ContentBlock[]>>;
   onRequestReview: (block: ContentBlock, commentId: number) => void;
   onSimulateReview: (blockId: number, commentId: number) => void;
   onSimulateContentGeneration: (block: ContentBlock, comment: Comment) => void;
@@ -34,6 +35,7 @@ export function CommentCard({
   comment,
   block,
   blockStatus,
+  setContentBlocks,
   onRequestReview,
   onSimulateReview,
   onSimulateContentGeneration,
@@ -129,7 +131,7 @@ export function CommentCard({
               onClick={() => {
                 if (comment.comment === '') {
                   // Remove the empty comment if canceled
-                  setContentBlocks((blocks) =>
+                  setContentBlocks((blocks: ContentBlock[]) =>
                     blocks.map((b) => ({
                       ...b,
                       comments: b.comments.filter((c) => c.id !== comment.id),

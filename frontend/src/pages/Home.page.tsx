@@ -10,7 +10,7 @@ import {
   Chip,
   rem,
 } from '@mantine/core';
-import { CONTENT_TYPES, CONTENT_CATEGORIES } from '../constants/ideahub';
+import { CONTENT_TYPES, CONTENT_CATEGORIES } from '../constants/Ideahub';
 
 export function HomePage() {
   const navigate = useNavigate();

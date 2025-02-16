@@ -77,6 +77,7 @@ const MarkdownEditorComponent: React.FC<MarkdownEditorComponentProps> = ({
     );
 
     if (text && text.length > 0) {
+      if (!editor) return;
       const { from } = editor.state.selection;
       const coords = editor.view.coordsAtPos(from);
       const editorElement = editor.view.dom.getBoundingClientRect();

@@ -51,7 +51,7 @@ import {
 import { useClickOutside, useFocusTrap } from '@mantine/hooks';
 import { CONTENT_TYPE_PLACEHOLDERS } from '@/constants/contentTypes';
 import { ContentBlock } from '@/types/content';
-import { CONTENT_TYPES, getStructuredBlocks } from '../constants/ideahub';
+import { CONTENT_TYPES, getStructuredBlocks } from '../constants/Ideahub';
 import { Agent } from '../services/agents/Agent';
 import { AgentManager } from '../services/agents/AgentManager';
 import { ConfigManager } from '../services/config/ConfigManager';

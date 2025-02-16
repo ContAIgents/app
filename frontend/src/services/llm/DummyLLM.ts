@@ -108,7 +108,7 @@ In conclusion, this dummy text demonstrates a more substantial response.`,
       }
     } catch (error) {
       // Simulate error response format similar to real LLM providers
-      throw new Error(`DummyLLM API error: ${error.message}`);
+      throw new Error(`DummyLLM API error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 }

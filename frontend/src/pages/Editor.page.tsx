@@ -503,6 +503,7 @@ export const EditorPage: React.FC = () => {
                           comment={comment}
                           block={block}
                           blockStatus={blockStatuses[block.id]}
+                          setContentBlocks={setContentBlocks}
                           onRequestReview={handleRequestReview}
                           onSimulateReview={(blockId, commentId) =>
                             simulateReview(blockId, commentId)

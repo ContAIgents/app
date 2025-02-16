@@ -5,11 +5,16 @@ import { DeepSeekProvider } from './DeepSeekProvider';
 import { HuggingFaceProvider } from './HuggingFaceProvider';
 import { OllamaProvider } from './OllamaProvider';
 import { LLMInterface } from './types';
+import { DummyLLM } from './DummyLLM';
 
 export class LLMFactory {
   private static instances: Map<string, LLMInterface> = new Map();
 
   static getConfiguredProvider(): LLMInterface {
+    if (process.env.USE_DUMMY_LLM) {
+      return new DummyLLM();
+    }
+
     const providers = this.getAvailableProviders();
     for (const providerName of providers) {
       try {

@@ -10,16 +10,18 @@ import {
 import {
   IconArrowRight,
   IconBulb,
+  IconCheck,
   IconCircleCheck,
   IconEdit,
   IconGripVertical,
+  IconInfoCircle,
   IconPencil,
   IconPlus,
   IconTrash,
   IconUsers,
   IconWand,
 } from '@tabler/icons-react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ActionIcon,
   Avatar,
@@ -32,6 +34,7 @@ import {
   Container,
   Divider,
   Group,
+  Loader,
   Modal,
   Paper,
   rem,
@@ -42,6 +45,7 @@ import {
   Textarea,
   TextInput,
   Title,
+  Tooltip,
   Transition,
 } from '@mantine/core';
 import { useClickOutside, useFocusTrap } from '@mantine/hooks';
@@ -126,6 +130,13 @@ export function EditorIdea() {
     setCurrentPlaceholder(getRandomPlaceholder(contentType));
   }, [contentType]);
 
+  useEffect(() => {
+    if (activeStep === 2 && !generatedBlocks && !isGenerating) {
+      // 2 is the index of the Generate step
+      handleGenerateIdea();
+    }
+  }, [activeStep]);
+
   // Update canProceed to not check for contentType since it's required
   const canProceed = (): boolean => {
     return !!(idea.trim() && selectedWriter && selectedReviewer);
@@ -143,6 +154,7 @@ export function EditorIdea() {
         throw new Error('Writer and content type must be selected');
       }
       const contentBlocks = await selectedWriter.generateStructuredBlocks(contentType, idea);
+      console.log('Generated blocks:', contentBlocks);
       setGeneratedBlocks(contentBlocks);
       setShowPlotModal(true);
     } catch (error) {
@@ -341,8 +353,8 @@ export function EditorIdea() {
                         },
                         section: {
                           width: 'auto',
-                          paddingRight: 8
-                        }
+                          paddingRight: 8,
+                        },
                       }}
                     />
 
@@ -406,108 +418,236 @@ export function EditorIdea() {
             </Stepper.Step>
 
             <Stepper.Step
-              label="Select Team"
-              description="Choose your AI team"
+              label="Team Up"
+              description="Build your dream AI team"
               icon={<IconUsers size="1.2rem" />}
             >
-              <Paper shadow="sm" p="xl" withBorder mt="xl">
-                <Stack gap="xl">
-                  <Text size="lg" fw={500}>
-                    Choose your Content Writer
+              <Stack gap="xl" style={{ height: 'calc(100vh - 200px)', overflow: 'hidden' }}>
+                <Box
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    textAlign: 'center',
+                  }}
+                >
+                  <Title order={1} size="3.5rem" mb="md">
+                    Team Up with AI
+                  </Title>
+                  <Text c="dimmed" size="xl" maw={600}>
+                    Choose your AI collaborators to bring your content to life
                   </Text>
-                  <SimpleGrid cols={{ base: 2, sm: 3, md: 4 }} spacing="lg">
-                    {writers.map((writer) => {
-                      const config = writer.getConfig();
-                      return (
-                        <Card
-                          key={config.id}
-                          shadow="sm"
-                          padding="lg"
-                          radius="md"
-                          withBorder
-                          onClick={() => setSelectedWriter(writer)}
-                          style={{
-                            cursor: 'pointer',
-                            opacity: selectedWriter?.getConfig().id === config.id ? 1 : 0.7,
-                          }}
-                          bg={selectedWriter?.getConfig().id === config.id ? 'blue.1' : undefined}
-                        >
-                          <Group>
-                            <Avatar size="md" src={config.avatar} color="blue">
-                              {config.name.charAt(0)}
-                            </Avatar>
-                            <div>
-                              <Text fw={500} size="sm">
-                                {config.name}
-                              </Text>
-                              <Group gap={5} mt={3}>
-                                {config.expertise?.slice(0, 2).map((skill) => (
-                                  <Badge key={skill} size="xs" variant="light">
-                                    {skill}
-                                  </Badge>
-                                ))}
-                              </Group>
-                            </div>
-                          </Group>
-                        </Card>
-                      );
-                    })}
-                  </SimpleGrid>
+                </Box>
 
-                  <Text size="lg" fw={500}>
-                    Choose your Content Reviewer
-                  </Text>
-                  <SimpleGrid cols={{ base: 2, sm: 3, md: 4 }} spacing="lg">
-                    {reviewers.map((reviewer) => {
-                      const config = reviewer.getConfig();
-                      return (
-                        <Card
-                          key={config.id}
-                          shadow="sm"
-                          padding="lg"
-                          radius="md"
-                          withBorder
-                          onClick={() => setSelectedReviewer(reviewer)}
-                          style={{
-                            cursor: 'pointer',
-                            opacity: selectedReviewer?.getConfig().id === config.id ? 1 : 0.7,
-                          }}
-                          bg={
-                            selectedReviewer?.getConfig().id === config.id ? 'green.1' : undefined
-                          }
-                        >
-                          <Group>
-                            <Avatar size="md" src={config.avatar} color="green">
-                              {config.name.charAt(0)}
-                            </Avatar>
-                            <div>
-                              <Text fw={500} size="sm">
-                                {config.name}
-                              </Text>
-                              <Group gap={5} mt={3}>
-                                {config.expertise?.slice(0, 2).map((skill) => (
-                                  <Badge key={skill} size="xs" variant="light">
-                                    {skill}
-                                  </Badge>
-                                ))}
-                              </Group>
-                            </div>
-                          </Group>
-                        </Card>
-                      );
-                    })}
-                  </SimpleGrid>
+                <Group align="flex-start" gap="xl" justify="center" style={{ flex: 1 }}>
+                  {/* Writer Section */}
+                  <Box style={{ width: '400px', height: '100%' }}>
+                    <Box
+                      p="lg"
+                      style={{
+                        border: '2px dotted var(--mantine-color-gray-4)',
+                        borderRadius: 'var(--mantine-radius-md)',
+                        height: '100%',
+                        display: 'flex',
+                        flexDirection: 'column',
+                      }}
+                    >
+                      <Box
+                        style={{
+                          textAlign: 'center',
+                          padding: '2rem 0',
+                          borderBottom: '1px solid var(--mantine-color-gray-2)',
+                        }}
+                      >
+                        <Title order={3} size="h3">
+                          Your Content Writer
+                        </Title>
+                        <Text size="sm" c="dimmed" mt="xs">
+                          Will create your content with expertise
+                        </Text>
+                      </Box>
 
-                  <Group justify="center" mt="xl">
-                    <Button variant="default" onClick={prevStep}>
-                      Back
-                    </Button>
-                    <Button onClick={nextStep} disabled={!selectedWriter || !selectedReviewer}>
-                      Continue
-                    </Button>
-                  </Group>
-                </Stack>
-              </Paper>
+                      {writers.length > 0 ? (
+                        <Box style={{ flex: 1, overflowY: 'auto', paddingRight: '8px' }}>
+                          <Stack gap="md" mt="xl">
+                            {writers.map((writer) => {
+                              const config = writer.getConfig();
+                              const isSelected = selectedWriter?.getConfig().id === config.id;
+                              return (
+                                <Card
+                                  key={config.id}
+                                  padding="md"
+                                  radius="md"
+                                  onClick={() => setSelectedWriter(writer)}
+                                  style={{
+                                    cursor: 'pointer',
+                                    border: isSelected
+                                      ? '2px solid var(--mantine-color-blue-5)'
+                                      : '1px solid var(--mantine-color-gray-3)',
+                                    backgroundColor: 'transparent',
+                                  }}
+                                >
+                                  <Group>
+                                    <Avatar
+                                      size="md"
+                                      src={config.avatar}
+                                      color={isSelected ? 'blue' : 'gray'}
+                                    >
+                                      {config.name.charAt(0)}
+                                    </Avatar>
+                                    <div>
+                                      <Text fw={500} size="lg">
+                                        {config.name}
+                                      </Text>
+                                      <Group gap={5} mt={3}>
+                                        {config.expertise?.slice(0, 2).map((skill) => (
+                                          <Badge
+                                            key={skill}
+                                            size="sm"
+                                            variant="dot"
+                                            color={isSelected ? 'blue' : 'gray'}
+                                          >
+                                            {skill}
+                                          </Badge>
+                                        ))}
+                                      </Group>
+                                    </div>
+                                  </Group>
+                                </Card>
+                              );
+                            })}
+                          </Stack>
+                        </Box>
+                      ) : (
+                        <Stack justify="center" align="center" style={{ flex: 1 }}>
+                          <Text c="dimmed">No content writers available</Text>
+                          <Button
+                            variant="light"
+                            component={Link}
+                            to="/agents"
+                            leftSection={<IconPlus size="1rem" />}
+                          >
+                            Create a Writer
+                          </Button>
+                        </Stack>
+                      )}
+                    </Box>
+                  </Box>
+
+                  {/* Separator */}
+                  <Divider orientation="vertical" h="100%" />
+
+                  {/* Reviewer Section */}
+                  <Box style={{ width: '400px', height: '100%' }}>
+                    <Box
+                      p="lg"
+                      style={{
+                        border: '2px dotted var(--mantine-color-gray-4)',
+                        borderRadius: 'var(--mantine-radius-md)',
+                        height: '100%',
+                        display: 'flex',
+                        flexDirection: 'column',
+                      }}
+                    >
+                      <Box
+                        style={{
+                          textAlign: 'center',
+                          padding: '2rem 0',
+                          borderBottom: '1px solid var(--mantine-color-gray-2)',
+                        }}
+                      >
+                        <Title order={3} size="h3">
+                          Your Content Reviewer
+                        </Title>
+                        <Text size="sm" c="dimmed" mt="xs">
+                          Will review and improve your content
+                        </Text>
+                      </Box>
+
+                      {reviewers.length > 0 ? (
+                        <Box style={{ flex: 1, overflowY: 'auto', paddingRight: '8px' }}>
+                          <Stack gap="md" mt="xl">
+                            {reviewers.map((reviewer) => {
+                              const config = reviewer.getConfig();
+                              const isSelected = selectedReviewer?.getConfig().id === config.id;
+                              return (
+                                <Card
+                                  key={config.id}
+                                  padding="md"
+                                  radius="md"
+                                  onClick={() => setSelectedReviewer(reviewer)}
+                                  style={{
+                                    cursor: 'pointer',
+                                    border: isSelected
+                                      ? '2px solid var(--mantine-color-blue-5)'
+                                      : '1px solid var(--mantine-color-gray-3)',
+                                    backgroundColor: 'transparent',
+                                  }}
+                                >
+                                  <Group>
+                                    <Avatar
+                                      size="md"
+                                      src={config.avatar}
+                                      color={isSelected ? 'blue' : 'gray'}
+                                    >
+                                      {config.name.charAt(0)}
+                                    </Avatar>
+                                    <div>
+                                      <Text fw={500} size="lg">
+                                        {config.name}
+                                      </Text>
+                                      <Group gap={5} mt={3}>
+                                        {config.expertise?.slice(0, 2).map((skill) => (
+                                          <Badge
+                                            key={skill}
+                                            size="sm"
+                                            variant="dot"
+                                            color={isSelected ? 'blue' : 'gray'}
+                                          >
+                                            {skill}
+                                          </Badge>
+                                        ))}
+                                      </Group>
+                                    </div>
+                                  </Group>
+                                </Card>
+                              );
+                            })}
+                          </Stack>
+                        </Box>
+                      ) : (
+                        <Stack justify="center" align="center" style={{ flex: 1 }}>
+                          <Text c="dimmed">No content reviewers available</Text>
+                          <Button
+                            variant="light"
+                            component={Link}
+                            to="/agents"
+                            leftSection={<IconPlus size="1rem" />}
+                          >
+                            Create a Reviewer
+                          </Button>
+                        </Stack>
+                      )}
+                    </Box>
+                  </Box>
+                </Group>
+
+                {/* Add navigation buttons */}
+                <Group justify="center" mt="auto" pb="md">
+                  <Button variant="default" onClick={prevStep}>
+                    Back
+                  </Button>
+                  <Button
+                    onClick={nextStep}
+                    disabled={!selectedWriter || !selectedReviewer}
+                    variant="gradient"
+                    gradient={{ from: 'blue', to: 'cyan' }}
+                  >
+                    Continue
+                  </Button>
+                </Group>
+              </Stack>
             </Stepper.Step>
 
             <Stepper.Step
@@ -515,160 +655,216 @@ export function EditorIdea() {
               description="Create content structure"
               icon={<IconWand size="1.2rem" />}
             >
-              <Box maw={800} mx="auto" mt="xl">
-                <Stack gap="xl" align="center">
-                  <Title order={2}>Ready to Generate</Title>
-
-                  <Text c="dimmed" ta="center" size="lg">
-                    Let's create a structured outline for your content. Our AI will analyze your
-                    idea and break it down into meaningful sections.
-                  </Text>
-
-                  <Paper withBorder p="md" radius="md" w="100%">
-                    <Stack gap="xs">
-                      <Text fw={500}>Content Type:</Text>
-                      <Text>{CONTENT_TYPES.find((t) => t.value === contentType)?.label}</Text>
-
-                      <Text fw={500} mt="md">
-                        Your Idea:
+              <Box maw={1000} mx="auto" mt="xl">
+                <Stack gap="xl">
+                  <Stack gap="xs" ta="center">
+                    <Title order={1} size="3rem" fw={900}>
+                      Let's get it to a plan
+                    </Title>
+                    <Group justify="center">
+                      <Text c="dimmed" size="md" maw={600} mx="auto">
+                        Review and arrange your content sections before AI starts writing. A
+                        well-structured outline helps AI generate more focused and coherent content.
+                        <Tooltip
+                          multiline
+                          w={300}
+                          position="top"
+                          withArrow
+                          label={
+                            <div>
+                              Why structure matters:
+                              <ul>
+                                <li>Better content organization</li>
+                                <li>More focused AI responses</li>
+                                <li>Easier content reviews</li>
+                                <li>Full control over the narrative flow</li>
+                                <li>Ability to iterate and refine sections</li>
+                              </ul>
+                            </div>
+                          }
+                        >
+                          <ActionIcon variant="subtle" color="gray">
+                            <IconInfoCircle size="1.2rem" />
+                          </ActionIcon>
+                        </Tooltip>
                       </Text>
-                      <Text>{idea}</Text>
+                    </Group>
+                  </Stack>
 
-                      <Text fw={500} mt="md">
-                        Your Team:
-                      </Text>
-                      <Group>
-                        <Text>Writer: {selectedWriter?.getConfig().name}</Text>
-                        <Text>Reviewer: {selectedReviewer?.getConfig().name}</Text>
+                  {isGenerating ? (
+                    <Paper withBorder p="xl" radius="md">
+                      <Stack align="center" gap="xl">
+                        <Loader size="xl" />
+                        <Text size="lg">Breaking down your content into logical sections...</Text>
+                      </Stack>
+                    </Paper>
+                  ) : (
+                    <Stack gap="xl">
+                      <Paper withBorder p="xl" radius="md">
+                        <DragDropContext onDragEnd={handleDragEnd}>
+                          <Droppable droppableId="sections">
+                            {(provided: DroppableProvided) => (
+                              <Stack gap="md" {...provided.droppableProps} ref={provided.innerRef}>
+                                {generatedBlocks?.map((block, index) => (
+                                  <Draggable
+                                    key={block.id}
+                                    draggableId={String(block.id)}
+                                    index={index}
+                                  >
+                                    {(provided: DraggableProvided) => (
+                                      <Paper
+                                        ref={provided.innerRef}
+                                        {...provided.draggableProps}
+                                        withBorder
+                                        p="md"
+                                        radius="md"
+                                      >
+                                        <Group>
+                                          <div
+                                            {...provided.dragHandleProps}
+                                            style={{
+                                              cursor: 'grab',
+                                              padding: '8px',
+                                              display: 'flex',
+                                              alignItems: 'center',
+                                            }}
+                                          >
+                                            <IconGripVertical size={18} style={{ opacity: 0.5 }} />
+                                          </div>
+
+                                          <Stack gap="xs" style={{ flex: 1 }}>
+                                            {editingBlockId === block.id ? (
+                                              <Stack gap="xs">
+                                                <TextInput
+                                                  value={block.title}
+                                                  onChange={(e) =>
+                                                    handleUpdateBlock(block.id, {
+                                                      title: e.target.value,
+                                                    })
+                                                  }
+                                                  onKeyDown={(e) =>
+                                                    e.key === 'Enter' && setEditingBlockId(null)
+                                                  }
+                                                  autoFocus
+                                                  size="md"
+                                                  placeholder="Section title"
+                                                />
+                                                <Textarea
+                                                  value={block.description}
+                                                  onChange={(e) =>
+                                                    handleUpdateBlock(block.id, {
+                                                      description: e.target.value,
+                                                    })
+                                                  }
+                                                  onKeyDown={(e) => {
+                                                    if (e.key === 'Enter' && e.shiftKey) {
+                                                      setEditingBlockId(null);
+                                                    }
+                                                  }}
+                                                  size="sm"
+                                                  placeholder="Section description"
+                                                  autosize
+                                                  minRows={2}
+                                                  maxRows={4}
+                                                />
+                                                <Text size="xs" c="dimmed">
+                                                  Press Shift + Enter to save
+                                                </Text>
+                                              </Stack>
+                                            ) : (
+                                              <>
+                                                <Text size="lg" fw={500}>
+                                                  {block.title}
+                                                </Text>
+                                                <Text size="sm" c="dimmed">
+                                                  {block.description}
+                                                </Text>
+                                              </>
+                                            )}
+                                          </Stack>
+
+                                          <Group gap="xs">
+                                            <ActionIcon
+                                              variant="subtle"
+                                              onClick={() => {
+                                                if (editingBlockId === block.id) {
+                                                  setEditingBlockId(null);
+                                                } else {
+                                                  setEditingBlockId(block.id);
+                                                }
+                                              }}
+                                              aria-label={
+                                                editingBlockId === block.id
+                                                  ? 'Save changes'
+                                                  : 'Edit section'
+                                              }
+                                              size="lg"
+                                              color={editingBlockId === block.id ? 'green' : 'gray'}
+                                            >
+                                              {editingBlockId === block.id ? (
+                                                <IconCheck size={18} />
+                                              ) : (
+                                                <IconEdit size={18} />
+                                              )}
+                                            </ActionIcon>
+                                            <ActionIcon
+                                              variant="subtle"
+                                              color="red"
+                                              onClick={() => handleDeleteBlock(block.id)}
+                                              disabled={generatedBlocks?.length <= 1}
+                                              aria-label="Delete section"
+                                              size="lg"
+                                            >
+                                              <IconTrash size={18} />
+                                            </ActionIcon>
+                                          </Group>
+                                        </Group>
+                                      </Paper>
+                                    )}
+                                  </Draggable>
+                                ))}
+                                {provided.placeholder}
+                              </Stack>
+                            )}
+                          </Droppable>
+                        </DragDropContext>
+
+                        <Button
+                          variant="light"
+                          leftSection={<IconPlus size={18} />}
+                          onClick={handleAddBlock}
+                          fullWidth
+                          size="md"
+                          mt="md"
+                        >
+                          Add New Section
+                        </Button>
+                      </Paper>
+
+                      <Group justify="center" mt="xl">
+                        <Button variant="default" size="md" onClick={prevStep}>
+                          Back
+                        </Button>
+                        {generatedBlocks && (
+                          <Button
+                            onClick={() => navigate('/editor')}
+                            leftSection={<IconCircleCheck size={18} />}
+                            size="md"
+                            variant="gradient"
+                            gradient={{ from: 'blue', to: 'cyan' }}
+                          >
+                            Start Writing
+                          </Button>
+                        )}
                       </Group>
                     </Stack>
-                  </Paper>
-
-                  <Group justify="center" mt="xl">
-                    <Button variant="default" onClick={prevStep}>
-                      Back
-                    </Button>
-                    <Button
-                      onClick={handleGenerateIdea}
-                      loading={isGenerating}
-                      size="lg"
-                      variant="gradient"
-                      gradient={{ from: 'blue', to: 'cyan' }}
-                    >
-                      Generate Content Structure
-                    </Button>
-                  </Group>
+                  )}
                 </Stack>
               </Box>
             </Stepper.Step>
           </Stepper>
         </Stack>
       </Container>
-
-      <Modal
-        opened={showPlotModal}
-        onClose={handleRejectPlot}
-        size="xl"
-        title={<Title order={3}>Content Structure</Title>}
-      >
-        <Stack gap="md">
-          <Text>
-            Review and customize your content structure. You can reorder sections by dragging them,
-            edit their titles, or add new sections as needed.
-          </Text>
-
-          <Paper withBorder p="md">
-            <DragDropContext onDragEnd={handleDragEnd}>
-              <Droppable droppableId="sections">
-                {(provided: DroppableProvided) => (
-                  <Stack gap="xs" ref={provided.innerRef} {...provided.droppableProps}>
-                    {generatedBlocks?.map((block, index) => (
-                      <Draggable key={block.id} draggableId={String(block.id)} index={index}>
-                        {(provided: DraggableProvided) => (
-                          <Paper
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            withBorder
-                            p="sm"
-                          >
-                            <Group gap="xs">
-                              <ActionIcon
-                                variant="subtle"
-                                {...provided.dragHandleProps}
-                                aria-label="Drag to reorder"
-                              >
-                                <IconGripVertical size={16} />
-                              </ActionIcon>
-
-                              <Stack gap="xs" style={{ flex: 1 }}>
-                                {editingBlockId === block.id ? (
-                                  <TextInput
-                                    value={block.title}
-                                    onChange={(e) =>
-                                      handleUpdateBlock(block.id, { title: e.target.value })
-                                    }
-                                    onBlur={() => setEditingBlockId(null)}
-                                    onKeyDown={(e) => e.key === 'Enter' && setEditingBlockId(null)}
-                                    autoFocus
-                                  />
-                                ) : (
-                                  <Text fw={500}>{block.title}</Text>
-                                )}
-                                <Text size="sm" c="dimmed">
-                                  {block.description}
-                                </Text>
-                              </Stack>
-
-                              <Group gap="xs">
-                                <ActionIcon
-                                  variant="subtle"
-                                  onClick={() => setEditingBlockId(block.id)}
-                                  aria-label="Edit section title"
-                                >
-                                  <IconEdit size={16} />
-                                </ActionIcon>
-                                <ActionIcon
-                                  variant="subtle"
-                                  color="red"
-                                  onClick={() => handleDeleteBlock(block.id)}
-                                  disabled={generatedBlocks.length <= 1}
-                                  aria-label="Delete section"
-                                >
-                                  <IconTrash size={16} />
-                                </ActionIcon>
-                              </Group>
-                            </Group>
-                          </Paper>
-                        )}
-                      </Draggable>
-                    ))}
-                    {provided.placeholder}
-                  </Stack>
-                )}
-              </Droppable>
-            </DragDropContext>
-
-            <Button
-              variant="light"
-              leftSection={<IconPlus size={16} />}
-              onClick={handleAddBlock}
-              mt="md"
-              fullWidth
-            >
-              Add New Section
-            </Button>
-          </Paper>
-
-          <Group justify="flex-end" mt="xl">
-            <Button variant="light" color="red" onClick={handleRejectPlot}>
-              Start Over
-            </Button>
-            <Button onClick={handleApprovePlot} leftSection={<IconCircleCheck size={16} />}>
-              Proceed to Editor
-            </Button>
-          </Group>
-        </Stack>
-      </Modal>
     </>
   );
 }

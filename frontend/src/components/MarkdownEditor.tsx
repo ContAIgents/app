@@ -78,10 +78,15 @@ const MarkdownEditorComponent: React.FC<MarkdownEditorComponentProps> = ({
 
     if (text && text.length > 0) {
       const { from } = editor.state.selection;
-      const start = editor.view.coordsAtPos(from);
+      const coords = editor.view.coordsAtPos(from);
+      const editorElement = editor.view.dom.getBoundingClientRect();
       
+      // Calculate position relative to the editor
+      setMenuPosition({ 
+        x: coords.left - editorElement.left,
+        y: coords.top - editorElement.top - 40 // Adjust this value as needed
+      });
       setSelection(text);
-      setMenuPosition({ x: start.left, y: start.top });
       setShowMenu(true);
     }
   };
@@ -262,8 +267,12 @@ const MarkdownEditorComponent: React.FC<MarkdownEditorComponentProps> = ({
           style={{
             position: 'absolute',
             left: `${menuPosition.x}px`,
-            top: `${menuPosition.y - 40}px`,
+            top: `${menuPosition.y}px`,
             zIndex: 1000,
+            background: 'white',
+            borderRadius: 'var(--mantine-radius-sm)',
+            boxShadow: 'var(--mantine-shadow-md)',
+            padding: '4px',
           }}
         >
           <SelectionMenu
@@ -271,6 +280,8 @@ const MarkdownEditorComponent: React.FC<MarkdownEditorComponentProps> = ({
             onRephrase={handleRephrase}
             onGrammarCheck={handleGrammarCheck}
             onExplain={handleExplain}
+            isLoading={isLoading}
+            disabled={disabled}
           />
         </div>
       )}

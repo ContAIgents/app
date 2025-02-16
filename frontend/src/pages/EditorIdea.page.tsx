@@ -276,7 +276,7 @@ export function EditorIdea() {
           <Stepper active={activeStep} onStepClick={setActiveStep} allowNextStepsSelect={false}>
             {/* Remove the first step for content type selection */}
             <Stepper.Step
-              label="Ideate"
+              label="Idea"
               description="Describe your content"
               icon={<IconPencil size="1.2rem" />}
             >

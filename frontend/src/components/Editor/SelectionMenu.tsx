@@ -1,5 +1,4 @@
-import { Menu, Button, Text, Modal, Textarea } from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
+import { Button, Group, Tooltip, TextInput, Modal, Loader } from '@mantine/core';
 import { IconWand, IconTextSpellcheck, IconBrain } from '@tabler/icons-react';
 import { useState } from 'react';
 
@@ -8,6 +7,8 @@ interface SelectionMenuProps {
   onRephrase: (text: string, instructions: string) => Promise<void>;
   onGrammarCheck: (text: string) => Promise<void>;
   onExplain: (text: string) => Promise<void>;
+  isLoading?: boolean;
+  disabled?: boolean;
 }
 
 export const SelectionMenu: React.FC<SelectionMenuProps> = ({
@@ -15,54 +16,136 @@ export const SelectionMenu: React.FC<SelectionMenuProps> = ({
   onRephrase,
   onGrammarCheck,
   onExplain,
+  isLoading = false,
+  disabled = false
 }) => {
-  const [opened, { open, close }] = useDisclosure(false);
-  const [instructions, setInstructions] = useState('');
+  const [rephraseModalOpen, setRephraseModalOpen] = useState(false);
+  const [rephraseInstructions, setRephraseInstructions] = useState('');
+  const [activeOperation, setActiveOperation] = useState<'rephrase' | 'grammar' | 'eli5' | null>(null);
 
-  const handleRephrase = async () => {
-    await onRephrase(selection, instructions);
-    close();
-    setInstructions('');
+  const handleRephraseSubmit = async () => {
+    setActiveOperation('rephrase');
+    try {
+      await onRephrase(selection, rephraseInstructions);
+    } finally {
+      setActiveOperation(null);
+      setRephraseModalOpen(false);
+      setRephraseInstructions('');
+    }
   };
+
+  const handleGrammarCheck = async () => {
+    setActiveOperation('grammar');
+    try {
+      await onGrammarCheck(selection);
+    } finally {
+      setActiveOperation(null);
+    }
+  };
+
+  const handleExplain = async () => {
+    setActiveOperation('eli5');
+    try {
+      await onExplain(selection);
+    } finally {
+      setActiveOperation(null);
+    }
+  };
+
+  const isButtonDisabled = isLoading || disabled;
 
   return (
     <>
-      <Menu shadow="md" width={200}>
-        <Menu.Target>
-          <Button size="xs" variant="light">Edit</Button>
-        </Menu.Target>
-
-        <Menu.Dropdown>
-          <Menu.Item 
-            leftSection={<IconWand size={14} />}
-            onClick={open}
+      <Group gap="xs">
+        <Tooltip 
+          label="Rewrite the selected text with custom instructions" 
+          position="top"
+          withArrow
+        >
+          <Button 
+            size="xs" 
+            variant="light"
+            leftSection={activeOperation === 'rephrase' ? <Loader size={14} /> : <IconWand size={14} />}
+            onClick={() => setRephraseModalOpen(true)}
+            disabled={isButtonDisabled}
+            loading={activeOperation === 'rephrase'}
           >
             Rephrase
-          </Menu.Item>
-          <Menu.Item 
-            leftSection={<IconTextSpellcheck size={14} />}
-            onClick={() => onGrammarCheck(selection)}
+          </Button>
+        </Tooltip>
+        
+        <Tooltip 
+          label="Fix grammar and improve writing style" 
+          position="top"
+          withArrow
+        >
+          <Button 
+            size="xs" 
+            variant="light"
+            leftSection={activeOperation === 'grammar' ? <Loader size={14} /> : <IconTextSpellcheck size={14} />}
+            onClick={handleGrammarCheck}
+            disabled={isButtonDisabled}
+            loading={activeOperation === 'grammar'}
           >
-            Grammar Check
-          </Menu.Item>
-          <Menu.Item 
-            leftSection={<IconBrain size={14} />}
-            onClick={() => onExplain(selection)}
+            Grammar
+          </Button>
+        </Tooltip>
+        
+        <Tooltip 
+          label="Explain this like I'm five years old" 
+          position="top"
+          withArrow
+        >
+          <Button 
+            size="xs" 
+            variant="light"
+            leftSection={activeOperation === 'eli5' ? <Loader size={14} /> : <IconBrain size={14} />}
+            onClick={handleExplain}
+            disabled={isButtonDisabled}
+            loading={activeOperation === 'eli5'}
           >
-            Explain Simply
-          </Menu.Item>
-        </Menu.Dropdown>
-      </Menu>
+            ELI5
+          </Button>
+        </Tooltip>
+      </Group>
 
-      <Modal opened={opened} onClose={close} title="Rephrase Instructions">
-        <Textarea
-          placeholder="How would you like this rephrased? (e.g., make it more formal, simplify it, etc.)"
-          value={instructions}
-          onChange={(e) => setInstructions(e.currentTarget.value)}
-          minRows={3}
+      <Modal
+        opened={rephraseModalOpen}
+        onClose={() => {
+          if (!activeOperation) {
+            setRephraseModalOpen(false);
+            setRephraseInstructions('');
+          }
+        }}
+        title="How should I rephrase this?"
+        size="md"
+      >
+        <TextInput
+          placeholder="e.g., Make it more formal, Use simpler words, Make it shorter..."
+          value={rephraseInstructions}
+          onChange={(event) => setRephraseInstructions(event.currentTarget.value)}
           mb="md"
+          disabled={activeOperation === 'rephrase'}
         />
-        <Button onClick={handleRephrase}>Rephrase</Button>
+        <Group justify="flex-end">
+          <Button 
+            variant="light" 
+            onClick={() => {
+              setRephraseModalOpen(false);
+              setRephraseInstructions('');
+            }}
+            disabled={activeOperation === 'rephrase'}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleRephraseSubmit}
+            loading={activeOperation === 'rephrase'}
+            disabled={!rephraseInstructions.trim()}
+          >
+            Rephrase
+          </Button>
+        </Group>
       </Modal>
     </>
   );

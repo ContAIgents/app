@@ -22,7 +22,7 @@ export function FileEditorPage() {
   const navigate = useNavigate();
   const [fileTree, setFileTree] = useState<FileTreeNode | undefined>(undefined);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
-  const [fileContent, setFileContent] = useState('');
+  const [markdownContent, setMarkdownContent] = useState('');
   const [comments, setComments] = useState<Comment[]>([]);
   const [blockStatus, setBlockStatus] = useState<IBlockStatus>({
     isLoading: false,
@@ -150,7 +150,7 @@ export function FileEditorPage() {
       const response = await fetch(`http://localhost:3000/api/files/${path}`);
       const data = await response.json();
       setSelectedFile(path);
-      setFileContent(data.content);
+      setMarkdownContent(data.content);
       
       // Load existing comments for this file
       const savedComments = configManager.load<Comment[]>(`comments_${path}`) || [];
@@ -179,7 +179,7 @@ export function FileEditorPage() {
       const instructions = await getReviewInstructionsFromUser();
       const reviewResponse = await selectedReviewer.generateReview(
         {
-          id: 1, title: selectedFile, content: fileContent,
+          id: 1, title: selectedFile, content: markdownContent,
           comments: [],
           description: ''
         },
@@ -218,15 +218,15 @@ export function FileEditorPage() {
     try {
       const rewrittenContent = await selectedWriter.rewrite(
         {
-          id: 1, title: selectedFile, content: fileContent,
+          id: 1, title: selectedFile, content: markdownContent,
           comments: [],
           description: ''
         },
-        fileContent,
+        markdownContent,
         comment.comment || ''
       );
 
-      setFileContent(rewrittenContent);
+      setMarkdownContent(rewrittenContent);
       setBlockStatus(prev => ({
         ...prev,
         isLoading: false,
@@ -243,7 +243,7 @@ export function FileEditorPage() {
   };
 
   const handleContentChange = (newContent: string) => {
-    setFileContent(newContent);
+    setMarkdownContent(newContent);
     if (selectedFile) {
       saveContent(selectedFile, newContent);
     }
@@ -404,7 +404,7 @@ export function FileEditorPage() {
                 <Box style={{ flex: 1, position: 'relative' }}>
                   {selectedFile ? (
                     <MarkdownEditorComponent
-                      content={fileContent}
+                      content={markdownContent}
                       onUpdate={handleContentChange}
                       disabled={!selectedFile}
                     />
@@ -441,7 +441,7 @@ export function FileEditorPage() {
                     <CommentCard
                       key={comment.id}
                       comment={comment}
-                      block={{ id: 1, title: selectedFile || '', content: fileContent }}
+                      block={{ id: 1, title: selectedFile || '', content: markdownContent }}
                       blockStatus={blockStatus}
                       setContentBlocks={() => {}}
                       onRequestReview={(_, commentId) => handleRequestReview(commentId)}

@@ -45,7 +45,7 @@ export class ConfigManager {
 
   private async syncWithCLI<T>(key: string, data: T): Promise<void> {
     try {
-      const response = await fetch(`${this.apiUrl}/api/files`, {
+      const response = await fetch(`${this.apiUrl}/api/files/update`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

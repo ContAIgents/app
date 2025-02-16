@@ -35,7 +35,7 @@ export function ExportPage() {
         const date = new Date().toISOString().split('T')[0];
         const filename = `content-${date}.md`;
 
-        const response = await fetch('http://localhost:3000/api/files', {
+        const response = await fetch('http://localhost:3000/api/files/update', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

@@ -43,11 +43,17 @@ const MarkdownEditorComponent: React.FC<MarkdownEditorComponentProps> = ({
       CodeBlockLowlight.configure({
         lowlight,
       }),
-      Markdown,
+      Markdown.configure({
+        html: false,
+        transformPastedText: true,
+        transformCopiedText: true
+      }),
     ],
     content,
     onUpdate: ({ editor }) => {
-      onUpdate(editor.getHTML());
+      // Convert to Markdown before sending update
+      const markdown = editor.storage.markdown.getMarkdown();
+      onUpdate(markdown);
     },
     editable: !disabled,
   });
@@ -60,9 +66,10 @@ const MarkdownEditorComponent: React.FC<MarkdownEditorComponentProps> = ({
 
   useEffect(() => {
     if (editor && content) {
-      // Only update if the content is different to avoid unnecessary rerenders
-      if (editor.getHTML() !== content) {
-        editor.commands.setContent(content);
+      // Only update if the content is different
+      const currentMarkdown = editor.storage.markdown.getMarkdown();
+      if (currentMarkdown !== content) {
+        editor.commands.setContent(content, false);
       }
     }
   }, [editor, content]);
@@ -102,7 +109,6 @@ const MarkdownEditorComponent: React.FC<MarkdownEditorComponentProps> = ({
 
   const handleRephrase = async (text: string, instructions: string) => {
     if (!selectedAgent) {
-      console.error('Rephrase failed: No agent selected');
       notifications.show({
         title: 'Error',
         message: 'No agent selected',
@@ -112,9 +118,7 @@ const MarkdownEditorComponent: React.FC<MarkdownEditorComponentProps> = ({
     }
 
     try {
-      console.log('Attempting to rephrase text:', { text, instructions });
       const response = await selectedAgent.executeTextTask(text, 'rephrase', instructions);
-      console.log('Received response:', response);
       
       editor?.chain()
         .focus()
@@ -125,22 +129,16 @@ const MarkdownEditorComponent: React.FC<MarkdownEditorComponentProps> = ({
         .insertContent(response)
         .focus()
         .run();
-      
+
       notifications.show({
         title: 'Text Rephrased',
-        message: 'The selected text has been rephrased according to your instructions',
+        message: 'The selected text has been rephrased',
         color: 'green',
       });
     } catch (error) {
-      console.error('Rephrase error details:', {
-        error,
-        agent: selectedAgent?.config,
-        text,
-        instructions
-      });
       notifications.show({
         title: 'Error',
-        message: error instanceof Error ? error.message : 'Failed to rephrase text',
+        message: 'Failed to rephrase text',
         color: 'red',
       });
     }
@@ -261,27 +259,13 @@ const MarkdownEditorComponent: React.FC<MarkdownEditorComponentProps> = ({
       </RichTextEditor>
       
       {!disableAIFeatures && showMenu && (
-        <div
-          style={{
-            position: 'absolute',
-            left: `${menuPosition.x}px`,
-            top: `${menuPosition.y}px`,
-            zIndex: 1000,
-            background: 'white',
-            borderRadius: 'var(--mantine-radius-sm)',
-            boxShadow: 'var(--mantine-shadow-md)',
-            padding: '4px',
-          }}
-        >
-          <SelectionMenu
-            selection={selection}
-            onRephrase={handleRephrase}
-            onGrammarCheck={handleGrammarCheck}
-            onExplain={handleExplain}
-            isLoading={isLoading}
-            disabled={disabled}
-          />
-        </div>
+        <SelectionMenu
+          position={menuPosition}
+          onClose={() => setShowMenu(false)}
+          onRephrase={(instructions) => handleRephrase(selection, instructions)}
+          onGrammarCheck={() => handleGrammarCheck(selection)}
+          onExplain={() => handleExplain(selection)}
+        />
       )}
     </div>
   );

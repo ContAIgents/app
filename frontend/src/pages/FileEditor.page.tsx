@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { IconArrowRight, IconBook, IconInfoCircle, IconWand } from '@tabler/icons-react';
+import { IconArrowRight, IconBook, IconInfoCircle, IconWand, IconCheck, IconX } from '@tabler/icons-react';
 import debounce from 'lodash/debounce';
 import { Link, useNavigate } from 'react-router-dom';
 import {
@@ -7,7 +7,6 @@ import {
   Box,
   Button,
   Container,
-  Grid,
   Group,
   Loader,
   Paper,
@@ -42,7 +41,7 @@ export function FileEditorPage() {
     reviewStatus: 'pending',
     isInitialReview: true,
   });
-  const [isSaving, setIsSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
   const configManager = new ConfigManager('file_editor_');
   const [selectedWriter, setSelectedWriter] = useState<Agent | null>(null);
@@ -53,7 +52,7 @@ export function FileEditorPage() {
     debounce(async (path: string, content: string) => {
       if (!path) return;
 
-      setIsSaving(true);
+      setSaveStatus('saving');
       try {
         const response = await fetch(`http://localhost:3000/api/files/update`, {
           method: 'POST',
@@ -67,22 +66,16 @@ export function FileEditorPage() {
           throw new Error('Failed to save file');
         }
 
-        notifications.show({
-          title: 'Saved',
-          message: 'File saved successfully',
-          color: 'green',
-        });
+        setSaveStatus('saved');
+        // Clear the saved status after 2 seconds
+        setTimeout(() => setSaveStatus('idle'), 2000);
       } catch (error) {
         console.error('Error saving file:', error);
-        notifications.show({
-          title: 'Error',
-          message: 'Failed to save file',
-          color: 'red',
-        });
-      } finally {
-        setIsSaving(false);
+        setSaveStatus('error');
+        // Clear the error status after 3 seconds
+        setTimeout(() => setSaveStatus('idle'), 3000);
       }
-    }, 1000), // 1 second debounce
+    }, 1000),
     []
   );
 
@@ -294,11 +287,6 @@ export function FileEditorPage() {
             gap: '8px',
           }}
         >
-          {isSaving && (
-            <Text size="sm" c="dimmed">
-              Saving...
-            </Text>
-          )}
           <Tooltip label="Export this file" position="bottom" multiline w={220}>
             <Button
               onClick={() => navigate('/export')}
@@ -334,9 +322,33 @@ export function FileEditorPage() {
               backgroundColor: 'var(--mantine-color-body)',
             }}
           >
-            <Text size="sm" fw={700}>
-              Files
-            </Text>
+            <Group justify="space-between" align="center">
+              <Text size="sm" fw={700}>
+                Files
+              </Text>
+              <Tooltip 
+                label={
+                  saveStatus === 'saving' ? 'Saving changes...' :
+                  saveStatus === 'saved' ? 'All changes saved' :
+                  saveStatus === 'error' ? 'Failed to save changes' :
+                  'No unsaved changes'
+                }
+                position="right"
+                withArrow
+              >
+                <Box style={{ width: 16, height: 16 }}>
+                  {saveStatus === 'saving' ? (
+                    <Loader size={16} />
+                  ) : saveStatus === 'saved' ? (
+                    <IconCheck size={16} style={{ color: 'var(--mantine-color-green-6)' }} />
+                  ) : saveStatus === 'error' ? (
+                    <IconX size={16} style={{ color: 'var(--mantine-color-red-6)' }} />
+                  ) : (
+                    <IconCheck size={16} style={{ color: 'var(--mantine-color-gray-5)' }} />
+                  )}
+                </Box>
+              </Tooltip>
+            </Group>
           </Box>
 
           <Box style={{ flex: 1, overflowY: 'auto' }}>

@@ -1,23 +1,15 @@
 import { useEffect, useState } from 'react';
-import { Container, Group, Paper, Stack, Text, Title } from '@mantine/core';
+import { Container, Group, Paper, Stack, Text, Title, Button } from '@mantine/core';
 import { FileTree as FileTreeType } from '@/types/files';
 import MarkdownEditor from '@/components/MarkdownEditor';
 import { FileTree } from '@/components/FileTree';
+import { IconRefresh } from '@tabler/icons-react';
 
 export function FileEditorPage() {
   const [fileTree, setFileTree] = useState<FileTreeType | null>(null);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [content, setContent] = useState<string>('');
-
-  useEffect(() => {
-    fetchFileTree();
-  }, []);
-
-  useEffect(() => {
-    if (selectedFile) {
-      fetchFileContent(selectedFile);
-    }
-  }, [selectedFile]);
+  const [loading, setLoading] = useState(false);
 
   const fetchFileTree = async () => {
     try {
@@ -42,6 +34,7 @@ export function FileEditorPage() {
   const handleContentUpdate = async (newContent: string) => {
     if (!selectedFile) return;
 
+    setLoading(true);
     try {
       await fetch(`http://localhost:3000/api/files/${selectedFile}`, {
         method: 'POST',
@@ -50,32 +43,74 @@ export function FileEditorPage() {
         },
         body: JSON.stringify({ content: newContent }),
       });
+      setContent(newContent);
     } catch (error) {
       console.error('Failed to save file:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
+  useEffect(() => {
+    fetchFileTree();
+  }, []);
+
+  useEffect(() => {
+    if (selectedFile) {
+      fetchFileContent(selectedFile);
+    }
+  }, [selectedFile]);
+
   return (
     <Container size="xl" py="xl">
-      <Title order={2} mb="xl">File Editor</Title>
-      <Group align="flex-start" gap="md">
-        <Paper withBorder p="md" style={{ width: 300 }}>
-          {fileTree && (
+      <Group position="apart" mb="xl">
+        <Title order={2}>File Editor</Title>
+        <Button
+          leftIcon={<IconRefresh size="1.1rem" />}
+          variant="light"
+          onClick={fetchFileTree}
+          loading={loading}
+        >
+          Refresh Files
+        </Button>
+      </Group>
+      
+      <Group align="flex-start" spacing="md" noWrap>
+        <Paper withBorder p="md" style={{ width: 300, minHeight: '70vh' }}>
+          <Title order={4} mb="md">Files</Title>
+          {fileTree ? (
             <FileTree
               tree={fileTree}
               onSelect={(path) => setSelectedFile(path)}
               selectedPath={selectedFile}
             />
+          ) : (
+            <Text c="dimmed">Loading files...</Text>
           )}
         </Paper>
-        <Stack style={{ flex: 1 }}>
+
+        <Stack style={{ flex: 1, minHeight: '70vh' }}>
           {selectedFile ? (
-            <MarkdownEditor
-              content={content}
-              onUpdate={handleContentUpdate}
-            />
+            <Paper withBorder p="md" style={{ height: '100%' }}>
+              <MarkdownEditor
+                content={content}
+                onUpdate={handleContentUpdate}
+                disableAIFeatures={true}
+              />
+            </Paper>
           ) : (
-            <Text>Select a file to edit</Text>
+            <Paper 
+              withBorder 
+              p="xl" 
+              style={{ 
+                height: '100%', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center' 
+              }}
+            >
+              <Text c="dimmed">Select a file to edit</Text>
+            </Paper>
           )}
         </Stack>
       </Group>

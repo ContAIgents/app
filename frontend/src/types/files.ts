@@ -5,9 +5,11 @@ export interface FileInfo {
   relativePath: string;
 }
 
-export interface FileTree {
+export interface FileTreeNode {
   name: string;
   path: string;
-  type: 'directory' | 'file';
-  children?: FileTree[];
+  type: 'file' | 'directory';
+  children?: FileTreeNode[];
 }
+
+export type FileTree = FileTreeNode[];

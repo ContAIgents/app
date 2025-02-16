@@ -2,6 +2,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { Agents } from './pages/Agents.page';
 import { EditorPage } from './pages/Editor.page';
 import { EditorIdea } from './pages/EditorIdea.page';
+import { FileEditorPage } from './pages/FileEditor.page';
 import { HomePage } from './pages/Home.page';
 import { KnowledgeBase } from './pages/KnowledgeBase.page';
 import { KnowledgeBaseEdit } from './pages/KnowledgeBaseEdit.page';
@@ -13,6 +14,10 @@ const router = createBrowserRouter([
   {
     path: '/',
     element: <HomePage />,
+  },
+  {
+    path: '/files',
+    element: <FileEditorPage />,
   },
   {
     path: '/llmConfig',
@@ -37,6 +42,10 @@ const router = createBrowserRouter([
   {
     path: '/editor',
     element: <EditorPage />,
+  },
+  {
+    path: '/editor/files',
+    element: <FileEditorPage />,
   },
   {
     path: '/export',

@@ -1,50 +1,63 @@
 import fs from 'fs/promises';
 import path from 'path';
 
-export interface FileInfo {
-  name: string;
-  path: string;
-  lastModified: Date;
-}
-
 export class FileService {
-  private contentDir = 'content';
+  private baseDir: string;
 
-  constructor() {
-    // Ensure content directory exists
-    fs.mkdir(this.contentDir, { recursive: true }).catch(console.error);
-  }
-
-  async listFiles(): Promise<FileInfo[]> {
-    try {
-      const files = await fs.readdir(this.contentDir);
-      const fileInfos = await Promise.all(
-        files
-          .filter(file => file.endsWith('.md'))
-          .map(async (file) => {
-            const filePath = path.join(this.contentDir, file);
-            const stats = await fs.stat(filePath);
-            return {
-              name: file,
-              path: filePath,
-              lastModified: stats.mtime
-            };
-          })
-      );
-      return fileInfos;
-    } catch (error) {
-      console.error('Error listing files:', error);
-      return [];
-    }
+  constructor(baseDir?: string) {
+    this.baseDir = baseDir || process.cwd();
   }
 
   async readFile(filePath: string): Promise<string> {
-    const fullPath = path.join(this.contentDir, filePath);
-    return fs.readFile(fullPath, 'utf-8');
+    try {
+      const fullPath = path.join(this.baseDir, filePath);
+      console.log('Reading file:', fullPath);
+      const content = await fs.readFile(fullPath, 'utf-8');
+      return content;
+    } catch (error) {
+      console.error('Error reading file:', error);
+      throw new Error(`Failed to read file: ${filePath}`);
+    }
   }
 
-  async saveFile(params: { path: string; content: string }): Promise<void> {
-    const fullPath = path.join(this.contentDir, params.path);
-    await fs.writeFile(fullPath, params.content, 'utf-8');
+  async getFileTree(): Promise<any> {
+    try {
+      const tree = await this.buildFileTree(this.baseDir);
+      return tree;
+    } catch (error) {
+      console.error('Error getting file tree:', error);
+      throw error;
+    }
+  }
+
+  private async buildFileTree(dir: string): Promise<any> {
+    console.log(`Building file tree for directory: ${dir}`);
+    const entries = await fs.readdir(dir, { withFileTypes: true });
+    console.log(`Found ${entries.length} entries in ${dir}`);
+    const items = await Promise.all(
+      entries.map(async (entry) => {
+        const fullPath = path.join(dir, entry.name);
+        const relativePath = path.relative(this.baseDir, fullPath);
+        console.log(`Processing entry: ${entry.name}, type: ${entry.isDirectory() ? 'directory' : 'file'}`);
+        
+        if (entry.isDirectory()) {
+          const children = await this.buildFileTree(fullPath);
+          console.log(`Finished processing directory: ${entry.name}, found ${children.length} children`);
+          return {
+            name: entry.name,
+            path: relativePath,
+            type: 'directory',
+            children
+          };
+        }
+        return {
+          name: entry.name,
+          path: relativePath,
+          type: 'file'
+        };
+      })
+    );
+    console.log(`Finished building file tree for ${dir}, returning ${items.length} items`);
+    return items;
   }
 }

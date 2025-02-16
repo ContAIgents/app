@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import { FileService } from './services/fileService.js';
+import fileRoutes from './routes/fileRoutes.js';
 
 export class Server {
   private app = express();
@@ -18,32 +19,12 @@ export class Server {
   }
 
   private setupRoutes(): void {
-    this.app.post('/api/files', async (req, res) => {
-      try {
-        const { path, content } = req.body;
-        await this.fileService.saveFile({ path, content });
-        res.status(200).json({ message: 'File saved successfully' });
-      } catch (error) {
-        res.status(500).json({ error: 'Failed to save file' });
-      }
-    });
+    // Mount the file routes under /api
+    this.app.use('/api', fileRoutes);
 
-    this.app.get('/api/files/:path', async (req, res) => {
-      try {
-        const content = await this.fileService.readFile(req.params.path);
-        res.status(200).json({ content });
-      } catch (error) {
-        res.status(404).json({ error: 'File not found' });
-      }
-    });
-
-    this.app.get('/api/files', async (_req, res) => {
-      try {
-        const files = await this.fileService.listFiles();
-        res.status(200).json({ files });
-      } catch (error) {
-        res.status(500).json({ error: 'Failed to list files' });
-      }
+    // Fallback route for the frontend
+    this.app.get('*', (_req, res) => {
+      res.redirect('http://localhost:5173');
     });
   }
 

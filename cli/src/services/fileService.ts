@@ -1,55 +1,50 @@
-import fs from "fs";
-import path from "path";
-import { FileContent } from "../types";
+import fs from 'fs/promises';
+import path from 'path';
+
+export interface FileInfo {
+  name: string;
+  path: string;
+  lastModified: Date;
+}
 
 export class FileService {
-  private baseDir: string;
+  private contentDir = 'content';
 
   constructor() {
-    this.baseDir = path.join(process.cwd(), "..", ".ai-content");
-    this.ensureBaseDir();
+    // Ensure content directory exists
+    fs.mkdir(this.contentDir, { recursive: true }).catch(console.error);
   }
 
-  private ensureBaseDir(): void {
-    if (!fs.existsSync(this.baseDir)) {
-      fs.mkdirSync(this.baseDir, { recursive: true });
+  async listFiles(): Promise<FileInfo[]> {
+    try {
+      const files = await fs.readdir(this.contentDir);
+      const fileInfos = await Promise.all(
+        files
+          .filter(file => file.endsWith('.md'))
+          .map(async (file) => {
+            const filePath = path.join(this.contentDir, file);
+            const stats = await fs.stat(filePath);
+            return {
+              name: file,
+              path: filePath,
+              lastModified: stats.mtime
+            };
+          })
+      );
+      return fileInfos;
+    } catch (error) {
+      console.error('Error listing files:', error);
+      return [];
     }
-  }
-
-  async saveFile({ path: filePath, content }: FileContent): Promise<void> {
-    const fullPath = path.join(this.baseDir, filePath);
-    const dirPath = path.dirname(fullPath);
-
-    if (!fs.existsSync(dirPath)) {
-      fs.mkdirSync(dirPath, { recursive: true });
-    }
-
-    await fs.promises.writeFile(fullPath, content);
   }
 
   async readFile(filePath: string): Promise<string> {
-    const fullPath = path.join(this.baseDir, filePath);
-    return fs.promises.readFile(fullPath, "utf-8");
+    const fullPath = path.join(this.contentDir, filePath);
+    return fs.readFile(fullPath, 'utf-8');
   }
 
-  async listFiles(dirPath?: string): Promise<string[]> {
-    const fullPath = dirPath ? path.join(this.baseDir, dirPath) : this.baseDir;
-    return fs.promises.readdir(fullPath);
-  }
-
-  async fileExists(filePath: string): Promise<boolean> {
-    const fullPath = path.join(this.baseDir, filePath);
-    return fs.existsSync(fullPath);
-  }
-
-  async deleteFile(filePath: string): Promise<void> {
-    const fullPath = path.join(this.baseDir, filePath);
-    await fs.promises.unlink(fullPath);
-  }
-
-  async copyFile(sourcePath: string, destinationPath: string): Promise<void> {
-    const fullSourcePath = path.join(this.baseDir, sourcePath);
-    const fullDestinationPath = path.join(this.baseDir, destinationPath);
-    await fs.promises.copyFile(fullSourcePath, fullDestinationPath);
+  async saveFile(params: { path: string; content: string }): Promise<void> {
+    const fullPath = path.join(this.contentDir, params.path);
+    await fs.writeFile(fullPath, params.content, 'utf-8');
   }
 }

@@ -1,15 +1,16 @@
 {
-  "name": "ai-content-ecosystem",
-  "version": "1.0.0",
+  "name": "contaigents",
+  "version": "0.1.0-alpha.1",
   "description": "Modular AI Content Ecosystem",
+  "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "ai-content": "./bin/cli.js"
+    "contaigents": "./bin/cli.js"
   },
   "scripts": {
     "build": "tsc",
-    "start": "node dist/index.js",
-    "dev": "ts-node src/index.ts"
+    "start": "node --experimental-specifier-resolution=node dist/index.js develop",
+    "dev": "node --loader ts-node/esm src/index.ts develop"
   },
   "keywords": [],
   "author": "",
@@ -19,7 +20,8 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
-    "ollama": "^0.5.13"
+    "ollama": "^0.5.13",
+    "open": "^10.1.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",

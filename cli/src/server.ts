@@ -1,21 +1,15 @@
-import express from "express";
-import cors from "cors";
-import { FileService } from "./services/fileService";
-import apiRoutes from "./routes/api";
-import llmRoutes from "./routes/agent";
+import express from 'express';
+import cors from 'cors';
+import { FileService } from './services/fileService.js';
 
 export class Server {
-  private app: express.Application;
-  private port: number;
-  public fileService: FileService;
+  private app = express();
+  private port = 3000;
+  private fileService = new FileService();
 
-  constructor(port: number = Number(process.env.PORT) || 3000) {
-    this.app = express();
-    this.port = port;
-    this.fileService = new FileService();
+  constructor() {
     this.setupMiddleware();
     this.setupRoutes();
-    this.setupErrorHandling();
   }
 
   private setupMiddleware(): void {
@@ -24,23 +18,33 @@ export class Server {
   }
 
   private setupRoutes(): void {
-    this.app.use("/api", apiRoutes);
-    this.app.use("/api", llmRoutes);
-  }
-
-  private setupErrorHandling(): void {
-    // Global error handler
-    this.app.use(
-      (
-        err: any,
-        req: express.Request,
-        res: express.Response,
-        next: express.NextFunction
-      ) => {
-        console.error(err.stack);
-        res.status(500).json({ error: "Something went wrong!" });
+    this.app.post('/api/files', async (req, res) => {
+      try {
+        const { path, content } = req.body;
+        await this.fileService.saveFile({ path, content });
+        res.status(200).json({ message: 'File saved successfully' });
+      } catch (error) {
+        res.status(500).json({ error: 'Failed to save file' });
       }
-    );
+    });
+
+    this.app.get('/api/files/:path', async (req, res) => {
+      try {
+        const content = await this.fileService.readFile(req.params.path);
+        res.status(200).json({ content });
+      } catch (error) {
+        res.status(404).json({ error: 'File not found' });
+      }
+    });
+
+    this.app.get('/api/files', async (_req, res) => {
+      try {
+        const files = await this.fileService.listFiles();
+        res.status(200).json({ files });
+      } catch (error) {
+        res.status(500).json({ error: 'Failed to list files' });
+      }
+    });
   }
 
   public start(): void {

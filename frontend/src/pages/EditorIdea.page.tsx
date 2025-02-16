@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { keyframes } from '@emotion/react';
 import {
   DragDropContext,
   Draggable,
@@ -7,20 +8,26 @@ import {
   DroppableProvided,
 } from '@hello-pangea/dnd';
 import {
+  IconArrowRight,
+  IconBulb,
   IconCircleCheck,
   IconEdit,
   IconGripVertical,
+  IconPencil,
   IconPlus,
   IconTrash,
-  IconArrowRight
+  IconUsers,
+  IconWand,
 } from '@tabler/icons-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ActionIcon,
   Avatar,
   Badge,
+  Box,
   Button,
   Card,
+  Center,
   Collapse,
   Container,
   Divider,
@@ -30,29 +37,30 @@ import {
   rem,
   SimpleGrid,
   Stack,
+  Stepper,
   Text,
   Textarea,
   TextInput,
   Title,
-  Center,
-  Box,
-  Stepper,
+  Transition,
 } from '@mantine/core';
-import { IconBulb, IconPencil, IconUsers, IconWand } from '@tabler/icons-react';
+import { useClickOutside, useFocusTrap } from '@mantine/hooks';
+import { CONTENT_TYPE_PLACEHOLDERS } from '@/constants/contentTypes';
 import { ContentBlock } from '@/types/content';
+import { CONTENT_TYPES, getStructuredBlocks } from '../constants/ideahub';
 import { Agent } from '../services/agents/Agent';
 import { AgentManager } from '../services/agents/AgentManager';
 import { ConfigManager } from '../services/config/ConfigManager';
-import { CONTENT_TYPES, getStructuredBlocks } from '../constants/ideahub';
-import { keyframes } from '@emotion/react';
-import { CONTENT_TYPE_PLACEHOLDERS } from '@/constants/contentTypes';
-
 
 const getRandomPlaceholder = (contentType: string | null): string => {
-  if (!contentType || !CONTENT_TYPE_PLACEHOLDERS[contentType as keyof typeof CONTENT_TYPE_PLACEHOLDERS]) {
+  if (
+    !contentType ||
+    !CONTENT_TYPE_PLACEHOLDERS[contentType as keyof typeof CONTENT_TYPE_PLACEHOLDERS]
+  ) {
     return "Describe your content idea in detail. The more specific you are, the better results you'll get...";
   }
-  const placeholders = CONTENT_TYPE_PLACEHOLDERS[contentType as keyof typeof CONTENT_TYPE_PLACEHOLDERS];
+  const placeholders =
+    CONTENT_TYPE_PLACEHOLDERS[contentType as keyof typeof CONTENT_TYPE_PLACEHOLDERS];
   return placeholders[Math.floor(Math.random() * placeholders.length)];
 };
 
@@ -64,7 +72,10 @@ const waveAnimation = keyframes`
 
 export function EditorIdea() {
   const navigate = useNavigate();
-  const [contentType, setContentType] = useState<string | null>(null);
+  const [searchParams] = useSearchParams();
+  const initialContentType = searchParams.get('type');
+
+  const [contentType, setContentType] = useState<string | null>(initialContentType);
   const [idea, setIdea] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedBlocks, setGeneratedBlocks] = useState<ContentBlock[] | null>(null);
@@ -75,7 +86,19 @@ export function EditorIdea() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [activeStep, setActiveStep] = useState(0);
   const [currentPlaceholder, setCurrentPlaceholder] = useState<string>('');
+  const [isFocused, setIsFocused] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const configManager = new ConfigManager('editor_');
+  const inputRef = useRef<HTMLInputElement>(null);
+  const focusTrapRef = useFocusTrap();
+  const suggestionsRef = useClickOutside(() => setShowSuggestions(false));
+
+  // Redirect if no content type is provided
+  useEffect(() => {
+    if (!initialContentType) {
+      navigate('/');
+    }
+  }, [initialContentType, navigate]);
 
   useEffect(() => {
     const agentManager = new AgentManager();
@@ -90,24 +113,22 @@ export function EditorIdea() {
       (agent) => agent.getConfig().role === 'content_reviewer'
     );
 
-    // Set first writer if available and none selected
     if (availableWriters.length > 0 && !selectedWriter) {
       setSelectedWriter(availableWriters[0]);
     }
 
-    // Set first reviewer if available and none selected
     if (availableReviewers.length > 0 && !selectedReviewer) {
       setSelectedReviewer(availableReviewers[0]);
     }
-  }, []); // Empty dependency array for initial load only
+  }, []);
 
   useEffect(() => {
     setCurrentPlaceholder(getRandomPlaceholder(contentType));
   }, [contentType]);
 
-  // Add a function to check if we can proceed
+  // Update canProceed to not check for contentType since it's required
   const canProceed = (): boolean => {
-    return !!(contentType && idea.trim() && selectedWriter && selectedReviewer);
+    return !!(idea.trim() && selectedWriter && selectedReviewer);
   };
 
   const handleGenerateIdea = async () => {
@@ -223,132 +244,163 @@ export function EditorIdea() {
     }
   };
 
+  const getSuggestions = () => {
+    if (!contentType || !idea.trim()) return [];
+    return CONTENT_TYPE_PLACEHOLDERS[contentType as keyof typeof CONTENT_TYPE_PLACEHOLDERS]
+      .filter((suggestion) => suggestion.toLowerCase().includes(idea.toLowerCase()))
+      .slice(0, 5);
+  };
+
+  const handleSuggestionClick = (suggestion: string) => {
+    setIdea(suggestion);
+    setShowSuggestions(false);
+    nextStep();
+  };
+
   return (
     <>
       <Container size="xl" py="xl">
         <Stack gap="xl">
-          <Title order={1}>Content Creation Hub</Title>
-
-          <Stepper
-            active={activeStep}
-            onStepClick={setActiveStep}
-            allowNextStepsSelect={false}
-          >
+          <Stepper active={activeStep} onStepClick={setActiveStep} allowNextStepsSelect={false}>
+            {/* Remove the first step for content type selection */}
             <Stepper.Step
-              label="Choose Type"
-              description="Select content type"
-              icon={<IconBulb size="1.2rem" />}
-            >
-              <Paper shadow="sm" p="xl" withBorder mt="xl">
-                <Stack gap="md">
-                  <Text size="lg" fw={500}>
-                    What would you like to create?
-                  </Text>
-                  <SimpleGrid cols={{ base: 4, sm: 6, md: 9 }} spacing="md">
-                    {CONTENT_TYPES.map((type) => (
-                      <Card
-                        key={type.value}
-                        shadow="sm"
-                        padding="sm"
-                        radius="md"
-                        withBorder
-                        style={{
-                          cursor: type.disabled ? 'not-allowed' : 'pointer',
-                          opacity: type.disabled ? 0.5 : 1,
-                        }}
-                        onClick={() => {
-                          if (!type.disabled) {
-                            setContentType(type.value);
-                            setActiveStep(1); // Directly set to next step instead of using nextStep()
-                          }
-                        }}
-                        bg={contentType === type.value ? 'blue.1' : undefined}
-                      >
-                        <Stack gap="xs" align="center">
-                          <type.icon size={rem(24)} />
-                          <Text size="sm" fw={500} ta="center">
-                            {type.label}
-                          </Text>
-                          <Text size="xs" c="dimmed" ta="center" style={{ minHeight: rem(32) }}>
-                            {type.description}
-                          </Text>
-                          {type.disabled && (
-                            <Badge
-                              color="yellow"
-                              size="xs"
-                              style={{ position: 'absolute', top: 5, right: 5 }}
-                            >
-                              Soon
-                            </Badge>
-                          )}
-                        </Stack>
-                      </Card>
-                    ))}
-                  </SimpleGrid>
-                </Stack>
-              </Paper>
-            </Stepper.Step>
-
-            <Stepper.Step
-              label="Share Idea"
+              label="Ideate"
               description="Describe your content"
               icon={<IconPencil size="1.2rem" />}
             >
-              <Box maw={800} mx="auto" mt="xl">
-                <Stack gap="xl">
-                  <Title order={2} size="2.5rem" ta="center">What's your idea?</Title>
-
-                  <Group align="flex-start" gap="md">
-                    <Textarea
-                      placeholder={currentPlaceholder}
-                      autosize
-                      minRows={8}
-                      maxRows={20}
-                      size="xl"
-                      radius="md"
-                      autoFocus
-                      value={idea}
-                      onChange={(event) => setIdea(event.currentTarget.value)}
-                      onKeyDown={handleKeyDown}
-                      onFocus={handleTextAreaFocus}
-                      style={{ flex: 1 }}
-                      styles={{
-                        input: {
-                          fontSize: '1.4rem',
-                          lineHeight: '1.8',
-                          padding: '1.5rem',
-                          backgroundColor: 'var(--mantine-color-body)',
-                          cursor: !idea.trim() ? 'pointer' : 'text',
-                        },
-                      }}
-                    />
-                    
-                    <Button
-                      onClick={() => idea.trim() && nextStep()}
-                      size="lg"
-                      h={80}
-                      w={80}
-                      variant="gradient"
-                      gradient={{ from: 'indigo', to: 'cyan' }}
-                      radius="md"
+              <Box
+                maw={800}
+                mx="auto"
+                mt={50}
+                style={{
+                  minHeight: '70vh',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}
+              >
+                <Stack gap="xl" align="center" style={{ width: '100%' }}>
+                  <Box mb={40}>
+                    <Title
+                      order={1}
+                      size="3.5rem"
+                      ta="center"
                       style={{
-                        transition: 'transform 0.2s ease',
-                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-                        opacity: idea.trim() ? 1 : 0.7,
-                        cursor: idea.trim() ? 'pointer' : 'default',
-                        ':hover': {
-                          transform: idea.trim() ? 'translateX(5px)' : 'none',
-                        },
+                        transition: 'transform 0.3s ease',
+                        transform: isFocused ? 'translateY(-20px)' : 'none',
                       }}
                     >
-                      <IconArrowRight 
-                        size="2rem"
-                        style={{
-                          animation: idea.trim() ? `${waveAnimation} 2s infinite` : 'none',
-                        }}
-                      />
-                    </Button>
-                  </Group>
+                      What would you like to write about?
+                    </Title>
+                  </Box>
+
+                  <Box
+                    style={{ width: '100%', maxWidth: 700, position: 'relative' }}
+                    ref={focusTrapRef}
+                  >
+                    <TextInput
+                      ref={inputRef}
+                      size="xl"
+                      radius="md"
+                      placeholder="Start typing your idea..."
+                      value={idea}
+                      onChange={(event) => {
+                        setIdea(event.currentTarget.value);
+                        setShowSuggestions(true);
+                      }}
+                      onFocus={() => {
+                        setIsFocused(true);
+                        setShowSuggestions(true);
+                      }}
+                      rightSection={
+                        idea.trim() && (
+                          <Button
+                            variant="gradient"
+                            gradient={{ from: 'indigo', to: 'cyan' }}
+                            size="md"
+                            radius="md"
+                            onClick={() => nextStep()}
+                            style={{ marginRight: -8 }}
+                          >
+                            GO
+                            <IconArrowRight size="1rem" style={{ marginLeft: 8 }} />
+                          </Button>
+                        )
+                      }
+                      styles={{
+                        input: {
+                          height: 65,
+                          fontSize: '1.4rem',
+                          padding: '0 1.5rem',
+                          boxShadow: isFocused ? '0 8px 24px rgba(0,0,0,0.12)' : 'none',
+                          transition: 'all 0.3s ease',
+                          '&:focus': {
+                            transform: 'scale(1.02)',
+                          },
+                        },
+                        section: {
+                          width: 'auto',
+                          paddingRight: 8
+                        }
+                      }}
+                    />
+
+                    <Transition
+                      mounted={showSuggestions && getSuggestions().length > 0}
+                      transition="pop-bottom-left"
+                      duration={200}
+                    >
+                      {(styles) => (
+                        <Paper
+                          ref={suggestionsRef}
+                          shadow="md"
+                          radius="md"
+                          p="md"
+                          style={{
+                            ...styles,
+                            position: 'absolute',
+                            top: 'calc(100% + 8px)',
+                            left: 0,
+                            right: 0,
+                            zIndex: 100,
+                          }}
+                        >
+                          <Stack gap="xs">
+                            {getSuggestions().map((suggestion, index) => (
+                              <Box
+                                key={index}
+                                p="md"
+                                style={{
+                                  cursor: 'pointer',
+                                  borderRadius: 8,
+                                  transition: 'background-color 0.2s ease',
+                                  '&:hover': {
+                                    backgroundColor: 'var(--mantine-color-blue-0)',
+                                  },
+                                }}
+                                onClick={() => handleSuggestionClick(suggestion)}
+                              >
+                                <Text size="lg">{suggestion}</Text>
+                              </Box>
+                            ))}
+                          </Stack>
+                        </Paper>
+                      )}
+                    </Transition>
+                  </Box>
+
+                  <Text
+                    c="dimmed"
+                    size="sm"
+                    mt="xl"
+                    style={{
+                      transition: 'opacity 0.3s ease',
+                      opacity: isFocused ? 0 : 0.7,
+                    }}
+                  >
+                    Press Space to see suggestions or start typing your idea
+                  </Text>
                 </Stack>
               </Box>
             </Stepper.Step>
@@ -450,10 +502,7 @@ export function EditorIdea() {
                     <Button variant="default" onClick={prevStep}>
                       Back
                     </Button>
-                    <Button
-                      onClick={nextStep}
-                      disabled={!selectedWriter || !selectedReviewer}
-                    >
+                    <Button onClick={nextStep} disabled={!selectedWriter || !selectedReviewer}>
                       Continue
                     </Button>
                   </Group>
@@ -469,20 +518,25 @@ export function EditorIdea() {
               <Box maw={800} mx="auto" mt="xl">
                 <Stack gap="xl" align="center">
                   <Title order={2}>Ready to Generate</Title>
-                  
+
                   <Text c="dimmed" ta="center" size="lg">
-                    Let's create a structured outline for your content. Our AI will analyze your idea and break it down into meaningful sections.
+                    Let's create a structured outline for your content. Our AI will analyze your
+                    idea and break it down into meaningful sections.
                   </Text>
 
                   <Paper withBorder p="md" radius="md" w="100%">
                     <Stack gap="xs">
                       <Text fw={500}>Content Type:</Text>
-                      <Text>{CONTENT_TYPES.find(t => t.value === contentType)?.label}</Text>
-                      
-                      <Text fw={500} mt="md">Your Idea:</Text>
+                      <Text>{CONTENT_TYPES.find((t) => t.value === contentType)?.label}</Text>
+
+                      <Text fw={500} mt="md">
+                        Your Idea:
+                      </Text>
                       <Text>{idea}</Text>
-                      
-                      <Text fw={500} mt="md">Your Team:</Text>
+
+                      <Text fw={500} mt="md">
+                        Your Team:
+                      </Text>
                       <Group>
                         <Text>Writer: {selectedWriter?.getConfig().name}</Text>
                         <Text>Reviewer: {selectedReviewer?.getConfig().name}</Text>

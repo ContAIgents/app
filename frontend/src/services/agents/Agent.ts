@@ -354,4 +354,34 @@ ${
       throw error;
     }
   }
+
+  public async executeTextTask(
+    text: string,
+    task: 'simplify' | 'rephrase' | 'grammar' | 'explain',
+    instructions?: string
+  ): Promise<string> {
+    const llm = LLMFactory.getConfiguredProvider();
+
+    const systemPrompt = `You are a focused writing assistant. Your task is to ${task} the given text.
+Keep your response DIRECT and CONCISE. Return ONLY the modified text without explanations or meta-commentary.
+Use ${this.config.writingStyle} style and ${this.config.tone} tone.`;
+
+    const taskPrompts = {
+      simplify: `Rewrite this text at a simpler reading level, making it clear and easy to understand: "${text}"`,
+      rephrase: `Rephrase this text ${instructions ? `according to these instructions: ${instructions}\n\nText: ` : ': '}${text}`,
+      grammar: `Check and correct any grammar issues in this text. Return only the corrected version: "${text}"`,
+      explain: `Explain this text in simple terms, using clear language and examples where helpful: "${text}"`,
+    };
+
+    try {
+      const response = await llm.executePrompt(`${systemPrompt}\n\n${taskPrompts[task]}`, {
+        temperature: 0.3,
+        maxTokens: 500,
+      });
+      return response.content; // Add this line to return the response content
+    } catch (error) {
+      console.error(`Failed to ${task} text:`, error);
+      throw error;
+    }
+  }
 }

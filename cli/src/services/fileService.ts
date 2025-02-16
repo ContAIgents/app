@@ -30,31 +30,41 @@ export class FileService {
     }
   }
 
-  private async buildFileTree(dir: string): Promise<any> {
+  private async buildFileTree(
+    dir: string, 
+    skipDirs: string[] = ['node_modules', 'dist', 'bin']
+  ): Promise<any> {
     const entries = await fs.readdir(dir, { withFileTypes: true });
     const items = await Promise.all(
-      entries.map(async (entry) => {
-        const fullPath = path.join(dir, entry.name);
-        const relativePath = path.relative(this.baseDir, fullPath);
-        
-        if (entry.isDirectory()) {
-          const children = await this.buildFileTree(fullPath);
-          return {
-            name: entry.name,
-            path: relativePath,
-            type: 'directory',
-            children
-          };
-        }
-        if (entry.name.endsWith('.md') || entry.name.endsWith('.mdx')) {
-          return {
-            name: entry.name,
-            path: relativePath,
-            type: 'file'
-          };
-        }
-        return null;
-      })
+      entries
+        .filter(entry => {
+          // Skip hidden files/directories and specified directories
+          if (entry.name.startsWith('.')) return false;
+          if (entry.isDirectory() && skipDirs.includes(entry.name)) return false;
+          return true;
+        })
+        .map(async (entry) => {
+          const fullPath = path.join(dir, entry.name);
+          const relativePath = path.relative(this.baseDir, fullPath);
+          
+          if (entry.isDirectory()) {
+            const children = await this.buildFileTree(fullPath, skipDirs);
+            return {
+              name: entry.name,
+              path: relativePath,
+              type: 'directory',
+              children
+            };
+          }
+          if (entry.name.endsWith('.md') || entry.name.endsWith('.mdx')) {
+            return {
+              name: entry.name,
+              path: relativePath,
+              type: 'file'
+            };
+          }
+          return null;
+        })
     );
     return items.filter(item => item !== null);
   }

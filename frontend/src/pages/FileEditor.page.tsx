@@ -1,119 +1,67 @@
 import { useEffect, useState } from 'react';
-import { Container, Group, Paper, Stack, Text, Title, Button } from '@mantine/core';
-import { FileTree as FileTreeType } from '@/types/files';
-import MarkdownEditor from '@/components/MarkdownEditor';
-import { FileTree } from '@/components/FileTree';
-import { IconRefresh } from '@tabler/icons-react';
+import { Container, Grid, Paper } from '@mantine/core';
+import { FileTree } from '@/components/FileTree/FileTree';
+import MarkdownEditorComponent from '@/components/MarkdownEditor';
+import { FileTreeType } from '@/types/files';
 
 export function FileEditorPage() {
-  const [fileTree, setFileTree] = useState<FileTreeType | null>(null);
+  const [fileTree, setFileTree] = useState<FileTreeType | undefined>(undefined);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
-  const [content, setContent] = useState<string>('');
-  const [loading, setLoading] = useState(false);
+  const [fileContent, setFileContent] = useState('');
 
-  const fetchFileTree = async () => {
-    try {
-      const response = await fetch('http://localhost:3000/api/files/tree');
-      const data = await response.json();
-      setFileTree(data);
-    } catch (error) {
-      console.error('Failed to fetch file tree:', error);
-    }
-  };
+  useEffect(() => {
+    // Fetch file tree
+    fetch('http://localhost:3000/api/files/tree')
+      .then(res => res.json())
+      .then(data => {
+        // Transform the flat array into a tree structure
+        const root = {
+          name: 'root',
+          path: '/',
+          type: 'directory',
+          children: data
+        };
+        setFileTree(root);
+      })
+      .catch(console.error);
+  }, []);
 
-  const fetchFileContent = async (path: string) => {
+  const handleFileSelect = async (path: string) => {
     try {
       const response = await fetch(`http://localhost:3000/api/files/${path}`);
       const data = await response.json();
-      setContent(data.content);
+      setSelectedFile(path);
+      setFileContent(data.content);
     } catch (error) {
-      console.error('Failed to fetch file content:', error);
+      console.error('Error loading file:', error);
     }
   };
-
-  const handleContentUpdate = async (newContent: string) => {
-    if (!selectedFile) return;
-
-    setLoading(true);
-    try {
-      await fetch(`http://localhost:3000/api/files/${selectedFile}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ content: newContent }),
-      });
-      setContent(newContent);
-    } catch (error) {
-      console.error('Failed to save file:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchFileTree();
-  }, []);
-
-  useEffect(() => {
-    if (selectedFile) {
-      fetchFileContent(selectedFile);
-    }
-  }, [selectedFile]);
 
   return (
-    <Container size="xl" py="xl">
-      <Group position="apart" mb="xl">
-        <Title order={2}>File Editor</Title>
-        <Button
-          leftIcon={<IconRefresh size="1.1rem" />}
-          variant="light"
-          onClick={fetchFileTree}
-          loading={loading}
-        >
-          Refresh Files
-        </Button>
-      </Group>
-      
-      <Group align="flex-start" spacing="md" noWrap>
-        <Paper withBorder p="md" style={{ width: 300, minHeight: '70vh' }}>
-          <Title order={4} mb="md">Files</Title>
-          {fileTree ? (
-            <FileTree
-              tree={fileTree}
-              onSelect={(path) => setSelectedFile(path)}
+    <Container fluid mt="md">
+      <Grid>
+        <Grid.Col span={3}>
+          <Paper withBorder>
+            <FileTree 
+              tree={fileTree} 
+              onSelect={handleFileSelect}
               selectedPath={selectedFile}
             />
-          ) : (
-            <Text c="dimmed">Loading files...</Text>
-          )}
-        </Paper>
-
-        <Stack style={{ flex: 1, minHeight: '70vh' }}>
-          {selectedFile ? (
-            <Paper withBorder p="md" style={{ height: '100%' }}>
-              <MarkdownEditor
-                content={content}
-                onUpdate={handleContentUpdate}
-                disableAIFeatures={true}
+          </Paper>
+        </Grid.Col>
+        <Grid.Col span={9}>
+          <Paper withBorder p="md">
+            {selectedFile ? (
+              <MarkdownEditorComponent
+                content={fileContent}
+                onUpdate={(content) => setFileContent(content)}
               />
-            </Paper>
-          ) : (
-            <Paper 
-              withBorder 
-              p="xl" 
-              style={{ 
-                height: '100%', 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center' 
-              }}
-            >
-              <Text c="dimmed">Select a file to edit</Text>
-            </Paper>
-          )}
-        </Stack>
-      </Group>
+            ) : (
+              <div>Select a file to edit</div>
+            )}
+          </Paper>
+        </Grid.Col>
+      </Grid>
     </Container>
   );
 }

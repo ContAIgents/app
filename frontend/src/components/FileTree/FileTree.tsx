@@ -3,12 +3,16 @@ import { Group, Tree } from '@mantine/core';
 import { FileTree as FileTreeType } from '@/types/files';
 
 interface FileTreeProps {
-  tree: FileTreeType;
+  tree?: FileTreeType;
   onSelect: (path: string) => void;
   selectedPath: string | null;
 }
 
 export function FileTree({ tree, onSelect, selectedPath }: FileTreeProps) {
+  if (!tree) {
+    return null;
+  }
+
   const transformToTreeItems = (node: FileTreeType): {
     value: string;
     label: string;

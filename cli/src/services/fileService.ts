@@ -31,18 +31,14 @@ export class FileService {
   }
 
   private async buildFileTree(dir: string): Promise<any> {
-    console.log(`Building file tree for directory: ${dir}`);
     const entries = await fs.readdir(dir, { withFileTypes: true });
-    console.log(`Found ${entries.length} entries in ${dir}`);
     const items = await Promise.all(
       entries.map(async (entry) => {
         const fullPath = path.join(dir, entry.name);
         const relativePath = path.relative(this.baseDir, fullPath);
-        console.log(`Processing entry: ${entry.name}, type: ${entry.isDirectory() ? 'directory' : 'file'}`);
         
         if (entry.isDirectory()) {
           const children = await this.buildFileTree(fullPath);
-          console.log(`Finished processing directory: ${entry.name}, found ${children.length} children`);
           return {
             name: entry.name,
             path: relativePath,
@@ -50,14 +46,16 @@ export class FileService {
             children
           };
         }
-        return {
-          name: entry.name,
-          path: relativePath,
-          type: 'file'
-        };
+        if (entry.name.endsWith('.md') || entry.name.endsWith('.mdx')) {
+          return {
+            name: entry.name,
+            path: relativePath,
+            type: 'file'
+          };
+        }
+        return null;
       })
     );
-    console.log(`Finished building file tree for ${dir}, returning ${items.length} items`);
-    return items;
+    return items.filter(item => item !== null);
   }
 }

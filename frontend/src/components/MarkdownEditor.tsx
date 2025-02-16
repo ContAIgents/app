@@ -260,11 +260,13 @@ const MarkdownEditorComponent: React.FC<MarkdownEditorComponentProps> = ({
       
       {!disableAIFeatures && showMenu && (
         <SelectionMenu
+          selection={selection}
           position={menuPosition}
-          onClose={() => setShowMenu(false)}
-          onRephrase={(instructions) => handleRephrase(selection, instructions)}
-          onGrammarCheck={() => handleGrammarCheck(selection)}
-          onExplain={() => handleExplain(selection)}
+          onRephrase={handleRephrase}
+          onGrammarCheck={handleGrammarCheck}
+          onExplain={handleExplain}
+          isLoading={isLoading}
+          disabled={disabled}
         />
       )}
     </div>

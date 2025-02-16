@@ -1,19 +1,31 @@
-import { useEffect, useState, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Container, Grid, Paper, Group, Stack, Text, ActionIcon, Tooltip, Box, Loader, Button } from '@mantine/core';
-import { IconInfoCircle, IconBook, IconWand, IconArrowRight } from '@tabler/icons-react';
+import { useCallback, useEffect, useState } from 'react';
+import { IconArrowRight, IconBook, IconInfoCircle, IconWand } from '@tabler/icons-react';
 import debounce from 'lodash/debounce';
+import { Link, useNavigate } from 'react-router-dom';
+import {
+  ActionIcon,
+  Box,
+  Button,
+  Container,
+  Grid,
+  Group,
+  Loader,
+  Paper,
+  Stack,
+  Text,
+  Tooltip,
+} from '@mantine/core';
 import { notifications } from '@mantine/notifications';
+import { CommentCard } from '@/components/CommentCard/CommentCard';
 import { FileTree } from '@/components/FileTree/FileTree';
 import MarkdownEditorComponent from '@/components/MarkdownEditor';
-import { FileTreeNode, FileTreeType } from '@/types/files';
+import { getReviewInstructionsFromUser } from '@/components/ReviewInstructionsModal/ReviewInstructionsModal';
+import { VoiceInput } from '@/components/VoiceInput/VoiceInput';
 import { Agent } from '@/services/agents/Agent';
 import { ConfigManager } from '@/services/config/ConfigManager';
-import { CommentCard } from '@/components/CommentCard/CommentCard';
-import { VoiceInput } from '@/components/VoiceInput/VoiceInput';
-import { getReviewInstructionsFromUser } from '@/components/ReviewInstructionsModal/ReviewInstructionsModal';
 import { Comment } from '@/types/content';
 import { IBlockStatus } from '@/types/editor';
+import { FileTreeNode, FileTreeType } from '@/types/files';
 
 const COMMENT_WIDTH = 280;
 const FILE_TREE_WIDTH = 300; // Increased from 200 to 280
@@ -83,19 +95,19 @@ export function FileEditorPage() {
 
     // Fetch file tree
     fetch('http://localhost:3000/api/files/tree')
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         const root = {
           name: 'root',
           path: '/',
           type: 'directory',
-          children: data
+          children: data,
         };
         setFileTree({
           name: 'root',
           path: '/',
           type: 'directory' as const,
-          children: data
+          children: data,
         } as FileTreeNode);
       })
       .catch(console.error);
@@ -106,42 +118,48 @@ export function FileEditorPage() {
 
     try {
       const newCommentId = Date.now();
-      setBlockStatus(prev => ({ ...prev, reviewStatus: 'reviewing' }));
+      setBlockStatus((prev) => ({ ...prev, reviewStatus: 'reviewing' }));
 
       // Add initial loading comment
-      setComments([{
-        id: newCommentId,
-        timestamp: new Date().toISOString(),
-        user: selectedReviewer.getConfig().name,
-        comment: 'Initiating first review...',
-        status: 'loading'
-      }]);
+      setComments([
+        {
+          id: newCommentId,
+          timestamp: new Date().toISOString(),
+          user: selectedReviewer.getConfig().name,
+          comment: 'Initiating first review...',
+          status: 'loading',
+        },
+      ]);
 
       // Generate initial review
       const reviewResponse = await selectedReviewer.generateReview(
         {
-          id: 1, title: path, content,
+          id: 1,
+          title: path,
+          content,
           comments: [],
-          description: ''
+          description: '',
         },
         'Please review this file and provide feedback.'
       );
 
-      setComments([{
-        id: newCommentId,
-        timestamp: new Date().toISOString(),
-        user: selectedReviewer.getConfig().name,
-        comment: reviewResponse,
-        status: 'success'
-      }]);
+      setComments([
+        {
+          id: newCommentId,
+          timestamp: new Date().toISOString(),
+          user: selectedReviewer.getConfig().name,
+          comment: reviewResponse,
+          status: 'success',
+        },
+      ]);
 
-      setBlockStatus(prev => ({ ...prev, reviewStatus: 'pending' }));
-      
+      setBlockStatus((prev) => ({ ...prev, reviewStatus: 'pending' }));
+
       // Save comments
       configManager.save(`comments_${path}`, comments);
     } catch (error) {
       console.error('Auto-review failed:', error);
-      setBlockStatus(prev => ({ ...prev, reviewStatus: 'error' }));
+      setBlockStatus((prev) => ({ ...prev, reviewStatus: 'error' }));
     }
   };
 
@@ -151,7 +169,7 @@ export function FileEditorPage() {
       const data = await response.json();
       setSelectedFile(path);
       setMarkdownContent(data.content);
-      
+
       // Load existing comments for this file
       const savedComments = configManager.load<Comment[]>(`comments_${path}`) || [];
       setComments(savedComments);
@@ -169,71 +187,73 @@ export function FileEditorPage() {
     if (!selectedReviewer || !selectedFile) return;
 
     try {
-      setBlockStatus(prev => ({ ...prev, reviewStatus: 'reviewing' }));
+      setBlockStatus((prev) => ({ ...prev, reviewStatus: 'reviewing' }));
 
       // Update comment to loading state
-      setComments(comments.map(c =>
-        c.id === commentId ? { ...c, status: 'loading' } : c
-      ));
+      setComments(comments.map((c) => (c.id === commentId ? { ...c, status: 'loading' } : c)));
 
       const instructions = await getReviewInstructionsFromUser();
       const reviewResponse = await selectedReviewer.generateReview(
         {
-          id: 1, title: selectedFile, content: markdownContent,
+          id: 1,
+          title: selectedFile,
+          content: markdownContent,
           comments: [],
-          description: ''
+          description: '',
         },
         instructions
       );
 
-      setComments(comments.map(c =>
-        c.id === commentId
-          ? {
-              ...c,
-              comment: reviewResponse,
-              status: 'success',
-              user: selectedReviewer.getConfig().name,
-            }
-          : c
-      ));
+      setComments(
+        comments.map((c) =>
+          c.id === commentId
+            ? {
+                ...c,
+                comment: reviewResponse,
+                status: 'success',
+                user: selectedReviewer.getConfig().name,
+              }
+            : c
+        )
+      );
 
-      setBlockStatus(prev => ({ ...prev, reviewStatus: 'pending' }));
-      
+      setBlockStatus((prev) => ({ ...prev, reviewStatus: 'pending' }));
+
       // Save comments
       configManager.save(`comments_${selectedFile}`, comments);
     } catch (error) {
       console.error('Review generation failed:', error);
-      setBlockStatus(prev => ({ ...prev, reviewStatus: 'error' }));
-      setComments(comments.map(c =>
-        c.id === commentId ? { ...c, status: 'error' } : c
-      ));
+      setBlockStatus((prev) => ({ ...prev, reviewStatus: 'error' }));
+      setComments(comments.map((c) => (c.id === commentId ? { ...c, status: 'error' } : c)));
     }
   };
 
   const handleContentGeneration = async (comment: Comment) => {
     if (!selectedWriter || !selectedFile) return;
 
-    setBlockStatus(prev => ({ ...prev, isLoading: true }));
+    setBlockStatus((prev) => ({ ...prev, isLoading: true }));
 
     try {
       const rewrittenContent = await selectedWriter.rewrite(
         {
-          id: 1, title: selectedFile, content: markdownContent,
+          id: 1,
+          title: selectedFile,
+          content: markdownContent,
           comments: [],
-          description: ''
+          description: '',
         },
         markdownContent,
         comment.comment || ''
       );
 
       setMarkdownContent(rewrittenContent);
-      setBlockStatus(prev => ({
+      setBlockStatus((prev) => ({
         ...prev,
         isLoading: false,
         reviewStatus: 'completed',
       }));
     } catch (error) {
-      setBlockStatus(prev => ({
+      setBlockStatus((prev) => ({
         ...prev,
         isLoading: false,
         error: error instanceof Error ? error.message : 'An unknown error occurred',
@@ -279,12 +299,7 @@ export function FileEditorPage() {
               Saving...
             </Text>
           )}
-          <Tooltip
-            label="Export this file"
-            position="bottom"
-            multiline
-            w={220}
-          >
+          <Tooltip label="Export this file" position="bottom" multiline w={220}>
             <Button
               onClick={() => navigate('/export')}
               size="md"
@@ -319,15 +334,13 @@ export function FileEditorPage() {
               backgroundColor: 'var(--mantine-color-body)',
             }}
           >
-            <Text size="sm" fw={700}>Files</Text>
+            <Text size="sm" fw={700}>
+              Files
+            </Text>
           </Box>
 
           <Box style={{ flex: 1, overflowY: 'auto' }}>
-            <FileTree 
-              tree={fileTree} 
-              onSelect={handleFileSelect}
-              selectedPath={selectedFile}
-            />
+            <FileTree tree={fileTree} onSelect={handleFileSelect} selectedPath={selectedFile} />
           </Box>
 
           <Box
@@ -336,12 +349,12 @@ export function FileEditorPage() {
               backgroundColor: 'var(--mantine-color-body)',
             }}
           >
-            <Button 
-              component={Link} 
-              to="/knowledgeBase" 
-              variant="light" 
-              size="sm" 
-              fullWidth 
+            <Button
+              component={Link}
+              to="/knowledgeBase"
+              variant="light"
+              size="sm"
+              fullWidth
               leftSection={<IconBook size="1rem" />}
             >
               Knowledge Base
@@ -375,14 +388,10 @@ export function FileEditorPage() {
               >
                 <Group justify="apart" mb="md">
                   <Group gap="xs">
-                    <Text size="lg" fw={500}>{selectedFile}</Text>
-                    <Tooltip
-                      label="File information"
-                      position="right"
-                      multiline
-                      w={300}
-                      withArrow
-                    >
+                    <Text size="lg" fw={500}>
+                      {selectedFile}
+                    </Text>
+                    <Tooltip label="File information" position="right" multiline w={300} withArrow>
                       <ActionIcon
                         variant="subtle"
                         color="gray"
@@ -396,7 +405,9 @@ export function FileEditorPage() {
                   {blockStatus.reviewStatus === 'reviewing' && (
                     <Group gap="xs">
                       <Loader size="xs" />
-                      <Text size="sm" c="dimmed">Review in progress...</Text>
+                      <Text size="sm" c="dimmed">
+                        Review in progress...
+                      </Text>
                     </Group>
                   )}
                 </Group>
@@ -414,7 +425,9 @@ export function FileEditorPage() {
                 </Box>
 
                 {blockStatus.error && (
-                  <Text c="red" size="sm" mt="xs">{blockStatus.error}</Text>
+                  <Text c="red" size="sm" mt="xs">
+                    {blockStatus.error}
+                  </Text>
                 )}
               </Paper>
 
@@ -441,16 +454,29 @@ export function FileEditorPage() {
                     <CommentCard
                       key={comment.id}
                       comment={comment}
-                      block={{ id: 1, title: selectedFile || '', content: markdownContent }}
+                      block={{
+                        id: 1,
+                        title: selectedFile || '',
+                        content: markdownContent,
+                        comments: [],
+                        description: '',
+                      }}
                       blockStatus={blockStatus}
                       setContentBlocks={() => {}}
                       onRequestReview={(_, commentId) => handleRequestReview(commentId)}
-                      onSimulateContentGeneration={handleContentGeneration}
+                      onSimulateContentGeneration={(block, comment) =>
+                        handleContentGeneration(comment)
+                      }
                       onUpdateComment={(commentId, newComment) => {
-                        setComments(comments.map(c =>
-                          c.id === commentId ? { ...c, comment: newComment } : c
-                        ));
+                        setComments(
+                          comments.map((c) =>
+                            c.id === commentId ? { ...c, comment: newComment } : c
+                          )
+                        );
                         configManager.save(`comments_${selectedFile}`, comments);
+                      }}
+                      onSimulateReview={function (blockId: number, commentId: number): void {
+                        throw new Error('Function not implemented.');
                       }}
                     />
                   ))}

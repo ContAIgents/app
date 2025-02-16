@@ -4,6 +4,10 @@ import { useState } from 'react';
 
 interface SelectionMenuProps {
   selection: string;
+  position: {
+    x: number;
+    y: number;
+  };
   onRephrase: (text: string, instructions: string) => Promise<void>;
   onGrammarCheck: (text: string) => Promise<void>;
   onExplain: (text: string) => Promise<void>;
@@ -13,6 +17,7 @@ interface SelectionMenuProps {
 
 export const SelectionMenu: React.FC<SelectionMenuProps> = ({
   selection,
+  position,
   onRephrase,
   onGrammarCheck,
   onExplain,

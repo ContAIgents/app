@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { IconCloud, IconLock, IconUsers } from '@tabler/icons-react';
+import { IconCloud, IconEdit, IconLock, IconUsers } from '@tabler/icons-react';
 import {
+  ActionIcon,
   Alert,
   Avatar,
   Badge,
@@ -352,60 +353,73 @@ export function Agents() {
     <Card
       key={config.id}
       shadow="sm"
-      padding="lg"
+      padding="md"
       radius="md"
       withBorder
-      opacity={isDisabled ? 0.7 : 1}
+      style={{
+        opacity: isDisabled ? 0.7 : 1,
+        maxWidth: '100%',
+      }}
     >
-      <Group>
+      <Group gap="sm" wrap="nowrap">
         <Avatar
-          size="xl"
+          size="lg"
           src={config.avatar}
           color={config.role === 'content_writer' ? 'blue' : 'green'}
         >
-          {config.name.charAt(0)}
+          {config.name.charAt(0).toLocaleUpperCase()}
         </Avatar>
-        <div style={{ flex: 1 }}>
-          <Group align="center" gap="xs">
-            <Text fw={500} size="lg">
+
+        <Stack gap="xs" style={{ flex: 1, minWidth: 0 }}>
+          <Group wrap="nowrap" justify="space-between">
+            <Text fw={500} size="sm" lineClamp={1}>
               {config.name}
             </Text>
-            {config.expertise?.map((skill) => (
-              <Badge key={skill} size="sm" variant="light">
+            {onEdit ? (
+              <ActionIcon variant="light" onClick={() => onEdit(new Agent(config))}>
+                <IconEdit size="1rem" />
+              </ActionIcon>
+            ) : (
+              isDisabled && (
+                <Tooltip label="Coming Soon!">
+                  <ActionIcon variant="light" disabled>
+                    <IconLock size="1rem" />
+                  </ActionIcon>
+                </Tooltip>
+              )
+            )}
+          </Group>
+
+          <Group gap="xs">
+            <Badge size="xs" variant="light">
+              {config.role === 'content_writer' ? 'Writer' : 'Reviewer'}
+            </Badge>
+            {config.expertise?.slice(0, 2).map((skill) => (
+              <Badge key={skill} size="xs" variant="outline">
                 {skill}
               </Badge>
             ))}
-          </Group>
-          <Group gap="xs">
-            <Text c="dimmed" size="sm">
-              {config.role === 'content_writer' ? 'Content Writer' : 'Content Reviewer'}
-            </Text>
-            {isDisabled ? (
-              <Tooltip label="Community reviews coming soon!" position="right">
-                <div>
-                  <Rating value={4.5} fractions={2} readOnly size="xs" />
-                </div>
+            {(config.expertise?.length ?? 0) > 2 && (
+              <Tooltip label={config.expertise?.slice(2).join(', ')}>
+                <Badge size="xs" variant="outline">
+                  +{(config.expertise?.length ?? 0) - 2}
+                </Badge>
               </Tooltip>
-            ) : (
-              <Rating value={4.5} fractions={2} readOnly size="xs" />
             )}
           </Group>
-          <Text size="sm" mt="xs" lineClamp={2}>
-            {config.systemPrompt}
+
+          <Text size="xs" c="dimmed" lineClamp={2}>
+            {config.systemPrompt?.substring(0, 100) + '...'}
           </Text>
-        </div>
-        {onEdit && (
-          <Button variant="light" onClick={() => onEdit(new Agent(config))}>
-            Edit
-          </Button>
-        )}
-        {isDisabled && (
-          <Tooltip label="Coming Soon!">
-            <Button variant="light" disabled>
-              <IconLock size="1rem" />
-            </Button>
-          </Tooltip>
-        )}
+
+          {isDisabled ? (
+            <Tooltip label="Community reviews coming soon!" position="right">
+              <Rating value={4.5} fractions={2} readOnly size="xs" />
+            </Tooltip>
+          ) : (
+            <Rating value={4.5} fractions={2} readOnly size="xs" />
+          )}
+        </Stack>
       </Group>
     </Card>
   );
@@ -428,7 +442,7 @@ export function Agents() {
         <div>
           <Group justify="space-between" mb="md">
             <div>
-              <Title order={1}>Your AI Workspace</Title>
+              <Title order={1}>Your AI Workforce</Title>
               <Text c="dimmed" size="sm">
                 Configure your personal AI agents for your specific needs
               </Text>

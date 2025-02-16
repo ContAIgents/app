@@ -12,4 +12,4 @@ export interface FileTreeNode {
   children?: FileTreeNode[];
 }
 
-export type FileTree = FileTreeNode[];
+export type FileTreeType = FileTreeNode[];

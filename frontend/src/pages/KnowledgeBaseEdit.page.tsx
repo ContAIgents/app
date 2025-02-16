@@ -64,6 +64,7 @@ export function KnowledgeBaseEdit() {
         <MarkdownEditorComponent
           content={content}
           onUpdate={(newContent) => setContent(newContent)}
+          disableAIFeatures={true}
         />
       </Paper>
     </Container>

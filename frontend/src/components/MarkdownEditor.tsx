@@ -16,6 +16,7 @@ interface MarkdownEditorComponentProps {
   content: string;
   onUpdate: (content: string) => void;
   disabled?: boolean;
+  disableAIFeatures?: boolean;
 }
 
 const lowlight = createLowlight(common);
@@ -24,6 +25,7 @@ const MarkdownEditorComponent: React.FC<MarkdownEditorComponentProps> = ({
   content,
   onUpdate,
   disabled = false,
+  disableAIFeatures = false,
 }) => {
   const { selectedAgent, isLoading, error } = useSelectedAgent({
     fallbackRole: 'content_writer'
@@ -252,18 +254,13 @@ const MarkdownEditorComponent: React.FC<MarkdownEditorComponentProps> = ({
             <RichTextEditor.CodeBlock />
           </RichTextEditor.ControlsGroup>
 
-          {/* <RichTextEditor.ControlsGroup>
-            <RichTextEditor.Unlink />
-            <RichTextEditor.Link />
-            <RichTextEditor.Image />
-          </RichTextEditor.ControlsGroup> */}
-            <ContentImportMenu />
+          {!disableAIFeatures && <ContentImportMenu />}
         </RichTextEditor.Toolbar>
 
         <RichTextEditor.Content />
       </RichTextEditor>
       
-      {showMenu && (
+      {!disableAIFeatures && showMenu && (
         <div
           style={{
             position: 'absolute',

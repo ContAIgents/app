@@ -1880,6 +1880,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/lodash@npm:^4":
+  version: 4.17.15
+  resolution: "@types/lodash@npm:4.17.15"
+  checksum: 10c0/2eb2dc6d231f5fb4603d176c08c8d7af688f574d09af47466a179cd7812d9f64144ba74bb32ca014570ffdc544eedc51b7a5657212bad083b6eecbd72223f9bb
+  languageName: node
+  linkType: hard
+
 "@types/markdown-it@npm:^13.0.7":
   version: 13.0.9
   resolution: "@types/markdown-it@npm:13.0.9"
@@ -4927,6 +4934,7 @@ __metadata:
     "@tiptap/pm": "npm:^2.11.5"
     "@tiptap/react": "npm:^2.11.5"
     "@tiptap/starter-kit": "npm:^2.11.5"
+    "@types/lodash": "npm:^4"
     "@types/node": "npm:^22.10.7"
     "@types/react": "npm:^19.0.7"
     "@types/react-dom": "npm:^19.0.3"
@@ -4937,6 +4945,7 @@ __metadata:
     eslint-plugin-react: "npm:^7.37.4"
     identity-obj-proxy: "npm:^3.0.0"
     jsdom: "npm:^26.0.0"
+    lodash: "npm:^4.17.21"
     lowlight: "npm:^3.3.0"
     postcss: "npm:^8.5.1"
     postcss-preset-mantine: "npm:1.17.0"

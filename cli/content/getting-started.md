@@ -1,16 +1,1 @@
-# Getting Started Guide
-
-## Introduction
-This is a sample getting started guide that demonstrates basic markdown formatting.
-
-## Features
-- Easy to use interface
-- Markdown support
-- Real-time preview
-
-## Usage
-Follow these simple steps to get started with our platform.
-
-1. Create an account
-2. Set up your workspace
-3. Start creating content
+<h1>Getting Started Guide</h1><h2>IntroductionTest</h2><p>This is a sample getting started guide that demonstrates basic markdown formatting.</p><h2>Features</h2><ul class="tight" data-tight="true"><li><p>Easy to use interface</p></li><li><p>Markdown support</p></li><li><p>Real-time preview</p></li></ul><h2>Usage</h2><p>Follow these simple steps to get started with our platform.</p><ol class="tight" data-tight="true"><li><p>Create an account</p></li><li><p>Set up your workspace</p></li><li><p>Start creating content</p></li></ol>

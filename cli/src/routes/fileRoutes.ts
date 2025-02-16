@@ -28,4 +28,21 @@ router.get('/files/:path(*)', async (req, res) => {
   }
 });
 
+// POST update file content
+router.post('/files/update', async (req:any, res:any) => {
+  try {
+    const { path, content } = req.body;
+    
+    if (!path || content === undefined) {
+      return res.status(400).json({ error: 'Path and content are required' });
+    }
+
+    await fileService.saveFile({ path, content });
+    res.status(200).json({ message: 'File updated successfully' });
+  } catch (error) {
+    console.error('Error updating file:', error);
+    res.status(500).json({ error: 'Failed to update file' });
+  }
+});
+
 export default router;

@@ -8,6 +8,22 @@ export class FileService {
     this.baseDir = baseDir || process.cwd();
   }
 
+  async saveFile({ path: filePath, content }: { path: string; content: string }): Promise<void> {
+    try {
+      const fullPath = path.join(this.baseDir, filePath);
+      const dirPath = path.dirname(fullPath);
+      
+      // Ensure directory exists
+      await fs.mkdir(dirPath, { recursive: true });
+      
+      // Write file
+      await fs.writeFile(fullPath, content, 'utf-8');
+    } catch (error) {
+      console.error('Error saving file:', error);
+      throw new Error(`Failed to save file: ${filePath}`);
+    }
+  }
+
   async readFile(filePath: string): Promise<string> {
     try {
       const fullPath = path.join(this.baseDir, filePath);

@@ -847,7 +847,14 @@ export function EditorIdea() {
                         </Button>
                         {generatedBlocks && (
                           <Button
-                            onClick={() => navigate('/editor')}
+                            onClick={() => {
+                              if (generatedBlocks) {
+                                configManager.save('contentBlocks', generatedBlocks);
+                                configManager.save('selectedWriter', selectedWriter?.getConfig());
+                                configManager.save('selectedReviewer', selectedReviewer?.getConfig());
+                                navigate('/editor');
+                              }
+                            }}
                             leftSection={<IconCircleCheck size={18} />}
                             size="md"
                             variant="gradient"

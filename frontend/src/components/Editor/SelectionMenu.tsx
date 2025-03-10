@@ -1,4 +1,4 @@
-import { Button, Group, Tooltip, TextInput, Modal, Loader } from '@mantine/core';
+import { Button, Group, Tooltip, TextInput, Modal, Loader, Paper } from '@mantine/core';
 import { IconWand, IconTextSpellcheck, IconBrain } from '@tabler/icons-react';
 import { useState } from 'react';
 
@@ -60,59 +60,66 @@ export const SelectionMenu: React.FC<SelectionMenuProps> = ({
   const isButtonDisabled = isLoading || disabled;
 
   return (
-    <>
-      <Group gap="xs">
-        <Tooltip 
-          label="Rewrite the selected text with custom instructions" 
-          position="top"
-          withArrow
-        >
-          <Button 
-            size="xs" 
-            variant="light"
-            leftSection={activeOperation === 'rephrase' ? <Loader size={14} /> : <IconWand size={14} />}
-            onClick={() => setRephraseModalOpen(true)}
-            disabled={isButtonDisabled}
-            loading={activeOperation === 'rephrase'}
+    <div style={{
+      position: 'absolute',
+      left: `${position.x}px`,
+      top: `${position.y}px`,
+      zIndex: 1000,
+    }}>
+      <Paper shadow="md" p="xs" radius="md" bg="var(--mantine-color-body)">
+        <Group gap="xs">
+          <Tooltip 
+            label="Rewrite the selected text with custom instructions" 
+            position="top"
+            withArrow
           >
-            Rephrase
-          </Button>
-        </Tooltip>
-        
-        <Tooltip 
-          label="Fix grammar and improve writing style" 
-          position="top"
-          withArrow
-        >
-          <Button 
-            size="xs" 
-            variant="light"
-            leftSection={activeOperation === 'grammar' ? <Loader size={14} /> : <IconTextSpellcheck size={14} />}
-            onClick={handleGrammarCheck}
-            disabled={isButtonDisabled}
-            loading={activeOperation === 'grammar'}
+            <Button 
+              size="xs" 
+              variant="light"
+              leftSection={activeOperation === 'rephrase' ? <Loader size={14} /> : <IconWand size={14} />}
+              onClick={() => setRephraseModalOpen(true)}
+              disabled={isButtonDisabled}
+              loading={activeOperation === 'rephrase'}
+            >
+              Rephrase
+            </Button>
+          </Tooltip>
+          
+          <Tooltip 
+            label="Fix grammar and improve writing style" 
+            position="top"
+            withArrow
           >
-            Grammar
-          </Button>
-        </Tooltip>
-        
-        <Tooltip 
-          label="Explain this like I'm five years old" 
-          position="top"
-          withArrow
-        >
-          <Button 
-            size="xs" 
-            variant="light"
-            leftSection={activeOperation === 'eli5' ? <Loader size={14} /> : <IconBrain size={14} />}
-            onClick={handleExplain}
-            disabled={isButtonDisabled}
-            loading={activeOperation === 'eli5'}
+            <Button 
+              size="xs" 
+              variant="light"
+              leftSection={activeOperation === 'grammar' ? <Loader size={14} /> : <IconTextSpellcheck size={14} />}
+              onClick={handleGrammarCheck}
+              disabled={isButtonDisabled}
+              loading={activeOperation === 'grammar'}
+            >
+              Grammar
+            </Button>
+          </Tooltip>
+          
+          <Tooltip 
+            label="Explain this like I'm five years old" 
+            position="top"
+            withArrow
           >
-            ELI5
-          </Button>
-        </Tooltip>
-      </Group>
+            <Button 
+              size="xs" 
+              variant="light"
+              leftSection={activeOperation === 'eli5' ? <Loader size={14} /> : <IconBrain size={14} />}
+              onClick={handleExplain}
+              disabled={isButtonDisabled}
+              loading={activeOperation === 'eli5'}
+            >
+              ELI5
+            </Button>
+          </Tooltip>
+        </Group>
+      </Paper>
 
       <Modal
         opened={rephraseModalOpen}
@@ -152,6 +159,6 @@ export const SelectionMenu: React.FC<SelectionMenuProps> = ({
           </Button>
         </Group>
       </Modal>
-    </>
+    </div>
   );
 };

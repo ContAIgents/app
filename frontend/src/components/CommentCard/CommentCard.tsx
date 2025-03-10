@@ -1,19 +1,20 @@
-import { useState, useRef } from 'react';
-import { 
-  Paper, 
-  Group, 
-  Avatar, 
-  Box, 
-  Text, 
-  ActionIcon, 
-  Tooltip, 
-  Button, 
-  Stack, 
-  Textarea 
+import { useRef, useState } from 'react';
+import { IconCheck, IconEdit, IconRefresh, IconX } from '@tabler/icons-react';
+import {
+  ActionIcon,
+  Avatar,
+  Box,
+  Button,
+  Group,
+  Paper,
+  Stack,
+  Text,
+  Textarea,
+  Tooltip,
 } from '@mantine/core';
-import { IconEdit, IconRefresh, IconX, IconCheck } from '@tabler/icons-react';
-import { Comment, ContentBlock } from '@/types/content';
+import { notifications } from '@mantine/notifications';
 import { ReviewStatus } from '@/services/agents/types';
+import { Comment, ContentBlock } from '@/types/content';
 
 interface CommentCardProps {
   comment: Comment;
@@ -47,10 +48,14 @@ export function CommentCard({
 
   const getAvatarColor = (user: string) => {
     switch (user) {
-      case 'AI Assistant': return 'blue';
-      case 'Editor': return 'green';
-      case 'Technical Reviewer': return 'orange';
-      default: return 'gray';
+      case 'AI Assistant':
+        return 'blue';
+      case 'Editor':
+        return 'green';
+      case 'Technical Reviewer':
+        return 'orange';
+      default:
+        return 'gray';
     }
   };
 
@@ -67,8 +72,21 @@ export function CommentCard({
       <Button
         size="xs"
         variant="light"
-        onClick={() => onRequestReview(block, comment.id)}
+        onClick={async () => {
+          try {
+            const reviewResponse= await onRequestReview(block, comment.id);
+          } catch (error) {
+            console.error('Review request failed:', error);
+            notifications.show({
+              title: 'Error',
+              message: 'Failed to generate review. Please try again.',
+              color: 'red',
+            });
+          }
+        }}
         fullWidth
+        loading={comment.status === 'loading'}
+        disabled={comment.status === 'loading'}
       >
         Ask {block?.reviewer?.config?.name || 'AI Assistant'} to re-review
       </Button>
@@ -170,17 +188,30 @@ export function CommentCard({
           )}
 
           <Group justify="flex-end" mt="md" gap="xs">
-            <Button
-              variant="light"
-              size="xs"
-              onClick={() => setEditingComment(true)}
-            >
+            <Button variant="light" size="xs" onClick={() => setEditingComment(true)}>
               Instruct
             </Button>
             <Button
               color="blue"
               size="xs"
-              onClick={() => onSimulateContentGeneration(block, comment)}
+              onClick={async () => {
+                try {
+                  await onSimulateContentGeneration(block, comment);
+                  // Add a visual feedback that content was updated
+                  notifications.show({
+                    title: 'Content Updated',
+                    message: 'The content has been rewritten successfully',
+                    color: 'green',
+                  });
+                } catch (error) {
+                  console.error('Failed to rewrite content:', error);
+                  notifications.show({
+                    title: 'Error',
+                    message: 'Failed to rewrite content. Please try again.',
+                    color: 'red',
+                  });
+                }
+              }}
               loading={blockStatus?.isLoading}
               disabled={blockStatus?.isLoading}
             >

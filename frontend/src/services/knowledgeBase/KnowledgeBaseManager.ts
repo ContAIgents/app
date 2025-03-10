@@ -12,6 +12,16 @@ export class KnowledgeBaseManager {
   constructor() {
     this.configManager = new ConfigManager('knowledge_base_');
   }
+  public async getRelevantData({
+    context,
+    targetAudience,
+  }: {
+    context?: string;
+    targetAudience?: string;
+  }): Promise<string> {
+    const doc = this.getDefaultDocument();
+    return doc.content;
+  }
 
   public getDefaultDocument(): KnowledgeBaseDocument {
     const doc = this.configManager.load<KnowledgeBaseDocument>('default');

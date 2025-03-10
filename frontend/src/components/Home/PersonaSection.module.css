@@ -1,0 +1,48 @@
+
+.personaBox {
+  padding: var(--mantine-spacing-lg);
+  border-radius: var(--mantine-radius-md);
+  background: linear-gradient(
+    to bottom right,
+    var(--mantine-color-white),
+    var(--mantine-color-gray-0)
+  );
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.personaIcon {
+  transition: all 0.3s ease;
+}
+
+.tagsContainer {
+  min-height: 80px; /* Ensure consistent height for tags */
+}
+
+.personaTag {
+  background-color: var(--mantine-color-blue-1);
+  color: var(--mantine-color-blue-7);
+  padding: 4px 8px;
+  border-radius: var(--mantine-radius-sm);
+  transition: all 0.5s ease;
+  opacity: 0.5;
+  transform: translateY(10px);
+}
+
+.activeTag {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Add hover effect to pause animation */
+.personaBox:hover .personaTag {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Stagger the animation for tags */
+.personaTag:nth-child(1) { transition-delay: 0.1s; }
+.personaTag:nth-child(2) { transition-delay: 0.2s; }
+.personaTag:nth-child(3) { transition-delay: 0.3s; }
+.personaTag:nth-child(4) { transition-delay: 0.4s; }

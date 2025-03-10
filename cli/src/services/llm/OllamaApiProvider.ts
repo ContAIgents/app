@@ -1,4 +1,4 @@
-import { BaseLLM } from "./BaseLLM";
+import { BaseLLM } from "./BaseLLM.js";
 import { PromptOptions, PromptResponse, ProviderConfig } from "./types";
 
 export class OllamaApiProvider extends BaseLLM {
@@ -32,8 +32,6 @@ export class OllamaApiProvider extends BaseLLM {
 
   async executePrompt(
     prompt: string,
-    systemPrompt?: string,
-    template?: string,
     options: PromptOptions = {}
   ): Promise<PromptResponse> {
     await this.loadConfig();

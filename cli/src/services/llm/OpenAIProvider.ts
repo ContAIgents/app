@@ -1,4 +1,4 @@
-import { BaseLLM } from "./BaseLLM";
+import { BaseLLM } from "./BaseLLM.js";
 import { PromptOptions, PromptResponse, ProviderConfig } from "./types";
 
 export class OpenAIProvider extends BaseLLM {
@@ -33,8 +33,6 @@ export class OpenAIProvider extends BaseLLM {
 
   async executePrompt(
     prompt: string,
-    systemPrompt?: string,
-    template?: string,
     options: PromptOptions = {}
   ): Promise<PromptResponse> {
     if (!this.isConfigured()) {

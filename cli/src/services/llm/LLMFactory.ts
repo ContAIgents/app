@@ -1,11 +1,11 @@
-import { AnthropicProvider } from "./AnthropicProvider";
-import { DeepSeekProvider } from "./DeepSeekProvider";
-import { GoogleProvider } from "./GoogleProvider";
-import { HuggingFaceProvider } from "./HuggingFaceProvider";
-import { OllamaProvider } from "./OllamaProvider";
-import { OllamaApiProvider } from "./OllamaApiProvider";
-import { OpenAIProvider } from "./OpenAIProvider";
-import { LLMInterface } from "./types";
+import { AnthropicProvider } from "./AnthropicProvider.js";
+import { DeepSeekProvider } from "./DeepSeekProvider.js";
+import { GoogleProvider } from "./GoogleProvider.js";
+import { HuggingFaceProvider } from "./HuggingFaceProvider.js";
+import { OllamaProvider } from "./OllamaProvider.js";
+import { OllamaApiProvider } from "./OllamaApiProvider.js";
+import { OpenAIProvider } from "./OpenAIProvider.js";
+import { LLMInterface } from "./types.js";
 
 export const providers = {
   OpenAI: OpenAIProvider.providerConfig,
@@ -22,6 +22,9 @@ export class LLMFactory {
 
   static getProvider(name: string): LLMInterface {
     const providerName = name.toLowerCase();
+    if (!providerName) {
+      throw new Error(`Unknown provider: ${name}`);
+    }
 
     if (!this.instances.has(providerName)) {
       switch (providerName) {
@@ -56,7 +59,6 @@ export class LLMFactory {
 
   static getConfiguredProvider(): LLMInterface | null {
     for (const providerName of Object.keys(providers)) {
-      console.log("LLM:", providerName);
       const llm = this.getProvider(providerName);
       if (llm.isConfigured()) {
         return llm;

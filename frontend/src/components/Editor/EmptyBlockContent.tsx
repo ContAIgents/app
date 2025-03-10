@@ -28,6 +28,7 @@ export const EmptyBlockContent: React.FC<EmptyBlockContentProps> = ({
     const avaialbleWriters= availableAgents.filter((agent) => agent.getConfig().role === 'content_writer');
 
   const handleGenerateContent = async () => {
+    console.log(">>> ", selectedWriter)
     setBlockStatuses((prev) => ({
       ...prev,
       [blockId]: {
@@ -36,13 +37,19 @@ export const EmptyBlockContent: React.FC<EmptyBlockContentProps> = ({
         error: null,
       },
     }));
-
+    console.log(">>> 1")
+    console.log(">>> 2")
+    
     const block = contentBlocks.find((b) => b.id === blockId);
+    console.log(">>> 2")
     if (!block) return;
-
+    console.log(">>> 4")
+    
     try {
       const expandedContent = await selectedWriter.expand(block);
+      console.log(">>> 5")
       const newCommentId = Math.floor(Math.random() * 1000);
+      console.log(">>> 6")
 
       setContentBlocks((blocks) =>
         blocks.map((b) =>

@@ -1,5 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
-import { IconArrowRight, IconBook, IconInfoCircle, IconWand, IconCheck, IconX } from '@tabler/icons-react';
+import {
+  IconArrowRight,
+  IconBook,
+  IconCheck,
+  IconInfoCircle,
+  IconWand,
+  IconX,
+} from '@tabler/icons-react';
 import debounce from 'lodash/debounce';
 import { Link, useNavigate } from 'react-router-dom';
 import {
@@ -14,20 +21,39 @@ import {
   Text,
   Tooltip,
 } from '@mantine/core';
-import { notifications } from '@mantine/notifications';
 import { CommentCard } from '@/components/CommentCard/CommentCard';
 import { FileTree } from '@/components/FileTree/FileTree';
 import MarkdownEditorComponent from '@/components/MarkdownEditor';
 import { getReviewInstructionsFromUser } from '@/components/ReviewInstructionsModal/ReviewInstructionsModal';
 import { VoiceInput } from '@/components/VoiceInput/VoiceInput';
 import { Agent } from '@/services/agents/Agent';
+import { AgentManager } from '@/services/agents/AgentManager';
 import { ConfigManager } from '@/services/config/ConfigManager';
+import { LLMFactory } from '@/services/llm/LLMFactory';
 import { Comment } from '@/types/content';
 import { IBlockStatus } from '@/types/editor';
-import { FileTreeNode, FileTreeType } from '@/types/files';
+import { FileTreeNode } from '@/types/files';
 
 const COMMENT_WIDTH = 280;
 const FILE_TREE_WIDTH = 300; // Increased from 200 to 280
+
+const useAgentAndLlmCheck = () => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const checkAgentAndLlm = async () => {
+      const agentManager = new AgentManager();
+      const llm = LLMFactory.getDefaultProvider();
+      if (!llm?.isConfigured()) {
+        navigate('/llmConfig?redirect=/files');
+      } else if (!agentManager.hasRequiredAgents()) {
+        navigate('/agents?redirect=/files');
+      }
+    };
+
+    checkAgentAndLlm();
+  }, []);
+};
 
 export function FileEditorPage() {
   const navigate = useNavigate();
@@ -47,6 +73,8 @@ export function FileEditorPage() {
   const [selectedWriter, setSelectedWriter] = useState<Agent | null>(null);
   const [selectedReviewer, setSelectedReviewer] = useState<Agent | null>(null);
 
+  useAgentAndLlmCheck();
+
   // Create debounced save function
   const saveContent = useCallback(
     debounce(async (path: string, content: string) => {
@@ -54,7 +82,7 @@ export function FileEditorPage() {
 
       setSaveStatus('saving');
       try {
-        const response = await fetch(`http://localhost:3000/api/files/update`, {
+        const response = await fetch(`http://localhost:2668/api/files/update`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -81,13 +109,18 @@ export function FileEditorPage() {
 
   useEffect(() => {
     // Load agents from config
-    const writerConfig = configManager.load('selectedWriter');
-    const reviewerConfig = configManager.load('selectedReviewer');
-    if (writerConfig) setSelectedWriter(new Agent(writerConfig));
-    if (reviewerConfig) setSelectedReviewer(new Agent(reviewerConfig));
+    const agentManager = new AgentManager();
+    const selectedWriter = agentManager
+      .getAllAgents()
+      .find((agent) => agent.getConfig().role === 'content_writer');
+    const selectedReviewer = agentManager
+      .getAllAgents()
+      .find((agent) => agent.getConfig().role === 'content_reviewer');
+    if (selectedWriter) setSelectedWriter(selectedWriter);
+    if (selectedReviewer) setSelectedReviewer(selectedReviewer);
 
     // Fetch file tree
-    fetch('http://localhost:3000/api/files/tree')
+    fetch('http://localhost:2668/api/files/tree')
       .then((res) => res.json())
       .then((data) => {
         const root = {
@@ -158,7 +191,7 @@ export function FileEditorPage() {
 
   const handleFileSelect = async (path: string) => {
     try {
-      const response = await fetch(`http://localhost:3000/api/files/${path}`);
+      const response = await fetch(`http://localhost:2668/api/files/${path}`);
       const data = await response.json();
       setSelectedFile(path);
       setMarkdownContent(data.content);
@@ -326,12 +359,15 @@ export function FileEditorPage() {
               <Text size="sm" fw={700}>
                 Files
               </Text>
-              <Tooltip 
+              <Tooltip
                 label={
-                  saveStatus === 'saving' ? 'Saving changes...' :
-                  saveStatus === 'saved' ? 'All changes saved' :
-                  saveStatus === 'error' ? 'Failed to save changes' :
-                  'No unsaved changes'
+                  saveStatus === 'saving'
+                    ? 'Saving changes...'
+                    : saveStatus === 'saved'
+                      ? 'All changes saved'
+                      : saveStatus === 'error'
+                        ? 'Failed to save changes'
+                        : 'No unsaved changes'
                 }
                 position="right"
                 withArrow

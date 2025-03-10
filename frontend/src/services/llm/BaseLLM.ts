@@ -1,11 +1,11 @@
-import { LLMInterface, PromptOptions, PromptResponse, ProviderConfig } from './types';
+import { LLMInterface, PromptOptions, PromptResponse, ProviderConfig, LLMConfiguration, DEFAULT_LLM_CONFIG } from './types';
+
+const LLM_CONFIG_KEY = 'llm_configurations';
 
 export abstract class BaseLLM implements LLMInterface {
   protected config: Record<string, any> = {};
-  protected readonly storageKey: string;
 
   constructor(protected readonly providerConfig: ProviderConfig) {
-    this.storageKey = `llm_config_${providerConfig.name.toLowerCase()}`;
     this.loadConfig();
   }
 
@@ -17,7 +17,9 @@ export abstract class BaseLLM implements LLMInterface {
 
   configure(config: Record<string, any>): void {
     this.config = config;
-    localStorage.setItem(this.storageKey, JSON.stringify(config));
+    const allConfig = this.getAllConfigurations();
+    allConfig.providers[this.providerConfig.name] = { config };
+    localStorage.setItem(LLM_CONFIG_KEY, JSON.stringify(allConfig));
   }
 
   getConfig(): Record<string, any> {
@@ -31,14 +33,20 @@ export abstract class BaseLLM implements LLMInterface {
   }
 
   protected loadConfig(): void {
-    const savedConfig = localStorage.getItem(this.storageKey);
-    if (savedConfig) {
-      try {
-        this.config = JSON.parse(savedConfig);
-      } catch (error) {
-        console.error('Failed to load config from localStorage:', error);
-        this.config = {};
-      }
+    const allConfig = this.getAllConfigurations();
+    const providerConfig = allConfig.providers[this.providerConfig.name];
+    if (providerConfig) {
+      this.config = providerConfig.config;
+    }
+  }
+
+  protected getAllConfigurations(): LLMConfiguration {
+    try {
+      const saved = localStorage.getItem(LLM_CONFIG_KEY);
+      return saved ? JSON.parse(saved) : DEFAULT_LLM_CONFIG;
+    } catch (error) {
+      console.error('Failed to load LLM configurations:', error);
+      return DEFAULT_LLM_CONFIG;
     }
   }
 }

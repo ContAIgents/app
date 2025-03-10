@@ -1,59 +1,87 @@
+import { Suspense, lazy } from 'react';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import { Agents } from './pages/Agents.page';
-import { EditorPage } from './pages/Editor.page';
-import { EditorIdea } from './pages/EditorIdea.page';
-import { FileEditorPage } from './pages/FileEditor.page';
-import { HomePage } from './pages/Home.page';
-import { KnowledgeBase } from './pages/KnowledgeBase.page';
-import { KnowledgeBaseEdit } from './pages/KnowledgeBaseEdit.page';
-import { LlmConfig } from './pages/LlmConfig.page';
-import { ResetPage } from './pages/Reset.page';
-import { ExportPage } from './pages/Export.page';
+import { Center, Loader } from '@mantine/core';
+
+// Lazy load all pages
+const HomePage = lazy(() => import('./pages/Home.page'));
+const Agents = lazy(() => import('./pages/Agents.page').then(module => ({ default: module.Agents })));
+const EditorPage = lazy(() => import('./pages/Editor.page').then(module => ({ default: module.EditorPage })));
+const EditorIdea = lazy(() => import('./pages/EditorIdea.page').then(module => ({ default: module.EditorIdea })));
+const FileEditorPage = lazy(() => import('./pages/FileEditor.page').then(module => ({ default: module.FileEditorPage })));
+const GetStarted = lazy(() => import('./pages/GetStarted.page').then(module => ({ default: module.GetStarted })));
+const KnowledgeBase = lazy(() => import('./pages/KnowledgeBase.page').then(module => ({ default: module.KnowledgeBase })));
+const KnowledgeBaseEdit = lazy(() => import('./pages/KnowledgeBaseEdit.page').then(module => ({ default: module.KnowledgeBaseEdit })));
+const LlmConfig = lazy(() => import('./pages/LlmConfig.page').then(module => ({ default: module.LlmConfig })));
+const ResetPage = lazy(() => import('./pages/Reset.page').then(module => ({ default: module.ResetPage })));
+const ExportPage = lazy(() => import('./pages/Export.page').then(module => ({ default: module.ExportPage })));
+const DocsPage = lazy(() => import('./pages/Docs.page').then(module => ({ default: module.DocsPage })));
+
+// Loading component
+const LoadingFallback = () => (
+  <Center h="100vh">
+    <Loader size="xl" variant="dots" />
+  </Center>
+);
+
+// Wrap component with Suspense
+const withSuspense = (Component: React.ComponentType) => (
+  <Suspense fallback={<LoadingFallback />}>
+    <Component />
+  </Suspense>
+);
 
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <HomePage />,
+    element: withSuspense(HomePage),
+  },
+  {
+    path: '/getStarted',
+    element: withSuspense(GetStarted),
   },
   {
     path: '/files',
-    element: <FileEditorPage />,
+    element: withSuspense(FileEditorPage),
   },
   {
     path: '/llmConfig',
-    element: <LlmConfig />,
+    element: withSuspense(LlmConfig),
   },
   {
     path: '/agents',
-    element: <Agents />,
+    element: withSuspense(Agents),
   },
   {
     path: '/knowledgeBase',
-    element: <KnowledgeBase />,
+    element: withSuspense(KnowledgeBase),
   },
   {
     path: '/knowledgeBase/edit/default',
-    element: <KnowledgeBaseEdit />,
+    element: withSuspense(KnowledgeBaseEdit),
   },
   {
     path: '/editor/idea',
-    element: <EditorIdea />,
+    element: withSuspense(EditorIdea),
   },
   {
     path: '/editor',
-    element: <EditorPage />,
+    element: withSuspense(EditorPage),
   },
   {
     path: '/editor/files',
-    element: <FileEditorPage />,
+    element: withSuspense(FileEditorPage),
   },
   {
     path: '/export',
-    element: <ExportPage />,
+    element: withSuspense(ExportPage),
   },
   {
     path: '/reset',
-    element: <ResetPage />,
+    element: withSuspense(ResetPage),
+  },
+  {
+    path: '/docs/*',
+    element: withSuspense(DocsPage),
   },
 ]);
 

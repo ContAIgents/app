@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { IconCloud, IconEdit, IconLock, IconUsers } from '@tabler/icons-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ActionIcon,
   Alert,
@@ -25,6 +26,7 @@ import {
   Tooltip,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
+import { AgentFormModal } from '@/components/AgentForm/AgentFormModal';
 import { OnboardingNavigation } from '../components/OnboardingNavigation/OnboardingNavigation';
 import { Agent } from '../services/agents/Agent';
 import { AgentManager } from '../services/agents/AgentManager';
@@ -303,47 +305,42 @@ const initialFormState: Partial<AgentConfig> = {
 };
 
 export function Agents() {
-  const [agents, setAgents] = useState<Agent[]>([]);
-  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [opened, { open, close }] = useDisclosure(false);
-  const [formData, setFormData] = useState<Partial<AgentConfig>>(initialFormState);
+  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
+  const [agents, setAgents] = useState<Agent[]>([]);
 
-  const agentManager = new AgentManager();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const redirectUrl = searchParams.get('redirect') || '';
 
   useEffect(() => {
+    const agentManager = new AgentManager();
+
     setAgents(agentManager.getAllAgents());
   }, []);
 
-  const handleSave = () => {
-    if (selectedAgent) {
-      if (agentManager.updateAgent(selectedAgent.getConfig().id, formData)) {
-        setAgents(agentManager.getAllAgents());
-      }
-    } else {
-      agentManager.createAgent(formData);
-      setAgents(agentManager.getAllAgents());
-    }
-    close();
-    setSelectedAgent(null);
-    setFormData({});
-  };
-
   const handleEdit = (agent: Agent) => {
     setSelectedAgent(agent);
-    setFormData(agent.getConfig());
     open();
   };
 
   const handleAdd = () => {
     setSelectedAgent(null);
-    setFormData((prev) => ({
-      ...prev,
-      role: getMissingRole() || 'content_writer', // Default to writer if both roles exist
-    }));
     open();
   };
 
-  const validateAgents = (): boolean => agentManager.hasRequiredAgents();
+  const handleSave = (agent: Agent) => {
+    const agentManager = new AgentManager();
+    if (agentManager.hasRequiredAgents()) {
+      return navigate(redirectUrl);
+    }
+    setAgents(agentManager.getAllAgents());
+  };
+
+  const validateAgents = (): boolean => {
+    const agentManager = new AgentManager();
+    return agentManager.hasRequiredAgents();
+  };
 
   const renderAgentCard = (
     config: AgentConfig,
@@ -434,6 +431,7 @@ export function Agents() {
 
   const getStyleOptions = (role: AgentRole) =>
     role === 'content_reviewer' ? reviewStyles : writingStyles;
+  const agentManager = new AgentManager();
 
   return (
     <Container size="lg" py="xl">
@@ -525,88 +523,14 @@ export function Agents() {
         </div>
       </Stack>
 
-      <Modal
+      <AgentFormModal
+        key={selectedAgent?.config?.id}
         opened={opened}
         onClose={close}
-        title={selectedAgent ? 'Edit Agent' : 'New Agent'}
-        size="lg"
-      >
-        <Stack gap="md">
-          <TextInput
-            label="Name"
-            placeholder="e.g., Tech Blogger Sarah"
-            value={formData.name || ''}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          />
-          <Select
-            label="Role"
-            data={[
-              { value: 'content_writer', label: 'Content Writer' },
-              { value: 'content_reviewer', label: 'Content Reviewer' },
-            ]}
-            value={formData.role || 'content_writer'}
-            onChange={(value) => setFormData({ ...formData, role: value as AgentRole })}
-          />
-          <MultiSelect
-            label="Areas of Expertise"
-            placeholder="Select or create new tags"
-            data={expertiseSuggestions}
-            value={formData.expertise || []}
-            onChange={(value) => setFormData({ ...formData, expertise: value })}
-            searchable
-          />
-          <Select
-            label={formData.role === 'content_reviewer' ? 'Review Style' : 'Writing Style'}
-            placeholder={
-              formData.role === 'content_reviewer'
-                ? 'Choose the primary review style'
-                : 'Choose the primary writing style'
-            }
-            data={getStyleOptions(formData.role || 'content_writer')}
-            value={formData.writingStyle}
-            onChange={(value) => setFormData({ ...formData, writingStyle: value as WritingStyle })}
-          />
-          <Select
-            label="Tone of Voice"
-            placeholder="Select the tone for communication"
-            data={toneOptions}
-            value={formData.tone}
-            onChange={(value) => setFormData({ ...formData, tone: value as ToneOfVoice })}
-          />
-          <Select
-            label="Language Model"
-            placeholder="Select the LLM (coming soon)"
-            data={llmOptions}
-            disabled
-            value={formData.llm}
-            onChange={(value) => setFormData({ ...formData, llm: value || undefined })}
-          />
-          <Textarea
-            label="Persona Definition"
-            placeholder="Describe the agent's personality, expertise, and approach in detail. Include their background, key strengths, and how they typically handle tasks in their role. For example:
-
-As a seasoned tech journalist with 10+ years of experience, this agent excels in breaking down complex technological concepts for a general audience. They have a knack for spotting emerging trends and can provide insightful analysis on how new technologies might impact various industries. Their writing style is clear and engaging, often using analogies to make difficult concepts more accessible. When reviewing content, they pay close attention to technical accuracy while ensuring the information remains digestible for non-experts."
-            value={formData.systemPrompt || ''}
-            onChange={(e) => setFormData({ ...formData, systemPrompt: e.target.value })}
-            autosize
-            minRows={5}
-          />
-          <MultiSelect
-            label={
-              <Group gap="xs">
-                <Text>Skills</Text>
-                <Badge size="xs">Coming Soon</Badge>
-              </Group>
-            }
-            placeholder="Agent capabilities"
-            data={skillOptions}
-            disabled
-            defaultValue={skillOptions.map((i) => i.value)}
-            description="Special capabilities that enhance agent performance"
-          />
-          <Button onClick={handleSave}>Save</Button>
-        </Stack>
-      </Modal>
+        initialAgent={selectedAgent}
+        onSave={handleSave}
+        defaultRole={agentManager.getMissingRole() || undefined}
+      />
     </Container>
   );
 }

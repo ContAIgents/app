@@ -1,13 +1,15 @@
 #!/usr/bin/env node
 
-const { program } = require('commander');
-const path = require('path');
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+import { createRequire } from 'module';
 
-program
-  .version('1.0.0')
-  .description('AI Content Ecosystem CLI')
-  .action(() => {
-    require(path.join(__dirname, '../dist/index.js'));
-  });
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const require = createRequire(import.meta.url);
 
-program.parse(process.argv);
+const distPath = join(__dirname, '../dist/index.js');
+import(distPath).catch(err => {
+    console.error('Failed to load CLI:', err);
+    process.exit(1);
+});

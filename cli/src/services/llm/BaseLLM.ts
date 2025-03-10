@@ -1,4 +1,4 @@
-import { FileService } from "../fileService";
+import { FileService } from "../fileService.js";
 import {
   LLMInterface,
   PromptOptions,
@@ -12,25 +12,21 @@ export abstract class BaseLLM implements LLMInterface {
   protected readonly fileService: FileService = new FileService();
 
   constructor(protected readonly providerConfig: ProviderConfig) {
-    this.storageKey = `llm_config_${providerConfig.name.toLowerCase()}.json`;
+    this.storageKey = `./.config/llm_config/${providerConfig.name.toLowerCase()}.json`;
     this.loadConfig();
   }
 
   abstract executePrompt(
     prompt: string,
-    systemPrompt?: string,
-    template?: string,
     options?: PromptOptions
   ): Promise<PromptResponse>;
 
   async executePrompts(
     prompts: string[],
-    systemPrompt?: string,
-    template?: string,
     options?: PromptOptions
   ): Promise<PromptResponse[]> {
     return Promise.all(
-      prompts.map((prompt) => this.executePrompt(prompt, systemPrompt, template, options))
+      prompts.map((prompt) => this.executePrompt(prompt, options))
     );
   }
 

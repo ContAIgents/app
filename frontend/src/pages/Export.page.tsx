@@ -14,9 +14,7 @@ export function ExportPage() {
 
   useEffect(() => {
     const contentBlocks = configManager.load<ContentBlock[]>('contentBlocks') || [];
-    const combinedContent = contentBlocks
-      .map((block) => `## ${block.title}\n\n${block.content}`)
-      .join('\n\n');
+    const combinedContent = contentBlocks.map((block) => block.content).join('\n\n');
     setFinalContent(combinedContent);
   }, []);
 
@@ -35,7 +33,7 @@ export function ExportPage() {
         const date = new Date().toISOString().split('T')[0];
         const filename = `content-${date}.md`;
 
-        const response = await fetch('http://localhost:3000/api/files/update', {
+        const response = await fetch('http://localhost:2668/api/files/update', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

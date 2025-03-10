@@ -82,6 +82,21 @@ Summary and next steps`,
             },
           },
         };
+      else if (prompt.startsWith('You are a concise content reviewer.'))
+        return {
+          content: `- Point 1: Improve the clarity of the introduction.
+- Point 2: Ensure the key concepts are well-explained.
+- Point 3: Provide more examples in the practical implementation section.
+- Point 4: Address common challenges in the next steps section.`,
+          raw: {
+            model: 'dummy-gpt-3.5',
+            usage: {
+              prompt_tokens: 147,
+              completion_tokens: 238,
+              total_tokens: 385,
+            },
+          },
+        };
       else {
         return {
           content: `# Dummy Response from DummyLLM Provider
@@ -108,7 +123,9 @@ In conclusion, this dummy text demonstrates a more substantial response.`,
       }
     } catch (error) {
       // Simulate error response format similar to real LLM providers
-      throw new Error(`DummyLLM API error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `DummyLLM API error: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 }

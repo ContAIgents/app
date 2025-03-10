@@ -17,28 +17,23 @@ interface TreeNodeProps {
 }
 
 function TreeNode({ node, onSelect, selectedPath, level }: TreeNodeProps) {
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false); // Changed to false
   const isSelected = node.path === selectedPath;
   const isDirectory = node.type === 'directory';
 
-  const handleClick = () => {
-    if (isDirectory) {
-      setIsExpanded(!isExpanded);
-    } else {
-      onSelect(node.path);
-    }
-  };
-
   return (
-    <div style={{ marginLeft: `${level * 20}px` }}>
+    <div style={{ marginLeft: `${level * 12}px` }}>
       <Group 
-        gap={5}
-        onClick={handleClick}
+        gap={2}
+        onClick={() => {
+          isDirectory ? setIsExpanded(!isExpanded) : onSelect(node.path);
+        }}
         style={{
-          padding: '4px 8px',
+          padding: '2px 4px',
           cursor: 'pointer',
           backgroundColor: isSelected ? 'var(--mantine-color-blue-1)' : 'transparent',
           borderRadius: 4,
+          fontSize: '0.9rem',
           '&:hover': {
             backgroundColor: 'var(--mantine-color-gray-1)'
           }
@@ -46,20 +41,20 @@ function TreeNode({ node, onSelect, selectedPath, level }: TreeNodeProps) {
       >
         {isDirectory && (
           <IconChevronDown
-            size={16}
+            size={14}
             style={{
               transform: isExpanded ? 'rotate(-180deg)' : 'none',
-              transition: 'transform 200ms ease',
+              transition: 'transform 150ms ease',
             }}
           />
         )}
-        {isDirectory ? <IconFolder size={18} /> : <IconFile size={18} />}
-        <span>{node.name}</span>
+        {isDirectory ? <IconFolder size={14} /> : <IconFile size={14} />}
+        <span style={{ fontSize: '0.9rem' }}>{node.name}</span>
       </Group>
 
       {isDirectory && isExpanded && node.children && (
-        <div>
-          {node.children.map((child, index) => (
+        <div style={{ marginTop: 2 }}>
+          {node.children.map((child) => (
             <TreeNode
               key={child.path}
               node={child}
@@ -75,18 +70,11 @@ function TreeNode({ node, onSelect, selectedPath, level }: TreeNodeProps) {
 }
 
 export function FileTree({ tree, onSelect, selectedPath }: FileTreeProps) {
-  if (!tree) {
-    return null;
-  }
-
+  if (!tree) return null;
+  
   return (
-    <div style={{ padding: '8px' }}>
-      <TreeNode
-        node={tree}
-        onSelect={onSelect}
-        selectedPath={selectedPath}
-        level={0}
-      />
+    <div style={{ padding: '4px' }}>
+      <TreeNode node={tree} onSelect={onSelect} selectedPath={selectedPath} level={0} />
     </div>
   );
 }

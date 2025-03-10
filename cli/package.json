@@ -1,6 +1,6 @@
 {
   "name": "contaigents",
-  "version": "0.1.0-alpha.1",
+  "version": "0.1.0-alpha.4",
   "description": "Modular AI Content Ecosystem",
   "type": "module",
   "main": "dist/index.js",
@@ -8,9 +8,11 @@
     "contaigents": "./bin/cli.js"
   },
   "scripts": {
-    "build": "tsc",
-    "start": "node --experimental-specifier-resolution=node dist/index.js develop",
-    "dev": "node --loader ts-node/esm src/index.ts develop"
+    "build": "tsc && chmod +x ./bin/cli.js",
+    "start": "node --experimental-specifier-resolution=node dist/index.js",
+    "start:files": "node --experimental-specifier-resolution=node dist/index.js",
+    "dev": "node --loader ts-node/esm src/index.ts develop",
+    "postbuild": "npm link"
   },
   "keywords": [],
   "author": "",

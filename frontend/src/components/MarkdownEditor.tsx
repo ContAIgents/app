@@ -87,14 +87,18 @@ const MarkdownEditorComponent: React.FC<MarkdownEditorComponentProps> = ({
 
     if (text && text.length > 0) {
       if (!editor) return;
-      const { from } = editor.state.selection;
-      const coords = editor.view.coordsAtPos(from);
+      
+      // Get the selection coordinates
+      const { from, to } = editor.state.selection;
+      const start = editor.view.coordsAtPos(from);
+      const end = editor.view.coordsAtPos(to);
       const editorElement = editor.view.dom.getBoundingClientRect();
       
       // Calculate position relative to the editor
+      // Position the menu at the end of the selection
       setMenuPosition({ 
-        x: coords.left - editorElement.left,
-        y: coords.top - editorElement.top - 40 // Adjust this value as needed
+        x: end.left - editorElement.left,
+        y: end.top - editorElement.top, // Remove the offset to place it right next to text
       });
       setSelection(text);
       setShowMenu(true);

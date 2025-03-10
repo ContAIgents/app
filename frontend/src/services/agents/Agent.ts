@@ -1,5 +1,6 @@
+import { reviewStyles, toneOptions, writingStyles } from '@/constants/agent-options';
 import { ConfigManager } from '@/services/config/ConfigManager';
-import { ContentBlock } from '@/types/content';
+import { ContentBlock, IdeaContent } from '@/types/content';
 import { KnowledgeBaseManager } from '../knowledgeBase/KnowledgeBaseManager';
 import { LLMFactory } from '../llm/LLMFactory';
 import { AgentConfig, AgentRole } from './types';
@@ -11,11 +12,14 @@ export class Agent {
     this.config = {
       id: config.id || crypto.randomUUID(),
       name: config.name || 'New Agent',
+      // Use the provided role or fall back to content_writer
       role: config.role || 'content_writer',
       systemPrompt:
         config.systemPrompt || this.getDefaultSystemPrompt(config.role || 'content_writer'),
       expertise: config.expertise || [],
-      writingStyle: config.writingStyle || 'professional',
+      // Set appropriate default style based on role
+      writingStyle:
+        config.writingStyle || (config.role === 'content_reviewer' ? 'detailed' : 'professional'),
       tone: config.tone || 'neutral',
       createdAt: config.createdAt || Date.now(),
       updatedAt: config.updatedAt || Date.now(),
@@ -73,13 +77,26 @@ export class Agent {
 
   public async generateStructuredBlocks(
     contentType: string,
-    idea: string
+    idea: string,
+    targetAudience: string,
+    extraContext?: string
   ): Promise<ContentBlock[]> {
-    const knowledgeBaseManager = new KnowledgeBaseManager();
-    const defaultDoc = knowledgeBaseManager.getDefaultDocument();
-    const knowledgeBase = defaultDoc.content;
+    const styleInstruction =
+      writingStyles.find((s) => s.value === this.config.writingStyle)?.systemInstruction || '';
+    const toneInstruction =
+      toneOptions.find((t) => t.value === this.config.tone)?.systemInstruction || '';
 
-    const llm = LLMFactory.getConfiguredProvider();
+    const km = new KnowledgeBaseManager();
+    const knowledgeBase = await km.getRelevantData({
+      context: `idea: ${idea} 
+      content type: ${contentType}`,
+      targetAudience,
+    });
+
+    const llm = LLMFactory.getDefaultProvider();
+    if (!llm) {
+      throw new Error('No provider configured');
+    }
 
     const systemPrompt = `You are an expert content strategist and writer. Your task is to create a detailed content structure.
 IMPORTANT: Format your response EXACTLY as shown in the example below, using "====" to separate sections:
@@ -101,10 +118,13 @@ Step-by-step guide for practical application
 Each section MUST have:
 1. Number and title on first line
 2. Description on third line (1-2 sentences)
-3. Sections separated by "====" on their own lines`;
+3. Sections separated by "====" on their own lines
 
-    const writerPersona = `Acting as ${this.config.name}, an expert ${(this.config.expertise ?? []).join(', ')}
-with a ${this.config.writingStyle} writing style and ${this.config.tone} tone.`;
+${styleInstruction}
+${toneInstruction}`;
+
+    const writerPersona = `Acting as ${this.config.name}, an expert ${(this.config.expertise ?? []).join(', ')}.
+    ${this.config.systemPrompt}`;
 
     const prompt = `${systemPrompt}
 
@@ -112,12 +132,15 @@ ${writerPersona}
 
 Content Type: ${contentType}
 Main Idea: ${idea}
+Target Audience: ${targetAudience}
 
 REFERENCE INFORMATION (Use this knowledge to inform your writing - DO NOT copy directly):
 ${knowledgeBase}
 
+${extraContext ? `EXTRA CONTEXT: ${extraContext}` : ''}
+
 Generate a structured outline following the EXACT format shown in the example above.
-Ensure each section builds logically on the previous one.`;
+Ensure each section builds logically on the previous one and is appropriate for the target audience.`;
 
     try {
       const response = await llm.executePrompt(prompt, { temperature: 0.7 });
@@ -131,18 +154,14 @@ Ensure each section builds logically on the previous one.`;
 
   public async expand(block: ContentBlock): Promise<string> {
     const configManager = new ConfigManager('editor_');
-    const knowledgeBaseManager = new KnowledgeBaseManager();
 
-    // Get context from ConfigManager
-    const contentType = configManager.load<string>('contentType');
-    const idea = configManager.load<string>('idea');
-    const contentBlocks = configManager.load<ContentBlock[]>('contentBlocks') || [];
+    const ideaContent = configManager.load<IdeaContent>('ideaContent')!;
+    const contentBlocks = ideaContent.blocks;
 
-    // Get knowledge base
-    const defaultDoc = knowledgeBaseManager.getDefaultDocument();
-    const knowledgeBase = defaultDoc.content;
-
-    const llm = LLMFactory.getConfiguredProvider();
+    const llm = LLMFactory.getDefaultProvider();
+    if (!llm) {
+      throw new Error('No provider configured');
+    }
 
     const systemPrompt = `You are an expert content writer. Your task is to write content for a specific section.
 IMPORTANT: 
@@ -159,27 +178,40 @@ Content Requirements:
 - Use paragraphs and bullet points for organization
 - Stay within the section's scope`;
 
-    const writerPersona = `Acting as ${this.config.name}, an expert ${(this.config.expertise ?? []).join(', ')}
-with a ${this.config.writingStyle} writing style and ${this.config.tone} tone.
+    const styleInstruction =
+      writingStyles.find((s) => s.value === this.config.writingStyle)?.systemInstruction || '';
+    const toneInstruction =
+      toneOptions.find((t) => t.value === this.config.tone)?.systemInstruction || '';
 
-${this.config.systemPrompt}`;
+    const writerPersona = `Acting as ${this.config.name}, an expert ${(this.config.expertise ?? []).join(', ')}.
+    ${styleInstruction}
+    ${toneInstruction}
+
+    ${this.config.systemPrompt}`;
 
     // Get the position of the current block in the outline
     const blockIndex = contentBlocks.findIndex((b) => b.id === block.id);
     const previousBlock = blockIndex > 0 ? contentBlocks[blockIndex - 1] : null;
     const nextBlock = blockIndex < contentBlocks.length - 1 ? contentBlocks[blockIndex + 1] : null;
 
+    const km = new KnowledgeBaseManager();
+    const knowledgeBase = await km.getRelevantData({
+      context: block.description,
+      targetAudience: ideaContent.targetAudience,
+    });
+
     const prompt = `${systemPrompt}
-
-${writerPersona}
-
-CONTEXT
-Content Type: ${contentType}
-Main Idea: ${idea}
-
-DOCUMENT STRUCTURE
-${contentBlocks.map((b) => `- ${b.title}: ${b.description}`).join('\n')}
-
+  
+  ${writerPersona}
+  
+  CONTEXT
+  Content Type: ${ideaContent.contentType}
+  Main Idea: ${ideaContent.description}
+  Target Audience: ${ideaContent.targetAudience}
+  
+  DOCUMENT STRUCTURE
+  ${ideaContent.blocks.map((b) => `- ${b.title}: ${b.description}`).join('\n')}
+  
 CURRENT SECTION
 Title: ${block.title}
 Description: ${block.description}
@@ -211,7 +243,10 @@ Write the section content now. Respond ONLY with the content:`;
     reviewerSuggestion: string
   ): Promise<string> {
     const configManager = new ConfigManager('editor_');
-    const knowledgeBaseManager = new KnowledgeBaseManager();
+    const styleInstruction =
+      writingStyles.find((s) => s.value === this.config.writingStyle)?.systemInstruction || '';
+    const toneInstruction =
+      toneOptions.find((t) => t.value === this.config.tone)?.systemInstruction || '';
 
     // Get context from ConfigManager
     const contentType = configManager.load<string>('contentType');
@@ -219,10 +254,17 @@ Write the section content now. Respond ONLY with the content:`;
     const contentBlocks = configManager.load<ContentBlock[]>('contentBlocks') || [];
 
     // Get knowledge base
-    const defaultDoc = knowledgeBaseManager.getDefaultDocument();
-    const knowledgeBase = defaultDoc.content;
+    const knowledgeBaseManager = new KnowledgeBaseManager();
+    const knowledgeBase = await knowledgeBaseManager.getRelevantData({
+      context: `idea: ${idea} 
+      reviewer suggestion: ${reviewerSuggestion}
+      content type: ${contentType}`,
+    });
 
-    const llm = LLMFactory.getConfiguredProvider();
+    const llm = LLMFactory.getDefaultProvider();
+    if (!llm) {
+      throw new Error('No provider configured');
+    }
 
     const systemPrompt = `You are an expert content writer. Your task is to rewrite a specific section of content based on reviewer feedback.
 IMPORTANT: 
@@ -236,12 +278,13 @@ Your rewrite must:
 - Use ${this.config.writingStyle} style and ${this.config.tone} tone
 - Preserve valuable elements from current content only if they don't conflict with feedback
 - Ensure clarity and readability
-- Maintain consistency with document flow`;
+- Maintain consistency with document flow
 
-    const writerPersona = `Acting as ${this.config.name}, an expert ${(this.config.expertise ?? []).join(', ')}
-with a ${this.config.writingStyle} writing style and ${this.config.tone} tone.
+${styleInstruction}
+${toneInstruction}`;
 
-${this.config.systemPrompt}`;
+    const writerPersona = `Acting as ${this.config.name}, an expert ${(this.config.expertise ?? []).join(', ')}.
+    ${this.config.systemPrompt}`;
 
     // Get the position of the current block in the outline
     const blockIndex = contentBlocks.findIndex((b) => b.id === block.id);
@@ -293,28 +336,44 @@ Rewrite the content now, incorporating all reviewer feedback. Respond ONLY with 
 
   public async generateReview(block: ContentBlock, reviewInstructions?: string): Promise<string> {
     const configManager = new ConfigManager('editor_');
-    const knowledgeBaseManager = new KnowledgeBaseManager();
+
+    // Use reviewStyles for reviewers, writingStyles for writers
+    const styleInstruction =
+      this.config.role === 'content_reviewer'
+        ? reviewStyles.find((s) => s.value === this.config.writingStyle)?.systemInstruction
+        : writingStyles.find((s) => s.value === this.config.writingStyle)?.systemInstruction;
+
+    const toneInstruction =
+      toneOptions.find((t) => t.value === this.config.tone)?.systemInstruction || '';
 
     // Get context from ConfigManager
     const contentType = configManager.load<string>('contentType');
     const idea = configManager.load<string>('idea');
     const contentBlocks = configManager.load<ContentBlock[]>('contentBlocks') || [];
 
-    // Get knowledge base
-    const defaultDoc = knowledgeBaseManager.getDefaultDocument();
-    const knowledgeBase = defaultDoc.content;
+    const knowledgeBaseManager = new KnowledgeBaseManager();
+    const knowledgeBase = await knowledgeBaseManager.getRelevantData({
+      context: `idea: ${idea} 
+      content type: ${contentType}`,
+    });
 
-    const llm = LLMFactory.getConfiguredProvider();
+    const llm = LLMFactory.getDefaultProvider();
+    if (!llm) {
+      throw new Error('No provider configured');
+    }
 
     const systemPrompt = `You are a concise content reviewer. Provide brief, actionable feedback in 3-5 bullet points.
 Each point must be:
 - Specific and actionable
 - Maximum 2 sentences
 - Focused on critical improvements only
-Do not include general praise or lengthy explanations.`;
+Do not include general praise or lengthy explanations.
 
-    const reviewerPersona = `Acting as ${this.config.name}, an expert ${(this.config.expertise ?? []).join(', ')}
-with a ${this.config.writingStyle} review style and ${this.config.tone} tone.`;
+${styleInstruction}
+${toneInstruction}`;
+
+    const reviewerPersona = `Acting as ${this.config.name}, an expert ${(this.config.expertise ?? []).join(', ')}.
+    ${this.config.systemPrompt}`;
 
     const prompt = `${systemPrompt}
 
@@ -347,7 +406,6 @@ ${
         temperature: 0.7,
         maxTokens: 500,
       });
-
       return response.content;
     } catch (error) {
       console.error('Failed to generate review:', error);
@@ -360,11 +418,23 @@ ${
     task: 'simplify' | 'rephrase' | 'grammar' | 'explain',
     instructions?: string
   ): Promise<string> {
-    const llm = LLMFactory.getConfiguredProvider();
+    const llm = LLMFactory.getDefaultProvider();
+    if (!llm) {
+      throw new Error('No provider configured');
+    }
+    const styleInstruction =
+      writingStyles.find((s) => s.value === this.config.writingStyle)?.systemInstruction || '';
+    const toneInstruction =
+      toneOptions.find((t) => t.value === this.config.tone)?.systemInstruction || '';
 
     const systemPrompt = `You are a focused writing assistant. Your task is to ${task} the given text.
 Keep your response DIRECT and CONCISE. Return ONLY the modified text without explanations or meta-commentary.
-Use ${this.config.writingStyle} style and ${this.config.tone} tone.`;
+
+${styleInstruction}
+${toneInstruction}`;
+
+    const writerPersona = `Acting as ${this.config.name}, an expert ${(this.config.expertise ?? []).join(', ')}.
+    ${this.config.systemPrompt}`;
 
     const taskPrompts = {
       simplify: `Rewrite this text at a simpler reading level, making it clear and easy to understand: "${text}"`,
@@ -374,11 +444,14 @@ Use ${this.config.writingStyle} style and ${this.config.tone} tone.`;
     };
 
     try {
-      const response = await llm.executePrompt(`${systemPrompt}\n\n${taskPrompts[task]}`, {
-        temperature: 0.3,
-        maxTokens: 500,
-      });
-      return response.content; // Add this line to return the response content
+      const response = await llm.executePrompt(
+        `${systemPrompt}\n\n${writerPersona}\n\n${taskPrompts[task]}`,
+        {
+          temperature: 0.3,
+          maxTokens: 500,
+        }
+      );
+      return response.content;
     } catch (error) {
       console.error(`Failed to ${task} text:`, error);
       throw error;

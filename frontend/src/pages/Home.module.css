@@ -1,0 +1,319 @@
+@keyframes gradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.gradientBackground {
+  background: linear-gradient(45deg, #4e15b8, #00007e, #5807ad);
+  background-size: 400% 400%;
+  animation: gradient 10s ease infinite;
+}
+
+.paperWrapper {
+  position: relative;
+  width: 100%;
+  height: 200px;
+  border-radius: var(--mantine-radius-lg);
+  margin-top: var(--mantine-spacing-md);
+}
+
+.titleWrapper {
+  position: relative;
+  top: 50%;
+  transform: translateY(-50%);
+  margin: auto;
+}
+
+.faviconWrapper {
+  position: absolute;
+  bottom: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 48px;
+  height: 48px;
+  background: white;
+  border-radius: 50%;
+  padding: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.faviconImage {
+  width: 100%;
+  height: 100%;
+}
+
+.stepsSection {
+  padding: 4rem 0;
+}
+
+.stepsGrid {
+  margin-top: 3rem;
+}
+
+.stepCard {
+  padding: 1.5rem;
+  transition: transform 0.2s ease;
+}
+
+.stepCard:hover {
+  transform: translateY(-5px);
+}
+
+.stepNumber {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--mantine-color-blue-6);
+  margin-bottom: 1rem;
+}
+
+.stepTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.stepDescription {
+  color: var(--mantine-color-gray-6);
+  line-height: 1.6;
+}
+
+.ctaButton {
+  background: linear-gradient(45deg, #4e15b8, #00007e, #5807ad);
+  border: none;
+  padding-left: 2rem;
+  padding-right: 2rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+  animation: float 3s ease-in-out infinite;
+}
+
+.ctaButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  background: linear-gradient(45deg, #4e15b8, #00007e, #5807ad);
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.featureCard {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--mantine-shadow-md);
+  }
+}
+
+.cardContainer {
+  display: flex;
+  gap: var(--mantine-spacing-xl);
+  padding: var(--mantine-spacing-md);
+  min-width: max-content;
+}
+
+.contentTypeCard {
+  flex: 0 0 320px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  background: linear-gradient(
+    to bottom,
+    var(--mantine-color-white),
+    var(--mantine-color-gray-0)
+  );
+  border: 1px solid var(--mantine-color-gray-2);
+  position: relative;
+  z-index: 1;
+  
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--mantine-shadow-lg);
+    border-color: var(--mantine-color-blue-2);
+    background: linear-gradient(
+      to bottom,
+      var(--mantine-color-white),
+      var(--mantine-color-blue-0)
+    );
+  }
+
+  &:hover .iconContainer {
+    transform: scale(1.05);
+    background-color: var(--mantine-color-blue-0);
+  }
+
+  &:hover .contentTypeIcon {
+    color: var(--mantine-color-blue-6);
+  }
+}
+
+.iconContainer {
+  width: rem(64);
+  height: rem(64);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--mantine-color-gray-0);
+  transition: all 0.3s ease;
+}
+
+.contentTypeIcon {
+  color: var(--mantine-color-gray-6);
+  transition: all 0.3s ease;
+}
+
+.contentTypeTitle {
+  color: var(--mantine-color-dark-7);
+  line-height: 1.2;
+}
+
+.contentTypeDescription {
+  line-height: 1.6;
+  min-height: rem(48);
+}
+
+.comingSoonBadge {
+  position: absolute;
+  top: var(--mantine-spacing-xs);
+  right: var(--mantine-spacing-xs);
+  background-color: var(--mantine-color-blue-1);
+  color: var(--mantine-color-blue-7);
+  padding: rem(4) rem(8);
+  border-radius: var(--mantine-radius-sm);
+  font-weight: 500;
+}
+
+.scrollViewport {
+  margin: 0 -1rem;
+  position: relative;
+}
+
+.scrollContainer {
+  position: relative;
+}
+
+/* Removing the fade overlays by deleting:
+.scrollContainer::before,
+.scrollContainer::after {
+  ...
+}
+*/
+
+.comingSoon {
+  position: absolute;
+  top: var(--mantine-spacing-xs);
+  right: var(--mantine-spacing-xs);
+  background: var(--mantine-color-gray-2);
+  padding: 2px 6px;
+  border-radius: var(--mantine-radius-sm);
+  transition: background-color 0.2s ease;
+}
+
+.footer {
+  margin-top: rem(120);
+  padding-top: calc(var(--mantine-spacing-xl) * 2);
+  padding-bottom: calc(var(--mantine-spacing-xl) * 2);
+  background-color: var(--mantine-color-gray-0);
+  border-top: rem(1) solid var(--mantine-color-gray-2);
+}
+
+.footerInner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mantine-spacing-xl);
+}
+
+.footerGroups {
+  display: flex;
+  justify-content: space-between;
+  gap: rem(32);
+
+  @media (max-width: $mantine-breakpoint-sm) {
+    flex-direction: column;
+    gap: var(--mantine-spacing-md);
+  }
+}
+
+.footerAfter {
+  @media (max-width: $mantine-breakpoint-sm) {
+    flex-direction: column;
+    align-items: center;
+    gap: var(--mantine-spacing-md);
+  }
+}
+
+.workflowTabs {
+  display: flex;
+  min-height: 400px;
+  gap: 40px;
+}
+
+.workflowTabsList {
+  flex: 0 0 400px;
+  border-right: 1px solid var(--mantine-color-gray-3);
+}
+
+.workflowTab {
+  padding: 20px;
+  min-height: auto;
+  border-radius: var(--mantine-radius-md);
+  transition: all 0.3s ease;
+}
+
+.workflowTab[data-active] {
+  background-color: var(--mantine-color-blue-light);
+  color: var(--mantine-color-blue-filled);
+}
+
+.tabContent {
+  transition: all 0.3s ease;
+}
+
+.descriptionWrapper {
+  overflow: hidden;
+  transition: height 0.3s ease;
+}
+
+.description {
+  margin-top: var(--mantine-spacing-sm);
+  white-space: pre-line;
+  opacity: 0;
+  max-height: 0;
+  transition: all 0.3s ease;
+}
+
+.workflowTab[data-active] .description {
+  opacity: 1;
+  max-height: 200px; /* Adjust based on your content */
+  margin-top: var(--mantine-spacing-md);
+}
+
+.workflowDemo {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background-color: var(--mantine-color-gray-0);
+  border-radius: var(--mantine-radius-md);
+}
+
+/* Optional: Add fade animation for demo images */
+.workflowDemo img {
+  opacity: 0;
+  animation: fadeIn 0.3s ease forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

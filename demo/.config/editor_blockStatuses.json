@@ -1,0 +1,20 @@
+{
+  "1": {
+    "isLoading": false,
+    "error": null,
+    "reviewStatus": "completed",
+    "isInitialReview": true
+  },
+  "2": {
+    "isLoading": false,
+    "error": null,
+    "reviewStatus": "pending",
+    "isInitialReview": true
+  },
+  "3": {
+    "isLoading": false,
+    "error": null,
+    "reviewStatus": "pending",
+    "isInitialReview": true
+  }
+}

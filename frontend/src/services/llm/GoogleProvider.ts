@@ -25,6 +25,7 @@ export class GoogleProvider extends BaseLLM {
           'gemini-1.0-pro',
         ],
         default: 'gemini-pro',
+        allowCustom: true,
       },
     ],
   };

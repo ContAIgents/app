@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { IconArrowRight, IconBook, IconInfoCircle, IconMicrophone, IconWand } from '@tabler/icons-react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { IconArrowRight, IconInfoCircle, IconWand } from '@tabler/icons-react';
+import { useNavigate } from 'react-router-dom';
 import {
   ActionIcon,
   Box,
@@ -13,293 +13,30 @@ import {
   Text,
   Tooltip,
 } from '@mantine/core';
-import { modals } from '@mantine/modals';
 import { CommentCard } from '@/components/CommentCard/CommentCard';
 import { EmptyBlockContent } from '@/components/Editor/EmptyBlockContent';
 import MarkdownEditorComponent from '@/components/MarkdownEditor';
-import { getReviewInstructionsFromUser } from '@/components/ReviewInstructionsModal/ReviewInstructionsModal';
-import { TableOfContents } from '@/components/TableOfContents';
+import { TableOfContentsSidebar } from '@/components/TableOfContentsSidebar';
 import { VoiceInput } from '@/components/VoiceInput/VoiceInput';
-import { Agent } from '@/services/agents/Agent';
-import { CommentStatus, ReviewStatus } from '@/services/agents/types';
-import { Comment, ContentBlock } from '@/types/content';
-import { IBlockStatus } from '@/types/editor';
-import { ContentImportMenu } from '../components/ContentImportMenu/ContentImportMenu';
-import { ConfigManager } from '../services/config/ConfigManager';
+import { useEditor } from '@/hooks/useEditor';
 
 const COMMENT_WIDTH = 280;
 const TOC_WIDTH = 200;
 
 export const EditorPage: React.FC = () => {
   const navigate = useNavigate();
-  const [contentBlocks, setContentBlocks] = useState<ContentBlock[]>([]);
-  const [blockStatuses, setBlockStatuses] = useState<Record<number, IBlockStatus>>({});
-  const configManager = new ConfigManager('editor_');
-  const setSelectedWriter = (writer: Agent) => {
-    configManager.save('selectedWriter', writer.getConfig());
-  };
-  const setSelectedReviewer = (reviewer: Agent) => {
-    configManager.save('selectedReviewer', reviewer.getConfig());
-  };
-
-  useEffect(() => {
-    const blocks = configManager.load<ContentBlock[]>('contentBlocks') || [];
-    setContentBlocks(blocks);
-
-    // Load blockStatuses from ConfigManager, or initialize if not found
-    const savedBlockStatuses = configManager.load<Record<number, IBlockStatus>>('blockStatuses');
-    if (savedBlockStatuses) {
-      setBlockStatuses(savedBlockStatuses);
-    } else {
-      const initialStatuses: Record<number, IBlockStatus> = {};
-      blocks.forEach((block) => {
-        initialStatuses[block.id] = {
-          isLoading: false,
-          error: null,
-          reviewStatus: 'pending',
-          isInitialReview: !block.content,
-        };
-      });
-      setBlockStatuses(initialStatuses);
-      configManager.save('blockStatuses', initialStatuses);
-    }
-  }, []);
-
-  // Create a useEffect to save blockStatuses whenever it changes
-  useEffect(() => {
-    if (Object.keys(blockStatuses).length > 0) {
-      configManager.save('blockStatuses', blockStatuses);
-    }
-  }, [blockStatuses]);
-
-  const handleUpdate = (id: number, content: string) => {
-    if (!id || content === null) return;
-
-    const updatedBlocks = contentBlocks.map((block) =>
-      block.id === id ? { ...block, content } : block
-    );
-    setContentBlocks(updatedBlocks);
-    configManager.save('contentBlocks', updatedBlocks);
-  };
-
-  // Generate table of contents links from content blocks
-  const tocLinks = contentBlocks.map((block) => ({
-    label: block.title,
-    link: `#section-${block.id}`,
-    order: 1,
-  }));
-
-  // // Simulate AI review generation with random timeout
-  const simulateReview = async (blockId: number, commentId: number, instructions?: string) => {
-    setBlockStatuses((prev) => ({
-      ...prev,
-      [blockId]: {
-        ...prev[blockId],
-        reviewStatus: 'reviewing',
-      },
-    }));
-
-    const updateCommentStatus = (status: CommentStatus) => {
-      setContentBlocks((blocks) =>
-        blocks.map((block) => ({
-          ...block,
-          comments: block.comments.map((comment) =>
-            comment.id === commentId ? { ...comment, status } : comment
-          ),
-        }))
-      );
-    };
-
-    updateCommentStatus('loading');
-
-    try {
-      await new Promise((resolve) => setTimeout(resolve, Math.random() * 3000 + 1000));
-
-      if (Math.random() < 0.2) throw new Error('Failed to generate review');
-
-      const newComment = `Updated AI review at ${new Date().toLocaleTimeString()}${
-        instructions ? `\n\nFocused on: ${instructions}` : ''
-      }`;
-
-      setContentBlocks((blocks) =>
-        blocks.map((block) => ({
-          ...block,
-          comments: block.comments.map((comment) =>
-            comment.id === commentId
-              ? {
-                  ...comment,
-                  comment: newComment,
-                  status: 'success',
-                  user: block?.reviewer?.config?.name || 'AI Assistant',
-                }
-              : comment
-          ),
-        }))
-      );
-
-      setBlockStatuses((prev) => ({
-        ...prev,
-        [blockId]: {
-          ...prev[blockId],
-          reviewStatus: 'completed',
-          isInitialReview: false,
-        },
-      }));
-    } catch (error) {
-      updateCommentStatus('error');
-      setBlockStatuses((prev) => ({
-        ...prev,
-        [blockId]: {
-          ...prev[blockId],
-          reviewStatus: 'error',
-        },
-      }));
-    }
-  };
-
-  // Simulate content generation
-  const simulateContentGeneration = async (block: ContentBlock, comment: Comment) => {
-    const blockId = block?.id;
-    if (!blockId || !block || !comment) return;
-
-    setBlockStatuses((prev) => ({
-      ...prev,
-      [blockId]: {
-        ...prev[blockId],
-        isLoading: true,
-        error: null,
-      },
-    }));
-
-    try {
-      if (!block?.writer?.config) return;
-
-      const selectedWriter = new Agent(block.writer.config);
-
-      if (!selectedWriter) throw new Error('No writer selected for this block');
-
-      const rewrittenContent = await selectedWriter.rewrite(
-        block,
-        block.content || '', // Provide default empty string if content is null
-        comment.comment || '' // Provide default empty string if comment is null
-      );
-
-      setContentBlocks((blocks) =>
-        blocks.map((b) => (b.id === blockId ? { ...b, content: rewrittenContent } : b))
-      );
-
-      setBlockStatuses((prev) => ({
-        ...prev,
-        [blockId]: {
-          ...prev[blockId],
-          isLoading: false,
-          error: null,
-          reviewStatus: 'completed',
-          isInitialReview: prev[blockId]?.isInitialReview || true,
-        },
-      }));
-    } catch (error) {
-      setBlockStatuses((prev) => ({
-        ...prev,
-        [blockId]: {
-          ...prev[blockId],
-          isLoading: false,
-          error: error instanceof Error ? error.message : 'An unknown error occurred',
-          reviewStatus: 'error',
-          isInitialReview: prev[blockId]?.isInitialReview || true,
-        },
-      }));
-    }
-  };
-
-  const handleRequestReview = async (block: ContentBlock, commentId: number) => {
-    const blockId = block?.id;
-    if (block?.reviewer?.config === undefined) return;
-
-    try {
-      // Set loading state before getting instructions
-      setBlockStatuses((prev) => ({
-        ...prev,
-        [blockId]: {
-          ...prev[blockId],
-          reviewStatus: 'reviewing',
-        },
-      }));
-
-      // Update comment to loading state
-      setContentBlocks((blocks) =>
-        blocks.map((b) =>
-          b.id === blockId
-            ? {
-                ...b,
-                comments: b.comments.map((c) =>
-                  c.id === commentId ? { ...c, status: 'loading' } : c
-                ),
-              }
-            : b
-        )
-      );
-
-      const instructions = await getReviewInstructionsFromUser();
-      const reviewResponse = await new Agent(block?.reviewer?.config).generateReview(
-        block,
-        instructions
-      );
-
-      setContentBlocks((blocks) =>
-        blocks.map((b) =>
-          b.id === blockId
-            ? {
-                ...b,
-                comments: [
-                  ...b.comments.filter((c) => c.id !== commentId),
-                  {
-                    id: commentId,
-                    timestamp: new Date().toISOString(),
-                    user: block?.reviewer?.config?.name || 'AI Assistant',
-                    comment: reviewResponse,
-                    status: 'success',
-                  },
-                ],
-              }
-            : b
-        )
-      );
-
-      setBlockStatuses((prev) => ({
-        ...prev,
-        [blockId]: {
-          ...prev[blockId],
-          reviewStatus: 'pending',
-        },
-      }));
-    } catch (error) {
-      console.error('Review generation failed:', error);
-
-      // Set error states
-      setBlockStatuses((prev) => ({
-        ...prev,
-        [blockId]: {
-          ...prev[blockId],
-          reviewStatus: 'error',
-        },
-      }));
-
-      // Update comment to error state
-      setContentBlocks((blocks) =>
-        blocks.map((b) =>
-          b.id === blockId
-            ? {
-                ...b,
-                comments: b.comments.map((c) =>
-                  c.id === commentId ? { ...c, status: 'error' } : c
-                ),
-              }
-            : b
-        )
-      );
-    }
-  };
+  const {
+    contentBlocks,
+    blockStatuses,
+    tocLinks,
+    handleUpdate,
+    simulateReview,
+    simulateContentGeneration,
+    handleRequestReview,
+    setContentBlocks,
+    setBlockStatuses,
+    configManager,
+  } = useEditor();
 
   return (
     <>
@@ -320,12 +57,7 @@ export const EditorPage: React.FC = () => {
             gap: '8px',
           }}
         >
-          <Tooltip
-            label="Let AI combine and polish all sections into a final piece"
-            position="bottom"
-            multiline
-            w={220}
-          >
+          <Tooltip label="Generate the final version of your content">
             <Button
               onClick={() => navigate('/export')}
               size="md"
@@ -342,54 +74,7 @@ export const EditorPage: React.FC = () => {
           </Tooltip>
         </Group>
         {/* Fixed TOC sidebar */}
-        <Paper
-          shadow="xs"
-          style={{
-            width: TOC_WIDTH,
-            height: '100vh',
-            borderRight: '1px solid var(--mantine-color-default-border)',
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-        >
-          {/* TOC Header */}
-          <Box
-            p="md"
-            style={{
-              borderBottom: '1px solid var(--mantine-color-default-border)',
-              backgroundColor: 'var(--mantine-color-body)',
-            }}
-          >
-            <Text size="sm" fw={700}>
-              Table of Contents
-            </Text>
-          </Box>
-
-          {/* Scrollable TOC Content */}
-          <Box
-            p="md"
-            style={{
-              flex: 1,
-              overflowY: 'auto',
-            }}
-          >
-            <TableOfContents links={tocLinks} />
-          </Box>
-
-          {/* Knowledge Base Section */}
-          <Box
-            style={{
-              borderTop: '1px solid var(--mantine-color-default-border)',
-              backgroundColor: 'var(--mantine-color-body)',
-            }}
-          >
-            <Box>
-              <Button component={Link} to="/knowledgeBase" variant="light" size="sm" fullWidth leftSection={<IconBook size="1rem" />}>
-                Knowledge Base
-              </Button>
-            </Box>
-          </Box>
-        </Paper>
+        <TableOfContentsSidebar links={tocLinks} width={TOC_WIDTH} />
 
         {/* Main content area with independent scroll */}
         <div
@@ -532,4 +217,3 @@ export const EditorPage: React.FC = () => {
     </>
   );
 };
-``;

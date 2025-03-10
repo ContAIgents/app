@@ -7,20 +7,18 @@ export interface PromptResponse {
 export interface PromptOptions {
   temperature?: number;
   maxTokens?: number;
+  systemPrompt?: string;
+  template?: string;
 }
 
 export interface LLMInterface {
   configure(config: Record<string, any>): void;
   executePrompt(
     prompt: string,
-    systemPrompt?: string,
-    template?: string,
     options?: PromptOptions
   ): Promise<PromptResponse>;
   executePrompts(
     prompts: string[],
-    systemPrompt?: string,
-    template?: string,
     options?: PromptOptions
   ): Promise<PromptResponse[]>;
   getConfig(): Record<string, any>;

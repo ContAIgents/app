@@ -33,7 +33,11 @@ export class ExportAgent {
     const defaultDoc = knowledgeBaseManager.getDefaultDocument();
     const knowledgeBase = defaultDoc.content;
 
-    const llm = LLMFactory.getConfiguredProvider();
+    const llm = LLMFactory.getDefaultProvider();
+    if (!llm) {
+      throw new Error('No provider configured');
+    }
+    
     const prompt = `You are a concise content creator. Given a few different sections of content, generate a final, cohesive piece of content that combines the main ideas from each section. The final content should be well-structured and easy to read.
 
 CONTEXT

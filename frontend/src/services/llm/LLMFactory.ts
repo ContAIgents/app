@@ -1,32 +1,59 @@
-import { OpenAIProvider } from './OpenAIProvider';
 import { AnthropicProvider } from './AnthropicProvider';
-import { GoogleProvider } from './GoogleProvider';
 import { DeepSeekProvider } from './DeepSeekProvider';
+import { DummyLLM } from './DummyLLM';
+import { GoogleProvider } from './GoogleProvider';
 import { HuggingFaceProvider } from './HuggingFaceProvider';
 import { OllamaProvider } from './OllamaProvider';
-import { LLMInterface } from './types';
-import { DummyLLM } from './DummyLLM';
+import { OpenAIProvider } from './OpenAIProvider';
+import { ReplicateProvider } from './ReplicateProvider';
+import { OpenRouterProvider } from './OpenRouterProvider';
+import { LLMInterface, LLMConfiguration, DEFAULT_LLM_CONFIG } from './types';
+
+const LLM_CONFIG_KEY = 'llm_configurations';
 
 export class LLMFactory {
   private static instances: Map<string, LLMInterface> = new Map();
 
-  static getConfiguredProvider(): LLMInterface {
+  static getDefaultProvider(): LLMInterface | null {
     if (process.env.USE_DUMMY_LLM) {
       return new DummyLLM();
     }
 
-    const providers = this.getAvailableProviders();
-    for (const providerName of providers) {
+    const config = this.getConfigurations();
+    if (config.defaultProvider) {
       try {
-        const provider = this.getProvider(providerName);
+        const provider = this.getProvider(config.defaultProvider);
         if (provider.isConfigured()) {
           return provider;
         }
       } catch (error) {
-        console.error(`Error checking ${providerName} configuration:`, error);
+        console.error(`Error getting default provider ${config.defaultProvider}:`, error);
       }
     }
-    throw new Error('No configured LLM provider found');
+
+    // Fall back to first configured provider
+    const configuredProvider = Object.keys(config.providers).find(name => {
+      const provider = this.getProvider(name);
+      return provider.isConfigured();
+    });
+
+    return configuredProvider ? this.getProvider(configuredProvider) : null;
+  }
+
+  static setDefaultProvider(providerName: string): void {
+    const config = this.getConfigurations();
+    config.defaultProvider = providerName;
+    localStorage.setItem(LLM_CONFIG_KEY, JSON.stringify(config));
+  }
+
+  static getConfigurations(): LLMConfiguration {
+    try {
+      const saved = localStorage.getItem(LLM_CONFIG_KEY);
+      return saved ? JSON.parse(saved) : DEFAULT_LLM_CONFIG;
+    } catch (error) {
+      console.error('Failed to load LLM configurations:', error);
+      return DEFAULT_LLM_CONFIG;
+    }
   }
 
   static getProvider(name: string): LLMInterface {
@@ -52,6 +79,12 @@ export class LLMFactory {
         case 'ollama':
           this.instances.set(providerName, new OllamaProvider());
           break;
+        case 'replicate':
+          this.instances.set(providerName, new ReplicateProvider());
+          break;
+        case 'openrouter':
+          this.instances.set(providerName, new OpenRouterProvider());
+          break;
         default:
           throw new Error(`Unknown provider: ${name}`);
       }
@@ -61,6 +94,15 @@ export class LLMFactory {
   }
 
   static getAvailableProviders(): string[] {
-    return ['OpenAI', 'Anthropic', 'Google', 'DeepSeek', 'HuggingFace', 'Ollama'];
+    return [
+      'OpenAI',
+      'Anthropic',
+      'Google',
+      'DeepSeek',
+      'HuggingFace',
+      'Ollama',
+      'Replicate',
+      'OpenRouter'
+    ];
   }
 }

@@ -18,6 +18,7 @@ export class DeepSeekProvider extends BaseLLM {
         required: true,
         options: ['deepseek-chat', 'deepseek-coder'],
         default: 'deepseek-chat',
+        allowCustom: true,
       },
     ],
   };

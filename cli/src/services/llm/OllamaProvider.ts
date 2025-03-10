@@ -1,4 +1,4 @@
-import { BaseLLM } from "./BaseLLM";
+import { BaseLLM } from "./BaseLLM.js";
 import { PromptOptions, PromptResponse, ProviderConfig } from "./types";
 import ollama from "ollama";
 
@@ -39,8 +39,6 @@ export class OllamaProvider extends BaseLLM {
 
   async executePrompt(
     prompt: string,
-    systemPrompt?: string,
-    template?: string,
     options: PromptOptions = {}
   ): Promise<PromptResponse> {
     await this.loadConfig();
@@ -56,8 +54,6 @@ export class OllamaProvider extends BaseLLM {
         model,
         prompt,
         stream,
-        system: systemPrompt,
-        template: template,
       });
       for await (const part of response) {
         result += part.response;
@@ -66,8 +62,6 @@ export class OllamaProvider extends BaseLLM {
       const response = await ollama.generate({
         model,
         prompt,
-        system: systemPrompt,
-        template: template,
       });
       result = response.response;
     }

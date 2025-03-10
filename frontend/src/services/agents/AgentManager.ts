@@ -1,6 +1,6 @@
+import { ConfigManager } from '../config/ConfigManager';
 import { Agent } from './Agent';
 import { AgentConfig } from './types';
-import { ConfigManager } from '../config/ConfigManager';
 
 export class AgentManager {
   private configManager: ConfigManager;
@@ -14,13 +14,13 @@ export class AgentManager {
 
   private loadAgents(): void {
     const savedAgents = this.configManager.load<AgentConfig[]>('list') || [];
-    savedAgents.forEach(config => {
+    savedAgents.forEach((config) => {
       this.agents.set(config.id, new Agent(config));
     });
   }
 
   private saveAgents(): void {
-    const agentsArray = Array.from(this.agents.values()).map(agent => agent.getConfig());
+    const agentsArray = Array.from(this.agents.values()).map((agent) => agent.getConfig());
     this.configManager.save('list', agentsArray);
   }
 
@@ -58,8 +58,22 @@ export class AgentManager {
 
   public hasRequiredAgents(): boolean {
     const agents = this.getAllAgents();
-    const hasContentWriter = agents.some(agent => agent.getConfig().role === 'content_writer');
-    const hasContentReviewer = agents.some(agent => agent.getConfig().role === 'content_reviewer');
+    const hasContentWriter = agents.some((agent) => agent.getConfig().role === 'content_writer');
+    const hasContentReviewer = agents.some(
+      (agent) => agent.getConfig().role === 'content_reviewer'
+    );
     return hasContentWriter && hasContentReviewer;
   }
+
+  public getMissingRole(): 'content_writer' | 'content_reviewer' | null {
+    const agents = this.getAllAgents();
+    const hasContentWriter = agents.some((agent) => agent.getConfig().role === 'content_writer');
+    const hasContentReviewer = agents.some(
+      (agent) => agent.getConfig().role === 'content_reviewer'
+    );
+    if (!hasContentWriter) return 'content_writer';
+    if (!hasContentReviewer) return 'content_reviewer';
+    return null;
+  }
+
 }

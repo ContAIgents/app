@@ -2,7 +2,7 @@ export class ConfigManager {
   private readonly storagePrefix: string;
   private readonly apiUrl: string;
 
-  constructor(storagePrefix: string = 'app_config_', apiUrl: string = 'http://localhost:3000') {
+  constructor(storagePrefix: string = 'app_config_', apiUrl: string = 'http://localhost:2668') {
     this.storagePrefix = storagePrefix;
     this.apiUrl = apiUrl;
   }
